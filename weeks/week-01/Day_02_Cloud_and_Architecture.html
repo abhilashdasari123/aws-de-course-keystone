@@ -370,20 +370,30 @@
     </div>
   </section>
 
-  <section id="interview" class="border-t border-zinc-800 bg-zinc-900/30">
+  <section id="interview" class="scroll-mt-20 border-t border-zinc-800 bg-zinc-900/30">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <h2 class="text-lg font-semibold text-white">Interview practice</h2>
+      <p class="text-sm text-zinc-500 mt-1">Day 2 focus: medallion layers, ETL vs ELT, AWS lifecycle, and cost thinking. Practice aloud in under 90 seconds.</p>
       <details class="mt-4 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
-        <summary class="cursor-pointer font-medium text-emerald-400">E · Bronze, Silver, Gold for a store manager</summary>
-        <p class="mt-2 text-zinc-400">Bronze keeps every receipt; Silver fixes typos and duplicates; Gold is today’s sales total AskShelf reads.</p>
+        <summary class="cursor-pointer font-medium text-emerald-400">E · Explain Bronze, Silver, and Gold without naming AWS services.</summary>
+        <p class="mt-2 text-xs font-medium text-zinc-500">Strong answer includes</p>
+        <p class="mt-1 text-zinc-400">Purpose of each layer, what changes between layers, and who consumes Gold.</p>
+        <p class="mt-3 text-xs font-medium text-zinc-500">Sample answer</p>
+        <p class="mt-1 text-zinc-400">Bronze is raw, append-only capture—exactly what sources sent, for audit and replay. Silver is validated, deduplicated, and conformed to shared entities (patients, orders, accounts). Gold is business-ready: KPIs, cohorts, and aggregates for dashboards, ML, and apps. If Silver is wrong, fix the job and replay from Bronze; don’t re-extract from production unless you have to.</p>
       </details>
       <details class="mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
-        <summary class="cursor-pointer font-medium text-amber-400">M · Why ELT on AWS?</summary>
-        <p class="mt-2 text-zinc-400">Cheap S3 holds raw data; Glue/Athena reshape without re-hitting Store-12 POS.</p>
+        <summary class="cursor-pointer font-medium text-amber-400">M · When would you choose ETL over ELT—and one AWS pattern for each?</summary>
+        <p class="mt-2 text-xs font-medium text-zinc-500">Strong answer includes</p>
+        <p class="mt-1 text-zinc-400">Two decision criteria (compliance, source load, warehouse compute) plus a concrete flow.</p>
+        <p class="mt-3 text-xs font-medium text-zinc-500">Sample answer</p>
+        <p class="mt-1 text-zinc-400">Choose <strong class="font-medium text-zinc-300">ETL</strong> when sensitive fields must be masked before they land in shared storage—e.g. Lambda or DMS transformations before S3. Choose <strong class="font-medium text-zinc-300">ELT</strong> when you want cheap raw history on S3 and flexible SQL/Spark in Glue or Redshift to reshape later without hammering OLTP. Hybrid is common: lightweight ETL at ingest, ELT for medallion Silver and Gold.</p>
       </details>
       <details class="mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
-        <summary class="cursor-pointer font-medium text-rose-400">H · Bill doubled, flat data — check what first?</summary>
-        <p class="mt-2 text-zinc-400">Idle Redshift/EMR, Athena scan volume, forgotten NAT or duplicate Glue runs.</p>
+        <summary class="cursor-pointer font-medium text-rose-400">H · Walk through ingest → store → transform → analyze → consume for a new SaaS API feed.</summary>
+        <p class="mt-2 text-xs font-medium text-zinc-500">Strong answer includes</p>
+        <p class="mt-1 text-zinc-400">One service per stage, catalog/lineage, scheduling, and how a dashboard reads the data.</p>
+        <p class="mt-3 text-xs font-medium text-zinc-500">Sample answer</p>
+        <p class="mt-1 text-zinc-400"><strong class="font-medium text-zinc-300">Ingest:</strong> AppFlow or scheduled API pull into S3 Bronze. <strong class="font-medium text-zinc-300">Store:</strong> S3 prefixes by date; register tables in the Glue Data Catalog; Lake Formation for access. <strong class="font-medium text-zinc-300">Transform:</strong> Glue job to Silver (schema, dedupe); Step Functions for retries; optional Gold rollups. <strong class="font-medium text-zinc-300">Analyze:</strong> Athena for ad hoc SQL; Redshift for heavy BI. <strong class="font-medium text-zinc-300">Consume:</strong> QuickSight on Gold, or API Gateway on curated metrics. Mention cost: Parquet, partitions, and no idle clusters unless needed.</p>
       </details>
     </div>
   </section>
