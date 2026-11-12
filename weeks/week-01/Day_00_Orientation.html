@@ -4,8 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Day 0 - Orientation: Introductions, Course Structure, Data Engineering Across Industries</title>
-<link rel="stylesheet" href="../../assets/slides.css">
+<script>
+(function () {
+  var path = location.pathname || '';
+  var base = location.hostname.endsWith('github.io')
+    ? '/aws-de-course-keystone/'
+    : (path.indexOf('weeks/week-01') >= 0 ? '../../' : '../');
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = base + 'assets/slides.css';
+  document.head.appendChild(link);
+  window.__DECK_ASSET_BASE__ = base;
+})();
+</script>
 <style>
+  html, body { margin: 0; height: 100%; background: #080c11; color: #e8eef5; font-family: "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  .deck { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; }
+  .slide { display: none; position: absolute; inset: 0; flex-direction: column; }
+  .slide.active { display: flex; }
   .ind { display: grid; grid-template-columns: 500px 1fr; gap: 28px; align-items: start; }
   .ind img { width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; }
   .ind .areas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
@@ -547,6 +564,12 @@
 </section>
 
 </div></div>
-<script src="../../assets/slides.js"></script>
+<script>
+(function () {
+  var s = document.createElement('script');
+  s.src = (window.__DECK_ASSET_BASE__ || '../') + 'assets/slides.js';
+  document.body.appendChild(s);
+})();
+</script>
 </body>
 </html>
