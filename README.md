@@ -4,7 +4,7 @@ Static interactive masterclass pages for the AWS Data Engineering course.
 
 ## View online (GitHub Pages)
 
-After deployment, open:
+Site is published with **GitHub Pages** (deploy from `main`, site root). Open:
 
 **https://abhilashdasari123.github.io/aws-de-course-keystone/**
 
