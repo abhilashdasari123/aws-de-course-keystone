@@ -1,0 +1,5 @@
+git_token
+*.env
+.env.*
+Thumbs.db
+.DS_Store

@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day 1 — Data Engineering Foundations | KeystoneEduTech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            forge: { 950: '#0a0c10', 900: '#111318', 850: '#181b22' },
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-feature-settings: "ss01" on; }
+    .glass { background: rgba(24, 27, 34, 0.72); backdrop-filter: blur(12px); }
+    .gradient-border { position: relative; }
+    .gradient-border::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.35), rgba(56, 189, 248, 0.2), rgba(167, 139, 250, 0.25));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+    }
+    .code-scroll { max-height: 220px; overflow: auto; }
+    .stage-btn.active { border-color: rgb(52 211 153); background: rgba(52, 211, 153, 0.12); color: rgb(167 243 208); }
+    .role-btn.active { border-color: rgb(56 189 248); background: rgba(56, 189, 248, 0.12); }
+    .scan-row { animation: scanRow 2.2s ease-in-out infinite; }
+  .scan-col { animation: scanCol 2.2s ease-in-out infinite; }
+    @keyframes scanRow { 0%,100% { opacity: 0.35; } 50% { opacity: 1; transform: translateX(4px); } }
+    @keyframes scanCol { 0%,100% { opacity: 0.35; } 50% { opacity: 1; transform: translateY(-3px); } }
+    .progress-ring { transition: stroke-dashoffset 0.4s ease; }
+    .paradigm-row { display: grid; grid-template-columns: 7rem 1fr auto 1fr auto 1fr; gap: 0.5rem 0.75rem; align-items: stretch; }
+    @media (max-width: 1023px) {
+      .paradigm-row { grid-template-columns: 1fr; }
+      .paradigm-arrow { display: none; }
+    }
+    .paradigm-cell { border-radius: 0.75rem; border: 1px solid rgb(39 39 42); background: rgba(24, 24, 27, 0.55); padding: 1rem 1.1rem; }
+    .paradigm-arrow { display: flex; align-items: center; justify-content: center; color: rgb(82 82 91); font-size: 1.25rem; }
+  </style>
+</head>
+<body class="bg-slate-950 text-zinc-100 antialiased min-h-screen">
+
+<header class="sticky top-0 z-50 border-b border-zinc-800 glass">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Primary">
+    <div class="flex flex-wrap items-center justify-between gap-3 py-3">
+      <a href="#top" class="flex items-center gap-2 font-semibold text-white tracking-tight">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+          <i data-lucide="database" class="w-4 h-4"></i>
+        </span>
+        KeystoneEduTech
+      </a>
+      <div class="hidden lg:flex items-center gap-1 text-sm">
+        <a href="#m1" class="nav-link px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Pipelines</a>
+        <a href="#m2" class="nav-link px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Roles</a>
+        <a href="#m3" class="nav-link px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">OLTP/OLAP</a>
+        <a href="#m4" class="nav-link px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Batch/Stream</a>
+        <a href="#m5" class="nav-link px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Lakehouse</a>
+        <a href="#m4-examples" class="nav-link px-2.5 py-1.5 rounded-md text-amber-300/90 hover:text-white hover:bg-amber-500/10">Industry examples</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-xs text-zinc-500" id="progress-label">
+          <svg class="w-9 h-9 -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="#27272a" stroke-width="3"/>
+            <circle id="progress-ring" class="progress-ring" cx="18" cy="18" r="15" fill="none" stroke="#34d399" stroke-width="3" stroke-linecap="round" stroke-dasharray="94.2" stroke-dashoffset="94.2"/>
+          </svg>
+          <span><span id="progress-pct" class="text-emerald-400 font-mono font-medium">0</span>% explored</span>
+        </div>
+        <a href="index.html" class="text-xs text-zinc-500 hover:text-zinc-300">Week 1</a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+  <!-- Hero -->
+  <section class="relative border-b border-zinc-800 overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(56,189,248,0.12),transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(167,139,250,0.1),transparent_45%)]"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-20 relative">
+      <p class="text-emerald-400 text-sm font-medium tracking-wide uppercase mb-3">Week 1 · Day 1</p>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white max-w-3xl">
+        The Foundations of Modern Data Engineering
+      </h1>
+      <p class="mt-4 text-lg text-zinc-400 max-w-2xl leading-relaxed">
+        Move data from sources to decisions with reliable pipes. Same topics as your live class: roles, OLTP vs OLAP, batch vs streaming, and lake vs warehouse vs lakehouse — with hands-on widgets below.
+      </p>
+      <div class="flex flex-wrap gap-2 mt-8" aria-label="Session topics">
+        <span class="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">Pipelines &amp; quality</span>
+        <span class="px-3 py-1 rounded-full text-xs font-medium bg-sky-500/15 text-sky-300 border border-sky-500/25">DE · DS · DA</span>
+        <span class="px-3 py-1 rounded-full text-xs font-medium bg-violet-500/15 text-violet-300 border border-violet-500/25">OLTP / OLAP</span>
+        <span class="px-3 py-1 rounded-full text-xs font-medium bg-amber-500/15 text-amber-200 border border-amber-500/25">Batch / stream</span>
+        <span class="px-3 py-1 rounded-full text-xs font-medium bg-zinc-700/50 text-zinc-300 border border-zinc-600">Storage patterns</span>
+      </div>
+      <a href="#m1" class="inline-flex items-center gap-2 mt-8 px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm transition-colors">
+        Jump to modules <i data-lucide="arrow-down" class="w-4 h-4"></i>
+      </a>
+    </div>
+  </section>
+
+  <!-- Module 1 -->
+  <section id="m1" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
+        <div>
+          <span class="text-xs font-mono text-emerald-400/90">Module 1</span>
+          <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">What is Data Engineering &amp; why it matters</h2>
+        </div>
+        <p class="text-sm text-zinc-500 max-w-md">Bedrock of the modern stack. If the pipe is wrong, dashboards, models, and GenAI all lie confidently.</p>
+      </div>
+      <div class="grid lg:grid-cols-2 gap-6 items-stretch">
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 gradient-border">
+          <p class="text-zinc-300 leading-relaxed">
+            <strong class="text-white">Data engineering</strong> builds and operates systems that ingest, store, transform, and serve data — reliably, securely, and at sensible cost. You own the plumbing; consumers own the insights.
+          </p>
+          <p class="mt-4 text-sm text-amber-200/90 border-l-2 border-amber-500/60 pl-3">
+            <strong>Garbage in, confident garbage out.</strong> A larger LLM or flashier BI tool cannot fix stale partitions or duplicate facts.
+          </p>
+          <p class="mt-4 text-sm text-zinc-500">Course anchor: AWS (S3, Glue, Kinesis, Redshift). Industry parallels: Kafka, Snowflake, Airflow, dbt.</p>
+        </article>
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+          <h3 class="text-sm font-semibold text-zinc-300 mb-4 flex items-center gap-2">
+            <i data-lucide="git-branch" class="w-4 h-4 text-emerald-400"></i> Lifecycle of a data pipeline
+          </h3>
+          <div class="flex flex-wrap gap-2" id="pipeline-stages" role="tablist"></div>
+          <div id="pipeline-inspector" class="mt-5 rounded-xl bg-slate-950/80 border border-zinc-800 p-4 min-h-[200px]">
+            <p class="text-sm text-zinc-500">Select a stage to inspect analogy, challenges, and tools.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Module 2 -->
+  <section id="m2" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <span class="text-xs font-mono text-sky-400/90">Module 2</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Data Engineer vs Data Scientist vs Data Analyst</h2>
+      <p class="text-zinc-400 mt-2 max-w-2xl">Same company, different questions. We use one running example: <strong class="text-zinc-200">RetailCo</strong> and shelf replenishment for SKU-4421 at Store 12.</p>
+      <div class="mt-4 rounded-xl border border-sky-500/25 bg-sky-500/10 p-4 text-sm text-zinc-300 leading-relaxed">
+        <strong class="text-sky-300">What is AskShelf?</strong>
+        RetailCo’s internal GenAI chatbot for store managers. Managers ask natural-language questions (“How many cases of SKU-4421 should I reorder?”). AskShelf answers using a <strong>RAG index</strong> built from live stock tables, sales history, and supplier PDFs. If pipelines are stale or wrong, AskShelf still sounds confident — that’s a data engineering failure, not an “AI bug.”
+      </div>
+
+      <div class="flex flex-wrap gap-2 mt-6" id="role-switcher" role="tablist"></div>
+
+      <div class="grid lg:grid-cols-2 gap-6 mt-6">
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6" id="role-detail"></div>
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+          <h3 class="text-sm font-semibold text-zinc-300 mb-3">Scenario: CEO wants better replenishment (fewer stock-outs and over-orders)</h3>
+          <p class="text-xs text-zinc-500 mb-3">What each role delivers for Store 12, SKU-4421, and AskShelf</p>
+          <div id="churn-scenario" class="space-y-2 text-sm"></div>
+        </div>
+      </div>
+      <pre class="mt-6 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-xs font-mono text-zinc-300 code-scroll" id="role-code"></pre>
+    </div>
+  </section>
+
+  <!-- Module 3 -->
+  <section id="m3" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <span class="text-xs font-mono text-violet-400/90">Module 3</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">OLTP vs OLAP — when to use what</h2>
+      <p class="text-zinc-400 mt-2">OLTP runs the business (fast writes). OLAP understands it (big scans). Don’t run a 3-year revenue report on production checkout.</p>
+
+      <div class="flex gap-2 mt-6">
+        <button type="button" id="btn-oltp" class="mode-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border border-zinc-700 text-sm font-medium text-zinc-300 hover:border-sky-500/50">OLTP · PostgreSQL / RDS</button>
+        <button type="button" id="btn-olap" class="mode-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border border-zinc-700 text-sm font-medium text-zinc-300 hover:border-emerald-500/50">OLAP · Redshift / Snowflake</button>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-6 mt-6">
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6" id="oltp-olap-facts"></div>
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+          <h3 class="text-sm font-semibold text-zinc-300 mb-3">Query &amp; storage simulator</h3>
+          <p class="text-xs text-zinc-500 mb-4" id="scan-caption"></p>
+          <div id="storage-viz" class="grid gap-1 font-mono text-[10px]"></div>
+          <p class="mt-4 text-xs text-zinc-400" id="scan-insight"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Module 4 -->
+  <section id="m4" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <span class="text-xs font-mono text-amber-400/90">Module 4</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">The 3 processing paradigms</h2>
+      <p class="text-zinc-400 mt-2 max-w-3xl text-sm">
+        Three rows, same layout: <strong class="text-zinc-200">data source</strong> → <strong class="text-zinc-200">what we do</strong> → <strong class="text-zinc-200">expected output</strong>.
+      </p>
+
+      <figure class="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 overflow-hidden">
+        <img src="images/day01_three_processing_paradigms.jpg" alt="Batch, micro-batch, and streaming: source, processing, and output for each paradigm" class="w-full h-auto block" loading="lazy">
+      </figure>
+
+      <div class="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4 sm:p-6 mt-6">
+        <div class="hidden lg:grid paradigm-row text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-3 px-1">
+          <span></span>
+          <span>Data source</span>
+          <span></span>
+          <span>What we do</span>
+          <span></span>
+          <span>Expected output</span>
+        </div>
+        <div class="space-y-4" id="paradigm-board" aria-label="Three processing paradigms"></div>
+      </div>
+
+      <div id="m4-examples" class="scroll-mt-24 mt-10 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+        <h3 class="text-lg font-semibold text-white flex items-center gap-2"><i data-lucide="building-2" class="w-5 h-5 text-amber-400"></i> Batch vs streaming — real companies</h3>
+        <p class="text-sm text-zinc-400 mt-2 max-w-3xl">Most enterprises run <strong class="text-zinc-200">both</strong> patterns. Names below are illustrative of common architectures (not inside knowledge of their stacks).</p>
+        <div class="flex flex-wrap gap-2 mt-5" id="industry-tabs" role="tablist" aria-label="Industry examples"></div>
+        <div id="industry-detail" class="mt-5 rounded-xl border border-zinc-800 bg-slate-950/60 p-5 min-h-[220px]"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Module 5 -->
+  <section id="m5" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <span class="text-xs font-mono text-emerald-400/90">Module 5</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Data lake vs warehouse vs lakehouse</h2>
+      <p class="text-zinc-400 mt-2">Deep dive on <a href="Day_02_Cloud_and_Architecture.html" class="text-emerald-400/90 hover:text-emerald-300">Day 2</a> — medallion layers and how lakehouse table formats (Delta, Iceberg, Hudi) sit on S3.</p>
+
+      <div class="flex flex-wrap gap-2 mt-6" id="arch-tabs" role="tablist"></div>
+      <div class="grid lg:grid-cols-2 gap-6 mt-6">
+        <div id="arch-diagram" class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 min-h-[240px]"></div>
+        <div class="rounded-2xl border border-zinc-800 overflow-hidden">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-zinc-800/80 text-zinc-300 text-xs uppercase">
+              <tr><th class="px-4 py-3">Dimension</th><th class="px-4 py-3">Lake</th><th class="px-4 py-3">Warehouse</th><th class="px-4 py-3">Lakehouse</th></tr>
+            </thead>
+            <tbody id="arch-compare" class="divide-y divide-zinc-800 text-zinc-400"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interview (course) -->
+  <section class="border-t border-zinc-800 bg-zinc-900/30">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <h2 class="text-lg font-semibold text-white">Live session: interview practice</h2>
+      <p class="text-sm text-zinc-500 mt-1">After the modules — Easy / Medium / Hard (reveal answers in class).</p>
+      <details class="mt-4 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <summary class="cursor-pointer font-medium text-emerald-400">E · What does a data engineer do day to day?</summary>
+        <p class="mt-2 text-zinc-400">Builds and maintains pipelines; monitors failures; models data; quality checks; cost and security.</p>
+      </details>
+      <details class="mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <summary class="cursor-pointer font-medium text-amber-400">M · One OLTP and one OLAP example — why different DBs?</summary>
+        <p class="mt-2 text-zinc-400">OLTP: place order (row store, few rows). OLAP: 3-year revenue (column scan). Mixing them slows apps and analytics.</p>
+      </details>
+      <details class="mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <summary class="cursor-pointer font-medium text-rose-400">H · Last 5 seconds of orders + monthly revenue trends?</summary>
+        <p class="mt-2 text-zinc-400">Stream to Kinesis for live view; land events in S3 + nightly Glue to Redshift/Athena; reconcile to source.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer class="border-t border-zinc-800 py-8 text-center text-xs text-zinc-600">
+  AWS Data Engineering in the AI Era · Week 1 Day 1 · <a href="index.html" class="text-zinc-500 hover:text-zinc-300">Back to week index</a>
+</footer>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+(function () {
+  const explored = new Set();
+  const CIRC = 94.2;
+
+  function bumpProgress(id) {
+    if (id) explored.add(id);
+    const modules = document.querySelectorAll('[data-module]');
+    const pct = Math.round((explored.size / modules.length) * 100);
+    document.getElementById('progress-pct').textContent = String(pct);
+    document.getElementById('progress-ring').style.strokeDashoffset = String(CIRC - (CIRC * pct) / 100);
+  }
+
+  document.querySelectorAll('[data-module]').forEach((sec) => {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) bumpProgress(sec.id); });
+    }, { threshold: 0.35 });
+    obs.observe(sec);
+  });
+
+  // --- Module 1: Pipeline lifecycle ---
+  const stages = {
+    ingestion: {
+      label: 'Ingestion',
+      icon: 'download',
+      analogy: 'City water intake from rivers and reservoirs — many sources, one controlled entry.',
+      challenges: 'Schema drift, late files, API rate limits, duplicate events, consent/PII at the edge.',
+      tools: 'Amazon Kinesis · MSK · AppFlow · DMS · SFTP to S3 · (industry: Kafka, Fivetran)',
+    },
+    storage: {
+      label: 'Storage',
+      icon: 'hard-drive',
+      analogy: 'Reservoirs and tanks — hold volume until treatment; partitioned by date and domain.',
+      challenges: 'Small-file problem, lifecycle cost, encryption, cross-account access.',
+      tools: 'Amazon S3 · Glacier tiers · (industry: ADLS, GCS)',
+    },
+    processing: {
+      label: 'Processing',
+      icon: 'cog',
+      analogy: 'Water treatment — filter, test, blend streams to drinking standard.',
+      challenges: 'Idempotent reruns, backfill, skew, overnight job failures.',
+      tools: 'AWS Glue · EMR Spark · Lambda · (industry: Airflow, dbt, Spark)',
+    },
+    serving: {
+      label: 'Serving',
+      icon: 'bar-chart-3',
+      analogy: 'Household taps and meters — right pressure, metered access, SLAs.',
+      challenges: 'Semantic layer drift, row-level security, cache staleness.',
+      tools: 'Redshift · Athena · OpenSearch · feature stores · (industry: Snowflake, Looker)',
+    },
+  };
+
+  let activeStage = 'ingestion';
+  const stageRoot = document.getElementById('pipeline-stages');
+  const inspector = document.getElementById('pipeline-inspector');
+
+  function renderPipelineInspector() {
+    const s = stages[activeStage];
+    inspector.innerHTML = `
+      <div class="flex items-start gap-3">
+        <span class="p-2 rounded-lg bg-emerald-500/15 text-emerald-400"><i data-lucide="${s.icon}" class="w-5 h-5"></i></span>
+        <div class="min-w-0">
+          <h4 class="font-semibold text-white">${s.label}</h4>
+          <p class="text-sm text-zinc-400 mt-1"><span class="text-zinc-500">Analogy:</span> ${s.analogy}</p>
+          <p class="text-sm text-zinc-400 mt-2"><span class="text-zinc-500">Challenges:</span> ${s.challenges}</p>
+          <p class="text-sm text-emerald-300/90 mt-2 font-mono text-xs leading-relaxed">${s.tools}</p>
+        </div>
+      </div>`;
+    lucide.createIcons();
+  }
+
+  Object.keys(stages).forEach((key) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'stage-btn px-3 py-2 rounded-lg border border-zinc-700 text-xs sm:text-sm font-medium text-zinc-300';
+    btn.dataset.stage = key;
+    btn.textContent = stages[key].label;
+    btn.addEventListener('click', () => {
+      activeStage = key;
+      stageRoot.querySelectorAll('.stage-btn').forEach((b) => b.classList.toggle('active', b.dataset.stage === key));
+      renderPipelineInspector();
+      bumpProgress('m1');
+    });
+    stageRoot.appendChild(btn);
+  });
+  stageRoot.querySelector('[data-stage="ingestion"]').classList.add('active');
+  renderPipelineInspector();
+
+  // --- Module 2: Roles ---
+  const roles = {
+    de: {
+      name: 'Data Engineer',
+      color: 'emerald',
+      objective: 'Get reliable data to everyone — pipes, SLAs, cost.',
+      dayToDay: 'Ingest POS to Kinesis → S3 → Glue Gold stock; on-call when the nightly replenishment job fails.',
+      badges: ['Glue', 'Kinesis', 'S3', 'Spark', 'IAM', 'dbt (optional)'],
+      code: `# Glue / Airflow-style nightly extract (conceptual)
+orders = spark.read.jdbc(url, "orders", partitionColumn="id")
+orders.dropDuplicates(["order_id"])\\
+    .write.partitionBy("order_date").parquet("s3://lake/silver/orders/")`,
+      churn: 'Builds stream + batch paths; dedupes sales; keeps AskShelf’s RAG index tied to fresh Gold stock (see AskShelf callout above).',
+    },
+    ds: {
+      name: 'Data Scientist',
+      color: 'violet',
+      objective: 'Predict what happens next — models that move margin.',
+      dayToDay: 'Feature engineering from Gold tables; train demand model; A/B test reorder policy.',
+      badges: ['Python', 'SageMaker', 'pandas', 'scikit-learn', 'PyTorch'],
+      code: `from sklearn.ensemble import GradientBoostingRegressor
+X = features[["lag_7_sales", "promo_flag", "days_of_supply"]]
+model = GradientBoostingRegressor().fit(X, y)
+# Requires clean features from DE`,
+      churn: 'Trains SKU-4421 demand forecast; cannot fix bad features if DE duplicated rows.',
+    },
+    da: {
+      name: 'Data Analyst',
+      color: 'sky',
+      objective: 'Explain what happened and persuade action.',
+      dayToDay: 'SQL on Gold; reorder dashboard; deck for why Mumbai over-ordered.',
+      badges: ['SQL', 'QuickSight', 'Excel', 'dbt metrics'],
+      code: `SELECT store_id, sku,
+       SUM(qty_sold) AS sold_7d,
+       AVG(days_of_supply) AS dos
+FROM gold.store_replenishment
+WHERE sku = 'SKU-4421'
+GROUP BY 1, 2;`,
+      churn: 'Defines the question with merchandising; builds report; does not own the nightly Glue job.',
+    },
+  };
+
+  let activeRole = 'de';
+  const roleSwitcher = document.getElementById('role-switcher');
+
+  const roleTitleClass = { de: 'text-emerald-300', ds: 'text-violet-300', da: 'text-sky-300' };
+
+  function renderRole() {
+    const r = roles[activeRole];
+    document.getElementById('role-detail').innerHTML = `
+      <h3 class="text-lg font-semibold ${roleTitleClass[activeRole]}">${r.name}</h3>
+      <p class="text-sm text-zinc-400 mt-2"><strong class="text-zinc-300">Objective:</strong> ${r.objective}</p>
+      <p class="text-sm text-zinc-400 mt-2"><strong class="text-zinc-300">Day-to-day:</strong> ${r.dayToDay}</p>
+      <div class="flex flex-wrap gap-1.5 mt-4">${r.badges.map((b) => `<span class="px-2 py-0.5 rounded-md bg-zinc-800 text-xs text-zinc-300 border border-zinc-700">${b}</span>`).join('')}</div>`;
+    document.getElementById('role-code').textContent = r.code;
+    const scenarioHtml = Object.entries(roles).map(([k, x]) => `
+      <div class="p-3 rounded-lg border ${k === activeRole ? 'border-sky-500/50 bg-sky-500/10' : 'border-zinc-800 bg-slate-950/50'}">
+        <span class="text-xs font-semibold text-zinc-500">${x.name}</span>
+        <p class="text-zinc-300 mt-1">${x.churn}</p>
+      </div>`).join('');
+    document.getElementById('churn-scenario').innerHTML = scenarioHtml;
+    bumpProgress('m2');
+  }
+
+  Object.keys(roles).forEach((key) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'role-btn px-4 py-2 rounded-lg border border-zinc-700 text-sm font-medium text-zinc-300';
+    btn.textContent = roles[key].name;
+    btn.addEventListener('click', () => {
+      activeRole = key;
+      roleSwitcher.querySelectorAll('.role-btn').forEach((b, i) => b.classList.toggle('active', Object.keys(roles)[i] === key));
+      renderRole();
+    });
+    roleSwitcher.appendChild(btn);
+  });
+  roleSwitcher.querySelector('.role-btn').classList.add('active');
+  renderRole();
+
+  // --- Module 3: OLTP / OLAP ---
+  let storageMode = 'oltp';
+
+  function renderStorageViz() {
+    const facts = document.getElementById('oltp-olap-facts');
+    const viz = document.getElementById('storage-viz');
+    const cap = document.getElementById('scan-caption');
+    const insight = document.getElementById('scan-insight');
+
+    if (storageMode === 'oltp') {
+      facts.innerHTML = `
+        <h3 class="text-sky-400 font-semibold mb-3">OLTP · row-oriented · ACID</h3>
+        <ul class="text-sm text-zinc-400 space-y-2 list-disc pl-4">
+          <li>Fast single-row writes: checkout, inventory −1</li>
+          <li>Normalised (3NF) — minimise update anomalies</li>
+          <li>Thousands of concurrent short transactions</li>
+          <li>AWS: RDS, Aurora, DynamoDB</li>
+        </ul>`;
+      cap.textContent = 'Query: UPDATE inventory SET qty = qty - 1 WHERE store_id = 12 AND sku = "4421" — touches one row cluster.';
+      viz.className = 'space-y-1 scan-row';
+      viz.innerHTML = Array.from({ length: 6 }, (_, i) =>
+        `<div class="flex gap-0.5">${Array.from({ length: 8 }, (_, j) =>
+          `<span class="h-5 flex-1 rounded-sm ${j === 3 && i === 2 ? 'bg-sky-500' : 'bg-zinc-800'}"></span>`).join('')}</div>`
+      ).join('');
+      insight.textContent = 'Row store reads entire rows even when you need one column — great for writes, poor for billion-row aggregates.';
+    } else {
+      facts.innerHTML = `
+        <h3 class="text-emerald-400 font-semibold mb-3">OLAP · columnar · star schema</h3>
+        <ul class="text-sm text-zinc-400 space-y-2 list-disc pl-4">
+          <li>Scans only amount + date columns across millions of rows</li>
+          <li>Denormalised facts + dimensions for slice-and-dice</li>
+          <li>Fewer, heavier queries · analysts &amp; BI</li>
+          <li>AWS: Redshift, Athena · (Snowflake, ClickHouse)</li>
+        </ul>`;
+      cap.textContent = 'Query: SELECT region, SUM(revenue) FROM fact_sales WHERE year = 2024 GROUP BY 1 — scans 2 of 40 columns.';
+      viz.className = 'grid grid-cols-8 gap-1 scan-col';
+      const cols = ['store', 'sku', 'amount', 'date', 'region', 'promo', 'cost', 'margin'];
+      viz.innerHTML = cols.map((c, ci) =>
+        `<p class="col-span-8 text-[9px] text-zinc-600">${c}</p>` +
+        Array.from({ length: 5 }, (_, ri) =>
+          `<span class="h-4 rounded-sm ${ci === 2 || ci === 3 ? 'bg-emerald-600/80' : 'bg-zinc-800/40'}"></span>`
+        ).join('')
+      ).join('');
+      insight.textContent = 'Columnar storage skips irrelevant fields — why OLAP is 10–100× faster for aggregates than row stores.';
+    }
+    bumpProgress('m3');
+  }
+
+  function setStorageMode(mode) {
+    storageMode = mode;
+    document.getElementById('btn-oltp').classList.toggle('border-sky-500', mode === 'oltp');
+    document.getElementById('btn-oltp').classList.toggle('bg-sky-500/10', mode === 'oltp');
+    document.getElementById('btn-olap').classList.toggle('border-emerald-500', mode === 'olap');
+    document.getElementById('btn-olap').classList.toggle('bg-emerald-500/10', mode === 'olap');
+    renderStorageViz();
+  }
+  document.getElementById('btn-oltp').addEventListener('click', () => setStorageMode('oltp'));
+  document.getElementById('btn-olap').addEventListener('click', () => setStorageMode('olap'));
+  setStorageMode('oltp');
+
+  // --- Module 4: Three processing paradigms (poster layout) ---
+  const paradigmRows = [
+    {
+      key: 'batch',
+      label: 'Batch',
+      accent: 'border-l-amber-500',
+      badge: 'bg-amber-500/15 text-amber-200 border-amber-500/30',
+      icon: 'package',
+      timing: 'End of day',
+      source: 'Daily transactions & backups pile up in S3 / databases all day.',
+      process: 'Nightly ETL & aggregation — Glue / Spark processes the whole pile at once.',
+      output: 'Daily sales & reconciled inventory → data warehouse for BI.',
+      aws: 'Glue · EMR · Redshift',
+      retail: 'RetailCo: all Store-12 POS files → nightly Gold for AskShelf & SKU-4421 replenishment.',
+    },
+    {
+      key: 'micro',
+      label: 'Micro-batch',
+      accent: 'border-l-sky-500',
+      badge: 'bg-sky-500/15 text-sky-200 border-sky-500/30',
+      icon: 'map',
+      timing: '~60 seconds',
+      source: 'GPS / trip events buffered into 1-minute chunks (Kafka / Kinesis).',
+      process: 'Spark Structured Streaming runs every 60s on each mini-batch.',
+      output: 'Live fleet map & mobile ETAs refresh about once a minute.',
+      aws: 'Kinesis · MSK · Firehose',
+      retail: 'RetailCo: rolling Store-12 sales ticker for the floor manager (not second-perfect).',
+    },
+    {
+      key: 'stream',
+      label: 'Streaming',
+      accent: 'border-l-rose-500',
+      badge: 'bg-rose-500/15 text-rose-200 border-rose-500/30',
+      icon: 'activity',
+      timing: '<10 ms / event',
+      source: 'Continuous sensor or checkout stream — events never stop.',
+      process: 'Flink / Lambda handles each event the instant it arrives.',
+      output: 'Fault or fraud alert — auto shutdown or block payment.',
+      aws: 'Kinesis · Managed Flink · Lambda',
+      retail: 'RetailCo: shrink alert on SKU-4421 scan at checkout within seconds.',
+    },
+  ];
+
+  function cell(title, body, sub) {
+    return `<div class="paradigm-cell h-full">
+      <p class="text-[10px] uppercase tracking-wide text-zinc-500 font-medium lg:hidden">${title}</p>
+      <p class="text-sm text-zinc-200 mt-1 lg:mt-0 leading-snug">${body}</p>
+      ${sub ? `<p class="text-xs text-zinc-500 mt-2 font-mono">${sub}</p>` : ''}
+    </div>`;
+  }
+
+  document.getElementById('paradigm-board').innerHTML = paradigmRows.map((row) => `
+    <article class="paradigm-row border-l-4 ${row.accent} pl-2 lg:pl-3 py-1">
+      <div class="flex flex-col justify-center gap-1 min-w-0 lg:min-w-[7rem]">
+        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-white">
+          <i data-lucide="${row.icon}" class="w-3.5 h-3.5 text-zinc-400"></i>${row.label}
+        </span>
+        <span class="text-[10px] px-2 py-0.5 rounded border w-fit ${row.badge}">${row.timing}</span>
+      </div>
+      ${cell('Data source', row.source)}
+      <span class="paradigm-arrow" aria-hidden="true">→</span>
+      ${cell('What we do', row.process, row.aws)}
+      <span class="paradigm-arrow" aria-hidden="true">→</span>
+      ${cell('Expected output', row.output)}
+    </article>
+    <p class="text-xs text-zinc-500 pl-3 lg:pl-[7.5rem] -mt-2 mb-1 pb-2 border-b border-zinc-800/80 last:border-0">${row.retail}</p>`).join('');
+
+  bumpProgress('m4');
+  lucide.createIcons();
+
+  const industryExamples = {
+    walmart: {
+      label: 'Walmart',
+      sector: 'Retail',
+      batch: 'Nightly sales and inventory reconciliation across thousands of stores; finance and supplier scorecards in the warehouse.',
+      stream: 'Real-time POS and e-commerce events for shrink detection, clickstream, and operational dashboards while stores are open.',
+      aws: 'Batch: Glue → Redshift. Stream: Kinesis → Lambda / managed analytics.',
+      note: 'Same sale event often feeds stream for “now” and lands in S3 for nightly truth.',
+    },
+    jpmorgan: {
+      label: 'JPMorgan Chase',
+      sector: 'Banking',
+      batch: 'Regulatory reporting, general-ledger reconciliation, and month-end risk aggregates from core banking.',
+      stream: 'Card and wire transaction streams scored for fraud before the authorisation completes.',
+      aws: 'Stream: Kinesis / MSK + real-time rules. Batch: DMS/Glue to S3 → Redshift with audit lineage.',
+      note: 'Streaming declines bad payments; batch proves numbers to auditors.',
+    },
+    netflix: {
+      label: 'Netflix',
+      sector: 'Media & entertainment',
+      batch: 'Royalty calculations, studio reporting, and historical engagement cohorts for executives.',
+      stream: '“Play”, pause, and buffer events to personalise the next title and run experiments live.',
+      aws: 'Stream: Kinesis/Firehose into the lake. Batch: Spark/Glue on S3 for royalties and KPIs.',
+      note: 'Personalisation wants streams; contracts and finance want batch totals.',
+    },
+    uber: {
+      label: 'Uber',
+      sector: 'Transport',
+      batch: 'Driver payouts, trip settlement, and city-level compliance reports.',
+      stream: 'GPS pings and trip events for matching riders, ETA, and surge pricing.',
+      aws: 'Stream: Kinesis + stream processing for live maps. Batch: Glue jobs for payouts and reconciliation.',
+      note: 'Rider sees a stream; accounting runs batch on the same trip ledger.',
+    },
+    unitedhealth: {
+      label: 'UnitedHealth Group',
+      sector: 'Healthcare',
+      batch: 'Claims adjudication batches, billing cycles, and population health reports for plans.',
+      stream: 'ICU vitals and remote monitoring streams for clinical early-warning alerts.',
+      aws: 'Stream: IoT/Kinesis for device data (de-identified). Batch: HealthLake/S3 + Glue for claims pipelines.',
+      note: 'Clinical alerts are latency-sensitive; claims accuracy is batch-oriented.',
+    },
+    airbnb: {
+      label: 'Airbnb',
+      sector: 'Travel & hospitality',
+      batch: 'Host payouts, tax reporting, and historical occupancy trends for planning.',
+      stream: 'Search, booking, and messaging events for fraud signals and dynamic pricing hints.',
+      aws: 'Stream: event buses into stream processors. Batch: warehouse jobs on bookings and payouts.',
+      note: 'Guests expect instant UX; finance needs reconciled batch payouts.',
+    },
+  };
+
+  let activeIndustry = 'walmart';
+  const indTabs = document.getElementById('industry-tabs');
+  const indDetail = document.getElementById('industry-detail');
+
+  function renderIndustry() {
+    const ex = industryExamples[activeIndustry];
+    indDetail.innerHTML = `
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h4 class="text-xl font-semibold text-white">${ex.label}</h4>
+          <p class="text-xs text-amber-400/90 font-medium uppercase tracking-wide mt-0.5">${ex.sector}</p>
+        </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 mt-4">
+        <div class="rounded-lg border border-amber-500/25 bg-amber-500/5 p-4">
+          <p class="text-xs font-semibold text-amber-200 flex items-center gap-1.5"><i data-lucide="layers" class="w-3.5 h-3.5"></i> Batch</p>
+          <p class="text-sm text-zinc-300 mt-2 leading-relaxed">${ex.batch}</p>
+        </div>
+        <div class="rounded-lg border border-rose-500/25 bg-rose-500/5 p-4">
+          <p class="text-xs font-semibold text-rose-200 flex items-center gap-1.5"><i data-lucide="radio" class="w-3.5 h-3.5"></i> Streaming</p>
+          <p class="text-sm text-zinc-300 mt-2 leading-relaxed">${ex.stream}</p>
+        </div>
+      </div>
+      <p class="text-xs font-mono text-emerald-300/80 mt-4 leading-relaxed"><span class="text-zinc-500">Typical AWS-shaped stack:</span> ${ex.aws}</p>
+      <p class="text-sm text-zinc-400 mt-3 border-t border-zinc-800 pt-3"><span class="text-zinc-500">Takeaway:</span> ${ex.note}</p>`;
+    lucide.createIcons();
+    bumpProgress('m4');
+  }
+
+  Object.keys(industryExamples).forEach((key) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.dataset.key = key;
+    btn.className = 'ind-tab px-3 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-300 hover:border-amber-500/40';
+    btn.textContent = industryExamples[key].label;
+    btn.addEventListener('click', () => {
+      activeIndustry = key;
+      indTabs.querySelectorAll('.ind-tab').forEach((b) => {
+        const on = b.dataset.key === key;
+        b.classList.toggle('border-amber-500', on);
+        b.classList.toggle('bg-amber-500/10', on);
+        b.classList.toggle('text-amber-100', on);
+      });
+      renderIndustry();
+    });
+    indTabs.appendChild(btn);
+  });
+  indTabs.querySelector('[data-key="walmart"]').classList.add('border-amber-500', 'bg-amber-500/10', 'text-amber-100');
+  renderIndustry();
+
+  // --- Module 5: Architecture ---
+  const archData = {
+    lake: {
+      title: 'Data lake',
+      diagram: 'Raw files (JSON, CSV, Parquet, images) land in cheap object storage. Schema-on-read. Flexible but easy to become a swamp without governance.',
+      flow: ['Sources', 'S3 raw', 'Athena ad-hoc', 'Varied consumers'],
+    },
+    warehouse: {
+      title: 'Data warehouse',
+      diagram: 'Structured, modeled tables optimised for SQL analytics. Schema-on-write. Fast BI, less flexible for raw ml/genai blobs.',
+      flow: ['ETL', 'Redshift / Snowflake', 'Semantic layer', 'BI'],
+    },
+    lakehouse: {
+      title: 'Lakehouse',
+      diagram: 'Open table formats (Delta, Iceberg, Hudi) on object storage: ACID, time travel, batch + stream. Unifies lake economics with warehouse reliability.',
+      flow: ['S3 + Iceberg/Delta', 'Glue/Spark', 'Redshift Spectrum', 'ML + BI + RAG'],
+    },
+  };
+
+  const compareRows = [
+    ['Schema', 'On read', 'On write (strict)', 'Enforced on open tables'],
+    ['Compute vs storage', 'Decoupled', 'Often coupled', 'Decoupled'],
+    ['Query speed', 'Varies', 'Fast SQL', 'Near-warehouse on hot tables'],
+    ['Cost', 'Low storage', 'Higher', 'Balanced'],
+    ['ACID', 'Rare', 'Yes', 'Yes (table formats)'],
+    ['Open formats', 'Files', 'Proprietary or locked', 'Delta · Iceberg · Hudi'],
+  ];
+
+  let archTab = 'lakehouse';
+  const archTabs = document.getElementById('arch-tabs');
+  const archDiagram = document.getElementById('arch-diagram');
+
+  function renderArch() {
+    const a = archData[archTab];
+    archDiagram.innerHTML = `
+      <h3 class="text-white font-semibold">${a.title}</h3>
+      <p class="text-sm text-zinc-400 mt-3 leading-relaxed">${a.diagram}</p>
+      <div class="flex flex-wrap items-center gap-2 mt-6 text-xs">
+        ${a.flow.map((n, i) => `${i ? '<span class="text-zinc-600">→</span>' : ''}<span class="px-2 py-1 rounded-md bg-zinc-800 border border-zinc-700 text-zinc-300">${n}</span>`).join('')}
+      </div>`;
+    document.getElementById('arch-compare').innerHTML = compareRows.map((row) =>
+      `<tr class="hover:bg-zinc-800/30">${row.map((cell, i) => `<td class="px-4 py-2.5 ${i === 0 ? 'font-medium text-zinc-300' : ''}">${cell}</td>`).join('')}</tr>`
+    ).join('');
+    bumpProgress('m5');
+  }
+
+  Object.keys(archData).forEach((key) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'arch-tab px-4 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-300';
+    btn.textContent = archData[key].title;
+    btn.addEventListener('click', () => {
+      archTab = key;
+      archTabs.querySelectorAll('button').forEach((b) => b.classList.toggle('border-emerald-500', b.textContent === archData[key].title));
+      renderArch();
+    });
+    archTabs.appendChild(btn);
+  });
+  archTabs.querySelector('button:last-child').classList.add('border-emerald-500');
+  renderArch();
+
+  lucide.createIcons();
+})();
+</script>
+</body>
+</html>

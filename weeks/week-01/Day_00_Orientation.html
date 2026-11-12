@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 0 - Orientation: Introductions, Course Structure, Data Engineering Across Industries</title>
+<link rel="stylesheet" href="../assets/slides.css">
+<style>
+  .ind { display: grid; grid-template-columns: 500px 1fr; gap: 28px; align-items: start; }
+  .ind img { width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; }
+  .ind .areas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+  .ind .area { background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 8px; padding: 7px 11px; }
+  .ind .area b { display: block; font-size: 17px; color: var(--ink); }
+  .ind .area span { font-size: 14.5px; color: var(--muted); line-height: 1.35; display: block; }
+  .ind-lead { font-size: 19px !important; color: var(--muted); margin-bottom: 10px !important; }
+  .work td, .work th { font-size: 16px; padding: 6px 10px; }
+  .sits { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+  .sits .card p, .sits .card li { font-size: 16px; }
+  .sits .card h3 { font-size: 19px; margin-bottom: 6px; }
+  .intro-card { background: var(--panel); border: 2px dashed var(--accent); border-radius: 12px; padding: 18px 24px; }
+  .intro-card li { font-size: 24px; margin-bottom: 8px; }
+  .org { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; text-align: center; margin: 6px 0 10px; }
+  .org .box { background: var(--panel); border: 2px solid var(--border); border-radius: 10px; padding: 10px; font-size: 17px; }
+  .org .box b { display: block; font-size: 19px; margin-bottom: 4px; }
+  .org .de { border-color: var(--accent); background: #2a2113; }
+  .compare td, .compare th { font-size: 16px; padding: 5px 10px; }
+</style>
+</head>
+<body data-no-footer>
+<div class="deck"><div class="stage">
+
+<!-- 1 -->
+<section class="slide title">
+  <div class="kicker">Week 1 &middot; Day 0 &middot; Orientation</div>
+  <h1>Welcome to<br>AWS Data Engineering in the AI Era</h1>
+  <div class="sub">Introductions, course structure, and what data engineers do in real industries</div>
+  <aside class="notes">Day 0 is an orientation session before Day 1. No AWS lab today. Keep energy high; the goal is that everyone knows each other, knows how the course runs, and can picture where a data engineer works.</aside>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <h2>Today's agenda</h2>
+  <ol class="steps">
+    <li><b>Introductions</b></li>
+    <li><b>Course structure</b>: 17 weeks, daily format, weekly rhythm, tools</li>
+    <li><b>Data engineering across industries</b>: retail, healthcare, travel / transport / hospitality, banking, manufacturing, telecom, energy and utilities, media and entertainment</li>
+    <li><b>Q&amp;A</b></li>
+  </ol>
+  <aside class="notes">Write each person's background (IT / Non-IT / Not working) on the board as they speak; it helps you pitch examples during the course.</aside>
+</section>
+
+<!-- ============ INTRODUCTIONS ============ -->
+
+<!-- 3 -->
+<section class="slide">
+  <h2>Introductions: tell us about yourself</h2>
+  <div class="intro-card">
+    <ol>
+      <li>Your <b>name</b> and where you are joining from</li>
+      <li>Your background: <b>IT</b>, <b>Non-IT</b>, or <b>not working currently</b></li>
+      <li>What you do (or did) and for how long</li>
+      <li>Any experience with SQL, Python, Excel, or cloud? (none is fine)</li>
+      <li><b>What are your expectations from this course?</b></li>
+    </ol>
+  </div>
+  <aside class="notes">Trainer introduces themselves first, answering the same questions. Note each person's expectation on the board; revisit the list at Checkpoint 3 (Day 54) and on the last day.</aside>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <h2>What you can expect, and what we expect from you</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>From the course</h3>
+      <ul class="small">
+        <li>A live session every day, Monday to Saturday</li>
+        <li>Hands-on AWS labs in a shared training account (no personal credit card needed)</li>
+        <li>3 interview questions every day</li>
+        <li>15 assignments, 5 mini-projects, 4 industry projects</li>
+        <li>About 1,700 interview practice questions</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>From you</h3>
+      <ul class="small">
+        <li>Attend live; camera on during labs if possible</li>
+        <li>3-5 hours per week outside class for assignments</li>
+        <li>Ask doubts: there is a dedicated 10-minute slot every day</li>
+        <li>Push every assignment to your GitHub repo</li>
+        <li>Clean up AWS resources after labs</li>
+        <li>Help each other: explaining is the best way to learn</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COURSE STRUCTURE ============ -->
+
+<!-- 5 -->
+<section class="slide">
+  <h2>Course structure at a glance</h2>
+  <div class="cols c4">
+    <div class="card" style="text-align:center"><h3 style="font-size:40px;margin:0">17</h3><p>weeks (about 4 months)</p></div>
+    <div class="card" style="text-align:center"><h3 style="font-size:40px;margin:0">102</h3><p>live sessions, Mon-Sat</p></div>
+    <div class="card" style="text-align:center"><h3 style="font-size:40px;margin:0">31</h3><p>sections, about 215 topics</p></div>
+    <div class="card" style="text-align:center"><h3 style="font-size:40px;margin:0">4</h3><p>industry projects</p></div>
+  </div>
+  <div class="flow" style="margin-top:22px">
+    <div class="node">Wk 1-3<small>Foundations</small></div><span class="arrow">&rarr;</span>
+    <div class="node">Wk 4-6<small>Core AWS DE</small></div><span class="arrow">&rarr;</span>
+    <div class="node">Wk 7-9<small>Databases and streaming</small></div><span class="arrow">&rarr;</span>
+    <div class="node">Wk 10-12<small>PySpark and Databricks</small></div><span class="arrow">&rarr;</span>
+    <div class="node o">Wk 13-15<small>GenAI for DE</small></div><span class="arrow">&rarr;</span>
+    <div class="node g">Wk 16-17<small>Projects</small></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <h2>What you will learn, phase by phase</h2>
+  <table class="small">
+    <tr><th>Weeks</th><th>Phase</th><th>Topics</th></tr>
+    <tr><td>1-3</td><td>Foundations</td><td>DE fundamentals, SQL, Python, S3, IAM</td></tr>
+    <tr><td>4-6</td><td>Core AWS DE</td><td>Glue, Athena, Redshift, Lake Formation, Lambda</td></tr>
+    <tr><td>7-9</td><td>Databases, streaming, big data</td><td>RDS, DynamoDB, Kinesis, SQS, EMR, OpenSearch, CI/CD</td></tr>
+    <tr><td>10-12</td><td>Operations, PySpark, Databricks</td><td>Monitoring and governance, PySpark (basic to advanced), EMR, Databricks, Delta Lake</td></tr>
+    <tr><td>13-15</td><td>GenAI for data engineering</td><td>Bedrock, embeddings, vector DBs, RAG, LLM-enriched pipelines, AI agents, AI governance</td></tr>
+    <tr><td>16-17</td><td>Industry projects</td><td>4 end-to-end projects, demos, resume and interview preparation</td></tr>
+  </table>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <h2>How every day works (60 minutes)</h2>
+  <div class="cols">
+    <div class="timeline">
+      <div class="t">0-5</div><div>Recap of yesterday</div>
+      <div class="t">5-25</div><div>Concepts and architecture</div>
+      <div class="t">25-45</div><div>Live hands-on lab</div>
+      <div class="t">45-55</div><div>Doubts</div>
+      <div class="t">55-60</div><div>3 interview questions: <span class="tag e">EASY</span><span class="tag m">MEDIUM</span><span class="tag h">HARD</span></div>
+    </div>
+    <div class="card">
+      <h3>Weekly rhythm</h3>
+      <ul class="small">
+        <li><b>Mon-Fri:</b> new topics and labs</li>
+        <li><b>Saturday:</b> new topic + assignment released</li>
+        <li><b>Every 3rd Saturday (Days 18, 36, 54, 72, 90):</b> checkpoint: mini-project demo</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <h2>Tools you will use</h2>
+  <ul>
+    <li>AWS console and CloudShell (shared training account)</li>
+    <li>PostgreSQL + DBeaver or pgAdmin</li>
+    <li>Python 3 and VS Code</li>
+    <li>Git and GitHub</li>
+    <li>Databricks (free trial / Community Edition, Week 12)</li>
+    <li>Kaggle account for datasets</li>
+  </ul>
+</section>
+
+<!-- ============ INDUSTRIES ============ -->
+
+<!-- 9 -->
+<section class="slide">
+  <h2>Data engineering across industries</h2>
+  <p>Every industry runs on data, but the <b>business areas</b> differ. The data engineer's job is the same everywhere:</p>
+  <div class="flow">
+    <div class="node">Business systems<small>POS, ERP, EHR, apps, sensors</small></div><span class="arrow">&rarr;</span>
+    <div class="node o">Data engineer<small>ingest, clean, model, govern</small></div><span class="arrow">&rarr;</span>
+    <div class="node">Trusted data platform<small>lake + warehouse</small></div><span class="arrow">&rarr;</span>
+    <div class="node g">Decisions<small>dashboards, ML, AI apps</small></div>
+  </div>
+  <p>For each industry we will look at:</p>
+  <ul>
+    <li>What the business does, and its main <b>business areas</b> (where data is created)</li>
+    <li>What a <b>data engineer builds</b> for each area</li>
+    <li><b>Where the data engineer sits</b> in the organisation and who they work with</li>
+  </ul>
+  <aside class="notes">Ask participants from non-IT backgrounds to add examples from their own industry. Their domain knowledge is an asset here.</aside>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <h2>Where does a data engineer sit in a company?</h2>
+  <div class="org">
+    <div class="box"><b>Source system owners</b>App developers, ERP / CRM teams, IoT and plant engineers<br><span class="muted">create the data</span></div>
+    <div class="box de"><b>Data engineering / data platform team</b>Pipelines, lake, warehouse, quality, governance<br><span class="accent">moves and shapes the data</span></div>
+    <div class="box"><b>Data consumers</b>BI analysts, data scientists, ML / AI engineers, business teams<br><span class="muted">use the data</span></div>
+  </div>
+  <table class="small">
+    <tr><th>Team model</th><th>How it works</th><th>Common in</th></tr>
+    <tr><td>Centralised</td><td>One data platform team serves the whole company (often under the CTO or Chief Data Officer)</td><td>Mid-size companies, banks</td></tr>
+    <tr><td>Embedded (hub and spoke)</td><td>A central platform team plus data engineers inside business domains (supply chain, marketing)</td><td>Large retailers, e-commerce</td></tr>
+    <tr><td>Data mesh</td><td>Each domain owns its data products; a central team provides the platform and rules</td><td>Large enterprises, tech companies</td></tr>
+  </table>
+</section>
+
+<!-- RETAIL A -->
+<section class="slide">
+  <h2>Retail</h2>
+  <div class="ind">
+    <img src="images/industry_retail.jpg" alt="Retail: checkout, shelves, warehouse, delivery van">
+    <div>
+      <p class="ind-lead">Supermarkets, fashion, electronics, and e-commerce: sell products through stores and online, and keep shelves stocked.</p>
+      <div class="areas">
+        <div class="area"><b>Sales transactions</b><span>POS billing, online orders, returns, payments</span></div>
+        <div class="area"><b>Inventory</b><span>Stock per store and warehouse, stock-outs, replenishment</span></div>
+        <div class="area"><b>Supply chain and shipping</b><span>Purchase orders, deliveries to stores, last-mile delivery</span></div>
+        <div class="area"><b>Workforce</b><span>Staff shifts, attendance, store productivity</span></div>
+        <div class="area"><b>Store maintenance</b><span>Fridge temperature sensors, equipment repairs, energy</span></div>
+        <div class="area"><b>Customers and loyalty</b><span>Loyalty cards, campaigns, app behaviour</span></div>
+        <div class="area"><b>Pricing and promotions</b><span>Discounts, offers, competitor prices</span></div>
+        <div class="area"><b>Suppliers</b><span>Vendor performance, lead times, costs</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RETAIL B -->
+<section class="slide">
+  <h2>Retail: what the data engineer does</h2>
+  <table class="work">
+    <tr><th>Business area</th><th>Data engineering work</th></tr>
+    <tr><td>Transactions</td><td>Ingest POS bills from 1,000 stores (nightly batch + near real-time), deduplicate, load daily sales facts</td></tr>
+    <tr><td>Inventory</td><td>Build a daily stock snapshot per store/SKU; reconcile stock vs sales; stock-out alerts</td></tr>
+    <tr><td>Shipping</td><td>Track shipment events from logistics partners; on-time delivery metrics</td></tr>
+    <tr><td>Workforce</td><td>Join HR rosters with store footfall and sales for staffing dashboards</td></tr>
+    <tr><td>Maintenance</td><td>Stream fridge temperature readings; alert before stock spoils</td></tr>
+    <tr><td>Customers</td><td>Customer 360: merge loyalty, online, and store data; features for demand forecasting and recommendations</td></tr>
+  </table>
+  <div class="flow"><div class="node">POS / e-com</div><span class="arrow">&rarr;</span><div class="node">Kinesis / S3</div><span class="arrow">&rarr;</span><div class="node o">Glue</div><span class="arrow">&rarr;</span><div class="node">Redshift</div><span class="arrow">&rarr;</span><div class="node g">QuickSight: daily sales, stock-outs</div></div>
+  <div class="sits">
+    <div class="card"><h3>Where the DE sits</h3><p>Central data platform team, often with embedded DEs in supply chain and e-commerce squads. Works with merchandisers, store operations, BI analysts, and forecasting data scientists.</p></div>
+    <div class="card"><h3>AI use cases</h3><p>Demand forecasting, product recommendations, auto-generated product descriptions, review summarisation.</p></div>
+  </div>
+</section>
+
+<!-- HEALTHCARE A -->
+<section class="slide">
+  <h2>Healthcare</h2>
+  <div class="ind">
+    <img src="images/industry_healthcare.jpg" alt="Healthcare: hospital, doctor with tablet, patient monitor, pharmacy, lab, wearable">
+    <div>
+      <p class="ind-lead">Hospitals, clinics, diagnostics labs, pharmacies, and insurers: treat patients and manage their care and costs.</p>
+      <div class="areas">
+        <div class="area"><b>Patient records (EHR)</b><span>Registration, diagnoses, prescriptions, discharge notes</span></div>
+        <div class="area"><b>Appointments</b><span>Bookings, wait times, no-shows</span></div>
+        <div class="area"><b>Clinical data</b><span>Lab results, imaging, vitals from monitors</span></div>
+        <div class="area"><b>Pharmacy</b><span>Drug inventory, dispensing, expiry</span></div>
+        <div class="area"><b>Billing and claims</b><span>Insurance claims, approvals, rejections</span></div>
+        <div class="area"><b>Beds and staff</b><span>Bed occupancy, nurse and doctor rosters</span></div>
+        <div class="area"><b>Remote monitoring</b><span>Wearables, home devices</span></div>
+        <div class="area"><b>Research</b><span>Clinical trials, outcomes studies</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HEALTHCARE B -->
+<section class="slide">
+  <h2>Healthcare: what the data engineer does</h2>
+  <table class="work">
+    <tr><th>Business area</th><th>Data engineering work</th></tr>
+    <tr><td>Patient records</td><td>Integrate EHR data using healthcare standards (HL7, FHIR); build a single patient timeline across departments</td></tr>
+    <tr><td>Privacy</td><td>De-identify or mask patient data (PHI); column-level access; audit every access</td></tr>
+    <tr><td>Clinical data</td><td>Stream ICU vitals for early-warning alerts; load lab results for doctors and researchers</td></tr>
+    <tr><td>Beds and staff</td><td>Real-time bed occupancy and emergency wait-time dashboards</td></tr>
+    <tr><td>Claims</td><td>Claims pipeline with validation rules; rejection analysis; fraud signals</td></tr>
+    <tr><td>Research</td><td>Curated, consented datasets for clinical trials and outcome studies</td></tr>
+  </table>
+  <div class="flow"><div class="node">EHR / lab systems</div><span class="arrow">&rarr;</span><div class="node">HealthLake / S3</div><span class="arrow">&rarr;</span><div class="node o">Glue (de-identify)</div><span class="arrow">&rarr;</span><div class="node">Lake Formation</div><span class="arrow">&rarr;</span><div class="node g">Athena / dashboards</div></div>
+  <div class="sits">
+    <div class="card"><h3>Where the DE sits</h3><p>Health informatics or data platform team, working closely with compliance and security. Works with clinicians, hospital operations, actuaries, and researchers.</p></div>
+    <div class="card"><h3>AI use cases</h3><p>Clinical note summarisation, medical coding automation, RAG assistants over treatment guidelines, readmission risk models.</p></div>
+  </div>
+</section>
+
+<!-- TRAVEL, TRANSPORT AND HOSPITALITY A -->
+<section class="slide">
+  <h2>Travel, transport and hospitality</h2>
+  <div class="ind">
+    <img src="images/industry_travel_transport_hospitality.jpg" alt="Travel, transport and hospitality: airplane, airport, hotel, restaurant, bus, delivery truck">
+    <div>
+      <p class="ind-lead">Airlines, travel agencies (OTAs), hotels, restaurants, ride-hailing, logistics, food delivery, and public transport: move people and goods, and look after guests.</p>
+      <div class="areas">
+        <div class="area"><b>Search and bookings</b><span>Flight and hotel searches, reservations, cancellations, refunds</span></div>
+        <div class="area"><b>Pricing and revenue</b><span>Dynamic fares and room rates, occupancy, RevPAR</span></div>
+        <div class="area"><b>Operations</b><span>Flight schedules and delays, crew, hotel front desk, housekeeping</span></div>
+        <div class="area"><b>Fleet telemetry</b><span>GPS pings, speed, fuel, engine health</span></div>
+        <div class="area"><b>Shipments and deliveries</b><span>Parcel and order scans, ETAs, proof of delivery</span></div>
+        <div class="area"><b>Drivers, crew, and staff</b><span>Shifts, ratings, payouts</span></div>
+        <div class="area"><b>Guests and loyalty</b><span>Guest profiles, frequent flyer points, memberships</span></div>
+        <div class="area"><b>Partners and reviews</b><span>GDS and hotel APIs, OTA feeds, ratings on many platforms</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRAVEL, TRANSPORT AND HOSPITALITY B -->
+<section class="slide">
+  <h2>Travel, transport and hospitality: what the data engineer does</h2>
+  <table class="work">
+    <tr><th>Business area</th><th>Data engineering work</th></tr>
+    <tr><td>Search and bookings</td><td>Ingest search clickstream; unify bookings from the website, app, and many OTAs; search-to-booking funnels</td></tr>
+    <tr><td>Pricing and revenue</td><td>Feed demand, competitor prices, and availability to pricing models; daily occupancy, ADR, and RevPAR</td></tr>
+    <tr><td>Fleet and shipments</td><td>Stream millions of GPS pings and scan events; live tracking and SLA breach alerts</td></tr>
+    <tr><td>Operations</td><td>Real-time delay feeds trigger rebooking and customer alerts; live room status for housekeeping</td></tr>
+    <tr><td>Drivers and staff</td><td>Daily payout calculations with an audit trail; utilisation dashboards</td></tr>
+    <tr><td>Guests and reviews</td><td>Guest 360 across properties and channels; collect reviews for sentiment and topic tagging</td></tr>
+  </table>
+  <div class="flow"><div class="node">Apps / GPS / PMS / OTAs</div><span class="arrow">&rarr;</span><div class="node">Kinesis + S3</div><span class="arrow">&rarr;</span><div class="node o">Glue / EMR</div><span class="arrow">&rarr;</span><div class="node">DynamoDB + Redshift</div><span class="arrow">&rarr;</span><div class="node g">Live tracking, revenue dashboards</div></div>
+  <div class="sits">
+    <div class="card"><h3>Where the DE sits</h3><p>Data platform team with a strong real-time (streaming) group, often with DEs embedded in revenue management. Works with pricing analysts, operations control rooms, hotel managers, and the customer app team.</p></div>
+    <div class="card"><h3>AI use cases</h3><p>Conversational trip planner, fare and ETA prediction, route optimisation, review responses, disruption assistants. (Our Project 3 is food delivery.)</p></div>
+  </div>
+</section>
+
+<!-- BANKING A -->
+<section class="slide">
+  <h2>Banking and financial services</h2>
+  <div class="ind">
+    <img src="images/industry_banking.jpg" alt="Banking: bank, ATM, mobile payment, cards, vault, fraud shield, market chart">
+    <div>
+      <p class="ind-lead">Banks, NBFCs, payment apps, insurers, and brokers: hold money, lend it, move it, and manage risk, under strict regulation.</p>
+      <div class="areas">
+        <div class="area"><b>Core banking</b><span>Accounts, deposits, loans, EMIs</span></div>
+        <div class="area"><b>Payments</b><span>Cards, UPI, NEFT/IMPS, ATM withdrawals</span></div>
+        <div class="area"><b>Fraud and AML</b><span>Suspicious transactions, money laundering checks</span></div>
+        <div class="area"><b>Onboarding and KYC</b><span>Identity documents, verification</span></div>
+        <div class="area"><b>Credit risk</b><span>Credit scores, loan approvals, defaults</span></div>
+        <div class="area"><b>Regulatory reporting</b><span>Reports to the regulator (for example, RBI)</span></div>
+        <div class="area"><b>Treasury and markets</b><span>Trades, positions, market prices</span></div>
+        <div class="area"><b>Customer service</b><span>Calls, chats, complaints</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BANKING B -->
+<section class="slide">
+  <h2>Banking: what the data engineer does</h2>
+  <table class="work">
+    <tr><th>Business area</th><th>Data engineering work</th></tr>
+    <tr><td>Payments and fraud</td><td>Stream card and UPI transactions to fraud models within milliseconds; block or flag in real time</td></tr>
+    <tr><td>Core banking</td><td>CDC from the core banking database to the lake; daily general-ledger reconciliation</td></tr>
+    <tr><td>Regulatory reporting</td><td>Accurate, auditable reports with full lineage ("where did this number come from?")</td></tr>
+    <tr><td>KYC</td><td>Pipelines that extract and validate data from identity documents</td></tr>
+    <tr><td>Credit risk</td><td>Customer history with SCD Type 2; features for credit scoring models</td></tr>
+    <tr><td>Security</td><td>Encryption, tokenisation of card numbers, fine-grained access, audit logs</td></tr>
+  </table>
+  <div class="flow"><div class="node">Core banking / switch</div><span class="arrow">&rarr;</span><div class="node">DMS / MSK</div><span class="arrow">&rarr;</span><div class="node">S3 (KMS encrypted)</div><span class="arrow">&rarr;</span><div class="node o">Glue + Lake Formation</div><span class="arrow">&rarr;</span><div class="node g">Redshift: risk and regulatory</div></div>
+  <div class="sits">
+    <div class="card"><h3>Where the DE sits</h3><p>Enterprise data office or data platform team, in a highly governed setup. Works with risk, finance, compliance, fraud operations, and auditors.</p></div>
+    <div class="card"><h3>AI use cases</h3><p>Fraud detection, KYC document extraction, RAG assistants over regulations and policies, call summarisation.</p></div>
+  </div>
+</section>
+
+<!-- MANUFACTURING A -->
+<section class="slide">
+  <h2>Manufacturing</h2>
+  <div class="ind">
+    <img src="images/industry_manufacturing.jpg" alt="Manufacturing: robotic assembly line, IoT sensors, quality camera, worker with tablet, pallets">
+    <div>
+      <p class="ind-lead">Automotive, electronics, pharma, FMCG, and steel: turn raw materials into products efficiently, safely, and at consistent quality.</p>
+      <div class="areas">
+        <div class="area"><b>Machine sensors (IoT)</b><span>Vibration, temperature, pressure, every second</span></div>
+        <div class="area"><b>Production</b><span>Batches, output, downtime (MES)</span></div>
+        <div class="area"><b>Quality</b><span>Inspection cameras, defects, rework</span></div>
+        <div class="area"><b>Maintenance</b><span>Work orders, spare parts, breakdowns</span></div>
+        <div class="area"><b>Supply chain</b><span>Procurement, suppliers, raw material stock (ERP, for example SAP)</span></div>
+        <div class="area"><b>Workforce and safety</b><span>Shifts, skills, incidents</span></div>
+        <div class="area"><b>Energy</b><span>Power and fuel consumption per line</span></div>
+        <div class="area"><b>Finished goods</b><span>Warehousing, dispatch to distributors</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MANUFACTURING B -->
+<section class="slide">
+  <h2>Manufacturing: what the data engineer does</h2>
+  <table class="work">
+    <tr><th>Business area</th><th>Data engineering work</th></tr>
+    <tr><td>Machine sensors</td><td>Ingest high-frequency sensor data from the plant floor to the cloud; downsample and store as time series</td></tr>
+    <tr><td>Production</td><td>Compute OEE (availability x performance x quality) per line and shift</td></tr>
+    <tr><td>Maintenance</td><td>Sensor + work-order features for predictive maintenance models</td></tr>
+    <tr><td>Quality</td><td>Traceability: link each defect to batch, machine, operator, and supplier lot</td></tr>
+    <tr><td>Supply chain</td><td>Extract ERP (SAP) data; raw material coverage and supplier delivery reports</td></tr>
+    <tr><td>Energy</td><td>Energy per unit produced, by line, for cost and sustainability reporting</td></tr>
+  </table>
+  <div class="flow"><div class="node">Sensors / PLCs</div><span class="arrow">&rarr;</span><div class="node">IoT Core / SiteWise</div><span class="arrow">&rarr;</span><div class="node">Kinesis</div><span class="arrow">&rarr;</span><div class="node o">S3 + Glue</div><span class="arrow">&rarr;</span><div class="node g">OEE and maintenance dashboards</div></div>
+  <div class="sits">
+    <div class="card"><h3>Where the DE sits</h3><p>Digital manufacturing / Industry 4.0 team, bridging plant engineering (OT) and IT. Works with plant managers, reliability engineers, quality, and supply chain planners.</p></div>
+    <div class="card"><h3>AI use cases</h3><p>Anomaly detection on sensors, visual defect detection, RAG assistant over machine manuals for technicians, demand planning.</p></div>
+  </div>
+</section>
+
+<!-- TELECOM A -->
+<section class="slide">
+  <h2>Telecom</h2>
+  <div class="ind">
+    <img src="images/industry_telecom.jpg" alt="Telecom: mobile tower, data centre racks, network operations centre, SIM store, smartphone users">
+    <div>
+      <p class="ind-lead">Mobile operators, broadband and fibre providers, and DTH: connect people and devices, and bill them for usage.</p>
+      <div class="areas">
+        <div class="area"><b>Call and data records (CDRs)</b><span>Every call, SMS, and data session</span></div>
+        <div class="area"><b>Network performance</b><span>Tower health, dropped calls, congestion</span></div>
+        <div class="area"><b>Billing and recharges</b><span>Prepaid recharges, postpaid bills, plans</span></div>
+        <div class="area"><b>Subscribers</b><span>SIM activations, KYC, port-ins and port-outs</span></div>
+        <div class="area"><b>Customer care</b><span>Complaints, call centre, app chats</span></div>
+        <div class="area"><b>Field operations</b><span>Tower maintenance, fibre faults, technician visits</span></div>
+        <div class="area"><b>Retail and dealers</b><span>SIM and device sales, dealer commissions</span></div>
+        <div class="area"><b>Fraud</b><span>SIM-box fraud, subscription fraud, spam calls</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TELECOM B -->
+<section class="slide">
+  <h2>Telecom: what the data engineer does</h2>
+  <table class="work">
+    <tr><th>Business area</th><th>Data engineering work</th></tr>
+    <tr><td>CDRs</td><td>Ingest billions of usage records per day; aggregate usage per subscriber, region, and hour</td></tr>
+    <tr><td>Network</td><td>Stream tower and network metrics; outage and congestion alerts for the network operations centre</td></tr>
+    <tr><td>Billing</td><td>Rate usage against plans; reconcile billing with usage; revenue assurance reports</td></tr>
+    <tr><td>Subscribers</td><td>Subscriber 360 with SCD history of plans; churn prediction features</td></tr>
+    <tr><td>Fraud</td><td>Near real-time pattern detection on call records for SIM-box and spam fraud</td></tr>
+    <tr><td>Privacy</td><td>Mask phone numbers and location; consent-based access for marketing</td></tr>
+  </table>
+  <div class="flow"><div class="node">Network switches / CDRs</div><span class="arrow">&rarr;</span><div class="node">MSK / Kinesis</div><span class="arrow">&rarr;</span><div class="node">S3 lake</div><span class="arrow">&rarr;</span><div class="node o">EMR / Spark</div><span class="arrow">&rarr;</span><div class="node g">Redshift: usage, churn, revenue</div></div>
+  <div class="sits">
+    <div class="card"><h3>Where the DE sits</h3><p>Big data / analytics platform team under the CIO or CTO. Works with network engineering, revenue assurance, marketing, and customer care.</p></div>
+    <div class="card"><h3>AI use cases</h3><p>Churn prediction, network fault prediction, personalised plan offers, customer care chatbots and call summarisation.</p></div>
+  </div>
+</section>
+
+<!-- ENERGY AND UTILITIES A -->
+<section class="slide">
+  <h2>Energy and utilities</h2>
+  <div class="ind">
+    <img src="images/industry_energy.jpg" alt="Energy and utilities: wind turbines, solar panels, substation, transmission lines, smart meters, water tank">
+    <div>
+      <p class="ind-lead">Power generation and distribution, renewables, oil and gas, water, and city gas: produce and deliver energy and water reliably to homes and industry.</p>
+      <div class="areas">
+        <div class="area"><b>Smart meters</b><span>Consumption readings every 15 to 30 minutes</span></div>
+        <div class="area"><b>Grid operations</b><span>Load, voltage, outages, substation data</span></div>
+        <div class="area"><b>Generation</b><span>Plant output, solar and wind production</span></div>
+        <div class="area"><b>Asset maintenance</b><span>Transformers, turbines, pipelines, inspections</span></div>
+        <div class="area"><b>Billing and collections</b><span>Bills, payments, arrears, tariffs</span></div>
+        <div class="area"><b>Field workforce</b><span>Technician jobs, new connections, repairs</span></div>
+        <div class="area"><b>Weather</b><span>Forecasts that drive demand and renewables</span></div>
+        <div class="area"><b>Regulation and losses</b><span>Theft, leakage, regulatory reports</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENERGY AND UTILITIES B -->
+<section class="slide">
+  <h2>Energy and utilities: what the data engineer does</h2>
+  <table class="work">
+    <tr><th>Business area</th><th>Data engineering work</th></tr>
+    <tr><td>Smart meters</td><td>Ingest millions of meter readings; handle late and missing readings; daily consumption per customer</td></tr>
+    <tr><td>Grid operations</td><td>Stream grid sensor data; outage detection and restoration-time dashboards</td></tr>
+    <tr><td>Generation</td><td>Join plant output with weather data for solar and wind forecasting</td></tr>
+    <tr><td>Maintenance</td><td>Sensor and inspection features for predictive maintenance of transformers and turbines</td></tr>
+    <tr><td>Losses</td><td>Compare supplied vs billed energy by area to find theft and leakage</td></tr>
+    <tr><td>Billing</td><td>Tariff-based billing pipelines; collection and arrears reports</td></tr>
+  </table>
+  <div class="flow"><div class="node">Meters / grid sensors</div><span class="arrow">&rarr;</span><div class="node">IoT Core / Kinesis</div><span class="arrow">&rarr;</span><div class="node">S3 + Timestream</div><span class="arrow">&rarr;</span><div class="node o">Glue</div><span class="arrow">&rarr;</span><div class="node g">Grid and loss dashboards</div></div>
+  <div class="sits">
+    <div class="card"><h3>Where the DE sits</h3><p>Digital / analytics team bridging operational technology (grid, plants) and IT. Works with grid operators, asset engineers, energy traders, and finance.</p></div>
+    <div class="card"><h3>AI use cases</h3><p>Demand and renewable forecasting, anomaly detection for theft, predictive maintenance, assistants over safety procedures.</p></div>
+  </div>
+</section>
+
+<!-- MEDIA AND ENTERTAINMENT A -->
+<section class="slide">
+  <h2>Media and entertainment</h2>
+  <div class="ind">
+    <img src="images/industry_media.jpg" alt="Media and entertainment: streaming on a smart TV, music on a phone, film camera and studio lights, game controller">
+    <div>
+      <p class="ind-lead">Video and music streaming, TV broadcasters, news, gaming, and digital advertising: create content, keep audiences engaged, and earn from subscriptions and ads.</p>
+      <div class="areas">
+        <div class="area"><b>Viewing and listening</b><span>Play, pause, skip, watch time, buffering</span></div>
+        <div class="area"><b>Content catalogue</b><span>Titles, metadata, rights and licences</span></div>
+        <div class="area"><b>Subscriptions</b><span>Sign-ups, plans, renewals, cancellations</span></div>
+        <div class="area"><b>Advertising</b><span>Ad impressions, clicks, campaigns, revenue</span></div>
+        <div class="area"><b>Recommendations</b><span>What to show each user next</span></div>
+        <div class="area"><b>Gaming</b><span>Player events, in-game purchases, matchmaking</span></div>
+        <div class="area"><b>Social and reviews</b><span>Comments, ratings, social buzz</span></div>
+        <div class="area"><b>Royalties</b><span>Payouts to artists, studios, and creators</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MEDIA AND ENTERTAINMENT B -->
+<section class="slide">
+  <h2>Media and entertainment: what the data engineer does</h2>
+  <table class="work">
+    <tr><th>Business area</th><th>Data engineering work</th></tr>
+    <tr><td>Viewing events</td><td>Stream billions of player events; watch-time and streaming-quality metrics per title and region</td></tr>
+    <tr><td>Recommendations</td><td>Build user and content features; feed recommendation models daily and in real time</td></tr>
+    <tr><td>Subscriptions</td><td>Subscriber lifecycle tables; churn and retention cohorts</td></tr>
+    <tr><td>Advertising</td><td>Join ad impressions with clicks and conversions; campaign revenue reporting</td></tr>
+    <tr><td>Royalties</td><td>Accurate per-play payout calculations for artists and studios, with an audit trail</td></tr>
+    <tr><td>Content catalogue</td><td>Clean title metadata and licence windows from many content partners</td></tr>
+  </table>
+  <div class="flow"><div class="node">Apps / players / ad servers</div><span class="arrow">&rarr;</span><div class="node">Kinesis / Firehose</div><span class="arrow">&rarr;</span><div class="node">S3 lake</div><span class="arrow">&rarr;</span><div class="node o">EMR / Spark</div><span class="arrow">&rarr;</span><div class="node g">Engagement, ads, royalties</div></div>
+  <div class="sits">
+    <div class="card"><h3>Where the DE sits</h3><p>Data platform team, often in a data mesh with domain teams for content, ads, and growth. Works with product managers, content strategists, ad sales, and recommendation data scientists.</p></div>
+    <div class="card"><h3>AI use cases</h3><p>Personalised recommendations, automatic subtitles and dubbing, content tagging, trailer and thumbnail generation.</p></div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section class="slide">
+  <h2>The common pattern across all industries</h2>
+  <table class="compare">
+    <tr><th>Industry</th><th>Batch example</th><th>Streaming example</th><th>Sensitive data</th></tr>
+    <tr><td>Retail</td><td>Daily sales and stock</td><td>Fridge temperature alerts</td><td>Customer contact details</td></tr>
+    <tr><td>Healthcare</td><td>Claims and billing</td><td>ICU vitals</td><td>Patient health records</td></tr>
+    <tr><td>Travel, transport, hospitality</td><td>Revenue, occupancy, driver payouts</td><td>GPS tracking, flight delays</td><td>Passport, payment, live location</td></tr>
+    <tr><td>Banking</td><td>Regulatory reports</td><td>Fraud checks on payments</td><td>Accounts, cards</td></tr>
+    <tr><td>Manufacturing</td><td>OEE, ERP reports</td><td>Machine sensors</td><td>Product designs (IP)</td></tr>
+    <tr><td>Telecom</td><td>Monthly billing, churn</td><td>Network outage alerts</td><td>Phone numbers, location</td></tr>
+    <tr><td>Energy and utilities</td><td>Consumption billing</td><td>Grid and meter readings</td><td>Customer addresses, usage patterns</td></tr>
+    <tr><td>Media and entertainment</td><td>Royalties, ad revenue</td><td>Player events</td><td>Viewing history</td></tr>
+  </table>
+  <div class="callout">Same skills everywhere: SQL, Python, Spark, AWS, batch + streaming, data modelling, security. Only the business vocabulary changes, so domain knowledge is a real advantage.</div>
+</section>
+
+<!-- END -->
+<section class="slide title">
+  <h1>Questions?</h1>
+</section>
+
+</div></div>
+<script src="../assets/slides.js"></script>
+</body>
+</html>

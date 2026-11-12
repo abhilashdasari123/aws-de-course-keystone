@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day 2 — Data Architecture, AWS &amp; Cloud Economics | KeystoneEduTech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-feature-settings: 'ss01' on; }
+    .glass { background: rgba(24, 27, 34, 0.72); backdrop-filter: blur(12px); }
+    .gradient-border { position: relative; }
+    .gradient-border::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.35), rgba(56, 189, 248, 0.2), rgba(167, 139, 250, 0.25));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+    }
+    .progress-ring { transition: stroke-dashoffset 0.4s ease; }
+    .flow-dash { stroke-dasharray: 6 5; animation: flowRun 1.2s linear infinite; }
+    @keyframes flowRun { to { stroke-dashoffset: -22; } }
+    .poster-frame { border: 1px solid rgb(63 63 70); border-radius: 1rem; background: rgb(2 6 23); padding: 1.25rem; }
+    .flow-grid { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0.5rem 0.65rem; align-items: stretch; }
+    @media (max-width: 1023px) {
+      .flow-grid { grid-template-columns: 1fr; }
+      .flow-grid .flow-arr { display: none; }
+    }
+    .flow-cell { border: 1px solid rgb(39 39 42); border-radius: 0.75rem; background: rgba(24, 24, 27, 0.65); padding: 0.75rem; min-height: 7.5rem; }
+    .flow-arr { display: flex; align-items: center; justify-content: center; color: rgb(113 113 122); font-size: 1.35rem; }
+    .strip-lit { box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.45); border-radius: 0.85rem; }
+    .strip-dim { opacity: 0.42; }
+    .pill-active { border-color: rgb(52 211 153); background: rgba(52, 211, 153, 0.12); color: rgb(167 243 208); }
+    .med-btn.active { border-color: rgb(217 119 6); background: rgba(217, 119, 6, 0.15); color: rgb(253 230 138); }
+    .med-btn[data-l="silver"].active { border-color: rgb(148 163 184); background: rgba(148, 163, 184, 0.15); }
+    .med-btn[data-l="gold"].active { border-color: rgb(52 211 153); background: rgba(52, 211, 153, 0.12); color: rgb(167 243 208); }
+    .map-row.active, .stage-btn.active, .bridge-row.active { border-color: rgb(56 189 248); background: rgba(56, 189, 248, 0.08); }
+    .eco-toggle.active { border-color: rgb(251 191 36); background: rgba(251, 191, 36, 0.12); }
+    .aws-svc-head { display: flex; align-items: center; gap: 0.75rem; }
+    .aws-svc-icon { width: 2.5rem; height: 2.5rem; flex-shrink: 0; object-fit: contain; }
+    .aws-svc-icons { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
+    .aws-svc-icons .aws-svc-icon { width: 2.25rem; height: 2.25rem; }
+  </style>
+</head>
+<body class="bg-slate-950 text-zinc-100 antialiased min-h-screen">
+
+<header class="sticky top-0 z-50 border-b border-zinc-800 glass">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Primary">
+    <div class="flex flex-wrap items-center justify-between gap-3 py-3">
+      <a href="#top" class="flex items-center gap-2 font-semibold text-white tracking-tight">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+          <i data-lucide="layers" class="w-4 h-4"></i>
+        </span>
+        KeystoneEduTech
+      </a>
+      <div class="hidden lg:flex items-center gap-1 text-sm">
+        <a href="#m1" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Medallion</a>
+        <a href="#m2" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">ETL vs ELT</a>
+        <a href="#m3" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">AWS Ecosystem</a>
+        <a href="#m4" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Cloud Costs</a>
+        <a href="#interview" class="px-2.5 py-1.5 rounded-md text-emerald-300/90 hover:text-white hover:bg-emerald-500/10">Interview</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-xs text-zinc-500">
+          <svg class="w-9 h-9 -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="#27272a" stroke-width="3"/>
+            <circle id="progress-ring" class="progress-ring" cx="18" cy="18" r="15" fill="none" stroke="#34d399" stroke-width="3" stroke-linecap="round" stroke-dasharray="94.2" stroke-dashoffset="94.2"/>
+          </svg>
+          <span><span id="progress-pct" class="text-emerald-400 font-mono font-medium">0</span>% explored</span>
+        </div>
+        <a href="Day_01_What_is_Data_Engineering.html" class="text-xs text-zinc-500 hover:text-zinc-300">Day 1</a>
+        <a href="index.html" class="text-xs text-zinc-500 hover:text-zinc-300">Week 1</a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="relative border-b border-zinc-800 overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(56,189,248,0.12),transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(167,139,250,0.1),transparent_45%)]"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-20 relative">
+      <p class="text-emerald-400 text-sm font-medium tracking-wide uppercase mb-3">Week 1 · Day 2</p>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white max-w-4xl">
+        Data Architecture, AWS Ecosystem &amp; Cloud Economics
+      </h1>
+      <p class="mt-4 text-lg text-zinc-400 max-w-3xl leading-relaxed">
+        How raw pipelines become trusted dashboards on AWS—medallion layers, ELT patterns, and cloud economics.
+      </p>
+      <a href="#m1" class="inline-flex items-center gap-2 mt-8 px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm transition-colors">
+        Jump to modules <i data-lucide="arrow-down" class="w-4 h-4"></i>
+      </a>
+    </div>
+  </section>
+
+  <section id="m1" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-amber-400/90">Module 1</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Medallion — Bronze, Silver, Gold</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        Medallion architecture is a <strong class="font-medium text-zinc-300">logical pattern</strong>, not a single product: data moves through three layers of increasing quality—raw, trusted, and decision-ready. Module 3 maps that journey to concrete AWS services.
+      </p>
+
+      <div class="grid md:grid-cols-3 gap-4 mt-6" id="med-generic-layers"></div>
+
+      <h3 class="text-sm font-semibold text-white mt-10 flex items-center gap-2"><i data-lucide="heart-pulse" class="w-4 h-4 text-rose-400"></i> Healthcare medallion (domain walkthrough)</h3>
+      <p class="text-xs text-zinc-500 mt-1 max-w-2xl">Same three layers—sources on the left flow through Bronze → Silver → Gold to analytics, clinical alerts, and research.</p>
+      <figure class="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+        <img src="images/day02_medallion_healthcare.jpg" alt="Medallion architecture for healthcare data: sources through bronze, silver, gold to consumption" class="w-full h-auto block" loading="lazy">
+      </figure>
+      <div class="flex flex-wrap gap-2 mt-4" id="health-btns" role="tablist"></div>
+      <article id="health-panel" class="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-sm text-zinc-300 leading-relaxed min-h-[120px]"></article>
+    </div>
+  </section>
+
+  <section id="m2" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-emerald-400/90">Module 2</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">ETL vs ELT</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        The letters are the same—only the <strong class="font-medium text-zinc-300">order</strong> changes.
+        <span class="text-rose-300/90">ETL</span>: Extract → Transform → Load (transform <em>before</em> the destination sees data).
+        <span class="text-emerald-300/90">ELT</span>: Extract → Load → Transform (land data first, transform inside the lake or warehouse).
+        Neither is “wrong”; the fit depends on compliance, source constraints, and where you want compute to run.
+      </p>
+
+      <div class="grid lg:grid-cols-2 gap-5 mt-6">
+        <article class="rounded-2xl border border-rose-500/30 bg-rose-950/10 overflow-hidden">
+          <img src="images/day02_etl_pipeline_exr.webp" alt="Architecture of an ETL pipeline" class="w-full h-auto block border-b border-zinc-800" loading="lazy">
+          <div class="p-4 text-sm text-zinc-300 space-y-2">
+            <p class="text-xs font-semibold text-rose-200 uppercase tracking-wide">ETL pipeline</p>
+            <p>Data is <strong class="font-medium text-zinc-200">cleansed, filtered, and conformed on a staging or ETL engine</strong>, then loaded into the target warehouse or mart.</p>
+            <ul class="text-xs text-zinc-400 list-disc pl-4 space-y-1">
+              <li>Fits strict compliance: sensitive fields masked <em>before</em> storage.</li>
+              <li>Legacy warehouses with limited compute—do heavy work off-platform.</li>
+              <li>Trade-off: rule changes often mean <strong class="text-zinc-300">re-extract</strong> from sources.</li>
+            </ul>
+          </div>
+        </article>
+        <article class="rounded-2xl border border-emerald-500/30 bg-emerald-950/10 overflow-hidden">
+          <img src="images/day02_elt_pipeline_exr.webp" alt="Architecture of an ELT pipeline" class="w-full h-auto block border-b border-zinc-800" loading="lazy">
+          <div class="p-4 text-sm text-zinc-300 space-y-2">
+            <p class="text-xs font-semibold text-emerald-200 uppercase tracking-wide">ELT pipeline</p>
+            <p>Raw files land in <strong class="font-medium text-zinc-200">S3 (or the lake)</strong> immediately; <strong class="font-medium text-zinc-200">Glue, Athena, or Redshift</strong> run transforms at scale in the cloud.</p>
+            <ul class="text-xs text-zinc-400 list-disc pl-4 space-y-1">
+              <li>Handles large volume and mixed formats (CSV, JSON, logs) cheaply.</li>
+              <li>Analysts iterate on SQL without re-hitting operational databases.</li>
+              <li>Matches Bronze → Silver → Gold: keep history, replay transforms.</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+
+      <h3 class="text-sm font-semibold text-white mt-10">When to choose ETL vs ELT</h3>
+      <p class="text-xs text-zinc-500 mt-1 max-w-3xl">Use this as a design checklist—not a brand preference. Many production platforms mix both.</p>
+
+      <div class="grid lg:grid-cols-2 gap-5 mt-5">
+        <article class="rounded-2xl border border-rose-500/25 bg-rose-950/10 p-5">
+          <p class="text-xs font-semibold text-rose-200 uppercase tracking-wide">Prefer ETL when…</p>
+          <ul class="mt-3 space-y-2.5 text-sm text-zinc-300 leading-relaxed list-none">
+            <li class="flex gap-2"><span class="text-rose-400 shrink-0">①</span><span><strong class="font-medium text-zinc-200">Compliance before storage</strong> — regulations or policy require masking, tokenizing, or filtering PII/PHI <em>before</em> data lands in a shared lake or third-party region.</span></li>
+            <li class="flex gap-2"><span class="text-rose-400 shrink-0">②</span><span><strong class="font-medium text-zinc-200">Weak destination compute</strong> — legacy warehouse or RDBMS that should receive narrow, already-typed tables, not raw JSON or wide dumps.</span></li>
+            <li class="flex gap-2"><span class="text-rose-400 shrink-0">③</span><span><strong class="font-medium text-zinc-200">Expensive or slow links</strong> — you pay per GB moved; shrinking and filtering at a staging tier reduces load size and recurring sync cost.</span></li>
+            <li class="flex gap-2"><span class="text-rose-400 shrink-0">④</span><span><strong class="font-medium text-zinc-200">Stable, structured sources</strong> — a small set of relational schemas with predictable contracts; transforms are versioned with the warehouse release, not explored ad hoc.</span></li>
+            <li class="flex gap-2"><span class="text-rose-400 shrink-0">⑤</span><span><strong class="font-medium text-zinc-200">Strict access boundaries</strong> — only curated rows may exist in the analytics zone; raw extracts must not be discoverable by downstream tools.</span></li>
+          </ul>
+          <p class="mt-4 text-xs text-zinc-500 border-t border-zinc-800 pt-3"><strong class="text-zinc-400">Watch out:</strong> KPI or schema changes often force a <strong class="text-zinc-300">re-extract</strong> unless you also keep a raw archive elsewhere.</p>
+        </article>
+        <article class="rounded-2xl border border-emerald-500/25 bg-emerald-950/10 p-5">
+          <p class="text-xs font-semibold text-emerald-200 uppercase tracking-wide">Prefer ELT when…</p>
+          <ul class="mt-3 space-y-2.5 text-sm text-zinc-300 leading-relaxed list-none">
+            <li class="flex gap-2"><span class="text-emerald-400 shrink-0">①</span><span><strong class="font-medium text-zinc-200">Elastic cloud compute</strong> — the lake or warehouse (Spark, SQL engine) is built to scan and transform at scale; you pay for queries, not a fixed ETL fleet.</span></li>
+            <li class="flex gap-2"><span class="text-emerald-400 shrink-0">②</span><span><strong class="font-medium text-zinc-200">Volume and variety</strong> — event streams, logs, APIs, and nested JSON where schema emerges over time; load first, enforce structure in Silver.</span></li>
+            <li class="flex gap-2"><span class="text-emerald-400 shrink-0">③</span><span><strong class="font-medium text-zinc-200">Medallion / lakehouse</strong> — Bronze must stay immutable; Silver and Gold are recomputable views and jobs on top of that history.</span></li>
+            <li class="flex gap-2"><span class="text-emerald-400 shrink-0">④</span><span><strong class="font-medium text-zinc-200">Fast time-to-data</strong> — stakeholders need yesterday’s files available today; refinement can follow on a schedule or micro-batch.</span></li>
+            <li class="flex gap-2"><span class="text-emerald-400 shrink-0">⑤</span><span><strong class="font-medium text-zinc-200">Many consumers, one raw copy</strong> — finance, ops, and ML each run different transforms without hammering the same OLTP source.</span></li>
+          </ul>
+          <p class="mt-4 text-xs text-zinc-500 border-t border-zinc-800 pt-3"><strong class="text-zinc-400">Watch out:</strong> raw zones need <strong class="text-zinc-300">governance</strong> (access, encryption, retention) because sensitive data may exist until Silver jobs run.</p>
+        </article>
+      </div>
+
+      <article class="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-sm text-zinc-300 leading-relaxed">
+        <p class="text-xs font-semibold text-sky-200 uppercase tracking-wide">Hybrid pattern (common in practice)</p>
+        <p class="mt-2">Lightweight <span class="text-rose-300">ETL at the edge</span> (field redaction, virus scan, format validation) → bulk <span class="text-emerald-300">ELT</span> in the platform (dedupe, joins, Gold KPIs). Example: tokenize patient IDs in an ingest function, then run Glue or warehouse SQL for clinical metrics. Interview sound bite: <em class="text-zinc-400">“We ETL what must never land raw; we ELT everything we might need to replay.”</em></p>
+      </article>
+
+      <div class="flex flex-wrap gap-2 mt-8">
+        <button type="button" id="sc-new" class="eco-toggle px-4 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-300">New daily batch lands</button>
+        <button type="button" id="sc-cfo" class="eco-toggle px-4 py-2 rounded-lg border border-zinc-700 text-sm text-zinc-300">KPI definition changes</button>
+      </div>
+      <p id="elt-scenario" class="mt-4 text-sm text-zinc-400 max-w-3xl leading-relaxed"></p>
+    </div>
+  </section>
+
+  <section id="m3" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-sky-400/90">Module 3</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">AWS data engineering ecosystem</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        End-to-end flow: <strong class="font-medium text-zinc-300">ingest</strong> from databases, SaaS, and streams → <strong class="font-medium text-zinc-300">store</strong> in the lake with governance → <strong class="font-medium text-zinc-300">transform</strong> and orchestrate pipelines → <strong class="font-medium text-zinc-300">analyze</strong> with SQL and search → <strong class="font-medium text-zinc-300">consume</strong> in BI, ML, and apps.
+      </p>
+
+      <figure class="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+        <img src="images/day02_aws_data_engineering_ecosystem.png" alt="AWS data engineering ecosystem: ingest, store, transform, analyze, and consume phases with key services" class="w-full h-auto block" loading="lazy">
+      </figure>
+
+      <div class="mt-10 space-y-10" id="aws-ecosystem-details">
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-orange-300">1 · Ingest</h3>
+          <p class="text-[11px] text-zinc-500 mt-1">Move data from on-prem, applications, IoT, and SaaS into AWS without overloading sources.</p>
+          <div class="grid sm:grid-cols-2 gap-3 mt-4" aria-label="Ingest services">
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/dms.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">AWS DMS</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Replicates OLTP and NoSQL databases to AWS with minimal downtime. Use for lift-and-shift, CDC into Bronze, or ongoing sync instead of nightly bulk dumps.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head">
+                <div class="aws-svc-icons" aria-hidden="true"><img src="images/aws-icons/kinesis.svg" alt="" class="aws-svc-icon" width="36" height="36" loading="lazy"><img src="images/aws-icons/msk.svg" alt="" class="aws-svc-icon" width="36" height="36" loading="lazy"></div>
+                <p class="text-sm font-medium text-white">Amazon Kinesis &amp; MSK</p>
+              </div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Ingest high-volume event streams (clicks, logs, device telemetry). Kinesis for managed streams; MSK when you need Apache Kafka compatibility and ecosystem tools.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/datasync.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">AWS DataSync</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Accelerates file and object copies from NAS or on-prem storage into S3. Use for large historical file migrations and recurring folder sync.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/appflow.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">Amazon AppFlow</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Pulls or pushes SaaS records (Salesforce, Marketo, Slack, etc.) into S3 or other targets. Use for connector-style SaaS ingestion without custom API code.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-amber-300">2 · Store</h3>
+          <p class="text-[11px] text-zinc-500 mt-1">Durable lake storage plus metadata and permissions so every tool sees the same datasets.</p>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/s3.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">Amazon S3</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Foundation of the data lake; Bronze, Silver, and Gold are usually prefixes or buckets. Cheap, durable, and the default landing zone for batch and streaming outputs.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/lake-formation.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">AWS Lake Formation</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Sets up and secures the lake—fine-grained table/column access, sharing across accounts. Use when many teams query the same S3 data with different entitlements.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4 sm:col-span-2 lg:col-span-1">
+              <div class="aws-svc-head"><img src="images/aws-icons/glue.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">AWS Glue Data Catalog</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Central hive-style metastore: table names, columns, partitions, and file locations. Athena, Glue, EMR, and Redshift Spectrum all discover data through it.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-violet-300">3 · Transform &amp; orchestrate</h3>
+          <p class="text-[11px] text-zinc-500 mt-1">Turn raw files into Silver and Gold—and chain jobs reliably on a schedule or on events.</p>
+          <div class="grid sm:grid-cols-2 gap-3 mt-4">
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/glue.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">AWS Glue</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Serverless Spark and Python jobs for crawl, ELT, and catalog updates. Default choice for scheduled medallion jobs and job bookmarks on incremental loads.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/emr.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">Amazon EMR</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Managed Hadoop/Spark clusters when you need custom Spark versions, heavy shuffle, or long-running batch at scale beyond a single Glue job.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/flink.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">Managed Apache Flink</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Stateful stream processing with windows, joins, and late data. Use to build real-time Silver features from Kinesis or MSK without managing Flink clusters.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/lambda.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">AWS Lambda</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Event-driven micro-transforms: validate uploads, split files, trigger Glue, send alerts. Use for light logic at ingest—not for large Spark workloads.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4 sm:col-span-2">
+              <div class="aws-svc-head">
+                <div class="aws-svc-icons" aria-hidden="true"><img src="images/aws-icons/step-functions.svg" alt="" class="aws-svc-icon" width="36" height="36" loading="lazy"><img src="images/aws-icons/mwaa.svg" alt="" class="aws-svc-icon" width="36" height="36" loading="lazy"></div>
+                <p class="text-sm font-medium text-white">Step Functions &amp; Amazon MWAA</p>
+              </div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Step Functions coordinates multi-step pipelines (ingest → Glue → check → notify) with retries. MWAA runs Apache Airflow when teams already use DAGs, sensors, and complex dependencies.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-sky-300">4 · Analyze</h3>
+          <p class="text-[11px] text-zinc-500 mt-1">Query and explore curated data—ad hoc on the lake or high-performance SQL in a warehouse.</p>
+          <div class="grid sm:grid-cols-3 gap-3 mt-4">
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/athena.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">Amazon Athena</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Serverless SQL directly on S3 via the Glue Catalog; pay per data scanned. Ideal for ad hoc analysis, data exploration, and lightweight Gold tables on files.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/redshift.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">Amazon Redshift</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Columnar MPP warehouse for dashboards, complex joins, and concurrent BI users. Often hosts Gold marts; can query S3 via Spectrum for lakehouse patterns.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/opensearch.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">Amazon OpenSearch</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Search and log analytics on semi-structured text and JSON. Use for operational dashboards, full-text search, and near-real-time observability over streaming indexes.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-emerald-300">5 · Consume</h3>
+          <p class="text-[11px] text-zinc-500 mt-1">Deliver insights to people, models, and applications—downstream of Gold or curated marts.</p>
+          <div class="grid sm:grid-cols-3 gap-3 mt-4">
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/quicksight.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">Amazon QuickSight</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Managed BI for KPI dashboards and self-serve charts on Athena, Redshift, and S3. Use for executive reporting without standing up a separate BI server fleet.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head"><img src="images/aws-icons/sagemaker.svg" alt="" class="aws-svc-icon" width="40" height="40" loading="lazy"><p class="text-sm font-medium text-white">Amazon SageMaker</p></div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Train and deploy ML models on features from Gold tables or the lake. Data engineers feed curated datasets; scientists experiment without copying sensitive raw Bronze widely.</p>
+            </div>
+            <div class="rounded-xl border border-zinc-800 bg-slate-950/60 p-4">
+              <div class="aws-svc-head">
+                <div class="aws-svc-icons" aria-hidden="true"><img src="images/aws-icons/api-gateway.svg" alt="" class="aws-svc-icon" width="36" height="36" loading="lazy"><img src="images/aws-icons/eventbridge.svg" alt="" class="aws-svc-icon" width="36" height="36" loading="lazy"></div>
+                <p class="text-sm font-medium text-white">APIs &amp; operational apps</p>
+              </div>
+              <p class="text-xs text-zinc-400 mt-2 leading-relaxed">API Gateway, AppSync, or event buses expose metrics and alerts to products. Use when dashboards are not enough—e.g. fraud scores, inventory triggers, or customer-facing stats.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="m4" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-rose-400/90">Module 4</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Cloud economics</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        Cloud economics is how you <strong class="font-medium text-zinc-300">trade money for flexibility</strong>. Instead of buying servers upfront (capital expense), you rent capacity by the hour, gigabyte, or query (operating expense). The bill follows real usage—so architecture choices directly shape cost: what you store, how long you keep it, when compute runs, and how much data each job reads.
+      </p>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-8">
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-sm text-zinc-300 leading-relaxed">
+          <p class="text-xs font-semibold uppercase tracking-wide text-emerald-300">Pay for what you use</p>
+          <p class="mt-2">Glue, Lambda, and Athena bill when work happens; an idle Redshift or EMR cluster still charges while it waits. Data engineering favors <em>elastic</em> patterns—batch jobs that start and stop, serverless SQL for ad hoc questions—unless steady 24/7 load justifies a always-on warehouse.</p>
+        </article>
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-sm text-zinc-300 leading-relaxed">
+          <p class="text-xs font-semibold uppercase tracking-wide text-sky-300">Unit costs you can reason about</p>
+          <p class="mt-2">Think in meters: dollars per TB-month in S3, per DPU-hour in Glue, per TB scanned in Athena, per node-hour in Redshift. A pipeline is “cheap” or “expensive” only relative to volume and frequency—10 GB daily is not the same problem as 10 TB.</p>
+        </article>
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-sm text-zinc-300 leading-relaxed">
+          <p class="text-xs font-semibold uppercase tracking-wide text-amber-300">Storage is cheap; mistakes are not</p>
+          <p class="mt-2">Raw Bronze can sit affordably on object storage, but <em>reading</em> the wrong data is costly—full-table scans, tiny files, and uncompressed CSV inflate compute bills. Columnar formats, partitions, and lifecycle rules (move old Bronze to Glacier, expire scratch data) keep storage and scan costs aligned with value.</p>
+        </article>
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-sm text-zinc-300 leading-relaxed">
+          <p class="text-xs font-semibold uppercase tracking-wide text-violet-300">Design for cost, not only speed</p>
+          <p class="mt-2">Economics is a product requirement: partition keys that match filters, incremental loads with job bookmarks, idempotent retries, and tagging for cost allocation by team or environment. FinOps tracks the bill; data engineers change the pipelines that generate it.</p>
+        </article>
+      </div>
+
+      <p class="text-xs text-zinc-500 mt-6 max-w-3xl">Rule of thumb for this course: <span class="text-zinc-400">store once in Bronze, transform with the smallest engine that fits the SLA, query only curated partitions, and turn off what nothing is using.</span></p>
+
+      <div class="grid lg:grid-cols-2 gap-5 mt-8">
+        <div class="poster-frame" id="eco-metaphor-left"></div>
+        <div class="poster-frame" id="eco-metaphor-right"></div>
+      </div>
+      <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 mt-6">
+        <h3 class="text-sm font-semibold text-white mb-1">Illustrative monthly bill</h3>
+        <p class="text-xs text-zinc-500 mb-4">Not real pricing—shows how storage, compute model, and file format shift the mix.</p>
+        <label class="block text-xs text-zinc-500 mb-1">S3 storage: <span id="gb-label" class="text-zinc-300 font-mono">500 GB</span></label>
+        <input type="range" id="gb-slider" min="100" max="5000" step="100" value="500" class="w-full accent-emerald-500">
+        <div class="flex flex-wrap gap-2 mt-4">
+          <button type="button" data-cm="serverless" class="eco-toggle px-3 py-2 rounded-lg border border-zinc-700 text-xs text-zinc-300">Serverless Athena/Glue</button>
+          <button type="button" data-cm="idle" class="eco-toggle px-3 py-2 rounded-lg border border-zinc-700 text-xs text-zinc-300">24/7 idle cluster</button>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <button type="button" data-fmt="parquet" class="eco-toggle px-3 py-2 rounded-lg border border-zinc-700 text-xs text-zinc-300">Parquet</button>
+          <button type="button" data-fmt="csv" class="eco-toggle px-3 py-2 rounded-lg border border-zinc-700 text-xs text-zinc-300">Raw CSV</button>
+        </div>
+        <div class="mt-5 h-8 flex rounded-lg overflow-hidden border border-zinc-800" id="cost-bars"></div>
+        <p id="cost-total" class="mt-3 font-mono text-lg text-emerald-300"></p>
+        <p id="cost-tip" class="text-xs text-zinc-500 mt-2"></p>
+      </article>
+    </div>
+  </section>
+
+  <section id="interview" class="border-t border-zinc-800 bg-zinc-900/30">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <h2 class="text-lg font-semibold text-white">Interview practice</h2>
+      <details class="mt-4 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <summary class="cursor-pointer font-medium text-emerald-400">E · Bronze, Silver, Gold for a store manager</summary>
+        <p class="mt-2 text-zinc-400">Bronze keeps every receipt; Silver fixes typos and duplicates; Gold is today’s sales total AskShelf reads.</p>
+      </details>
+      <details class="mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <summary class="cursor-pointer font-medium text-amber-400">M · Why ELT on AWS?</summary>
+        <p class="mt-2 text-zinc-400">Cheap S3 holds raw data; Glue/Athena reshape without re-hitting Store-12 POS.</p>
+      </details>
+      <details class="mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <summary class="cursor-pointer font-medium text-rose-400">H · Bill doubled, flat data — check what first?</summary>
+        <p class="mt-2 text-zinc-400">Idle Redshift/EMR, Athena scan volume, forgotten NAT or duplicate Glue runs.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer class="border-t border-zinc-800 py-8 text-center text-xs text-zinc-600">
+  Week 1 Day 2 · <a href="index.html" class="text-zinc-500 hover:text-zinc-300">Week index</a>
+</footer>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+(function () {
+  const explored = new Set();
+  const CIRC = 94.2;
+  function bump(id) {
+    if (id) explored.add(id);
+    const n = document.querySelectorAll('[data-module]').length;
+    document.getElementById('progress-pct').textContent = String(Math.round((explored.size / n) * 100));
+    document.getElementById('progress-ring').style.strokeDashoffset = String(CIRC - (CIRC * explored.size / n));
+  }
+  document.querySelectorAll('[data-module]').forEach((s) => {
+    new IntersectionObserver((e) => e.forEach((x) => { if (x.isIntersecting) bump(s.id); }), { threshold: 0.3 }).observe(s);
+  });
+
+  function hdr() {
+    return '<p class="hidden lg:grid flow-grid text-[9px] font-semibold uppercase tracking-wider text-zinc-500 mb-2 px-1"><span></span><span>Data source</span><span></span><span>What we do</span><span></span><span>Expected output</span></p>';
+  }
+
+  function cell(title, cap, svg) {
+    return `<div class="flow-cell">
+      <p class="text-[9px] uppercase text-zinc-500 font-semibold lg:hidden">${title}</p>
+      <div class="h-14 flex items-center justify-center">${svg}</div>
+      <p class="text-xs text-zinc-200 mt-2 leading-snug">${cap}</p>
+    </div>`;
+  }
+
+  const icons = {
+    boxes: `<svg viewBox="0 0 80 48" class="w-full max-w-[100px] h-12" aria-hidden="true">
+      <rect x="8" y="22" width="22" height="18" fill="#78350f" stroke="#f59e0b" rx="2"/>
+      <rect x="18" y="12" width="22" height="18" fill="#92400e" stroke="#fbbf24" rx="2"/>
+      <rect x="38" y="18" width="26" height="22" fill="#a16207" stroke="#fcd34d" rx="2"/>
+      <rect x="52" y="8" width="18" height="14" fill="#854d0e" stroke="#fde68a" rx="1"/>
+    </svg>`,
+    s3in: `<svg viewBox="0 0 80 48" class="w-full max-w-[100px] h-12"><path d="M12 28 L40 12 L68 28 L68 40 L12 40 Z" fill="#1e3a5f" stroke="#38bdf8" stroke-width="1.5"/>
+      <path d="M40 12 L40 40" stroke="#7dd3fc" stroke-dasharray="3 2"/><text x="40" y="32" text-anchor="middle" fill="#bae6fd" font-size="8">S3</text></svg>`,
+    vault: `<svg viewBox="0 0 80 48" class="w-full max-w-[100px] h-12"><rect x="22" y="10" width="36" height="30" rx="4" fill="#27272a" stroke="#d97706" stroke-width="2"/>
+      <circle cx="40" cy="25" r="6" fill="none" stroke="#fbbf24"/><rect x="37" y="22" width="6" height="10" fill="#f59e0b"/></svg>`,
+    funnel: `<svg viewBox="0 0 80 48" class="w-full max-w-[100px] h-12"><path d="M15 10 H65 L48 26 L48 38 H32 V26 Z" fill="#0c4a6e" stroke="#38bdf8"/>
+      <circle cx="58" cy="32" r="8" fill="none" stroke="#a1a1aa"/><circle cx="62" cy="32" r="6" fill="none" stroke="#71717a"/><circle cx="66" cy="32" r="4" fill="none" stroke="#52525b"/></svg>`,
+    table: `<svg viewBox="0 0 80 48" class="w-full max-w-[100px] h-12"><rect x="10" y="14" width="60" height="28" rx="2" fill="#18181b" stroke="#94a3b8"/>
+      ${[0,1,2].map(r=>[0,1,2].map(c=>`<rect x="${14+c*18}" y="${18+r*8}" width="14" height="5" fill="${c===0?'#334155':'#1e293b'}" opacity="0.9"/>`).join('')).join('')}</svg>`,
+    dash: `<svg viewBox="0 0 80 48" class="w-full max-w-[100px] h-12"><rect x="8" y="30" width="64" height="12" rx="2" fill="#052e16" stroke="#34d399"/>
+      <rect x="12" y="18" width="12" height="20" fill="#34d399" opacity="0.7"/><rect x="28" y="22" width="12" height="16" fill="#10b981"/><rect x="44" y="14" width="12" height="24" fill="#6ee7b7"/>
+      <ellipse cx="66" cy="18" rx="8" ry="8" fill="#1e293b" stroke="#38bdf8"/><text x="66" y="20" text-anchor="middle" fill="#7dd3fc" font-size="7">?</text></svg>`,
+    bottleneck: `<svg viewBox="0 0 80 48" class="w-full max-w-[100px] h-12"><rect x="28" y="14" width="24" height="24" fill="#4c0519" stroke="#fb7185"/>
+      <text x="40" y="30" text-anchor="middle" fill="#fecdd3" font-size="14">!</text></svg>`,
+    highway: `<svg viewBox="0 0 80 48" class="w-full max-w-[100px] h-12"><path d="M5 24 H75" stroke="#34d399" stroke-width="4" class="flow-dash"/><path d="M55 10 L75 24 L55 38" fill="none" stroke="#6ee7b7" stroke-width="2"/>
+      <rect x="52" y="16" width="18" height="16" fill="#451a03" stroke="#f59e0b" rx="2"/><text x="61" y="27" text-anchor="middle" fill="#fde68a" font-size="6">S3</text></svg>`,
+    lakehouse: `<svg viewBox="0 0 80 48" class="w-full max-w-[100px] h-12"><ellipse cx="40" cy="36" rx="28" ry="8" fill="#0f172a" stroke="#a78bfa"/><rect x="20" y="14" width="40" height="22" fill="#1e1b4b" stroke="#8b5cf6" rx="3"/>
+      <path d="M26 28 Q40 18 54 28" stroke="#c4b5fd" fill="none"/></svg>`,
+  };
+
+  function strip(id, badge, cols, accent) {
+    return `<article id="strip-${id}" data-layer="${id}" class="flow-grid items-stretch py-2 px-1 border-l-4 ${accent}">
+      <div class="flex items-center justify-center lg:justify-start"><span class="text-xs font-bold text-white whitespace-nowrap">${badge}</span></div>
+      ${cell('Data source', cols[0].cap, cols[0].svg)}
+      <span class="flow-arr">→</span>
+      ${cell('What we do', cols[1].cap, cols[1].svg)}
+      <span class="flow-arr">→</span>
+      ${cell('Expected output', cols[2].cap, cols[2].svg)}
+    </article>`;
+  }
+
+  const genericLayers = [
+    {
+      tier: 'Bronze',
+      color: 'border-amber-600/50 bg-amber-950/20',
+      title: 'Raw landing',
+      summary: 'Everything from source systems lands here unchanged—your audit trail and replay buffer. Little or no business logic; the goal is faithful capture.',
+      acts: [
+        'Store files, API payloads, and DB snapshots in original format',
+        'Append-only history (reprocess Silver/Gold without re-extracting)',
+        'Record when data arrived, from which system, and batch or stream ID',
+        'Retention and archival policies for cost and compliance',
+      ],
+    },
+    {
+      tier: 'Silver',
+      color: 'border-slate-500/50 bg-slate-900/40',
+      title: 'Cleansed & conformed',
+      summary: 'The organization’s working copy: validated, deduplicated, and aligned to shared definitions so every team sees the same patients, orders, or accounts.',
+      acts: [
+        'Schema checks, null handling, duplicate key resolution',
+        'Standardize codes, currencies, timestamps, and naming',
+        'Entity-centric tables (customer, product, encounter) for reuse',
+        'Document lineage—which Bronze inputs produced each Silver table',
+      ],
+    },
+    {
+      tier: 'Gold',
+      color: 'border-emerald-600/40 bg-emerald-950/15',
+      title: 'Business-ready',
+      summary: 'Curated for consumption: KPIs, aggregates, and subject-matter datasets that match how the business asks questions—not how sources store rows.',
+      acts: [
+        'Apply business rules, joins across domains, and rollups',
+        'Build metrics (revenue, readmissions, churn) and cohorts',
+        'Shape for BI, APIs, operational apps, and ML features',
+        'Tune for read performance (partitions, aggregates, semantic models)',
+      ],
+    },
+  ];
+  document.getElementById('med-generic-layers').innerHTML = genericLayers.map((L) => `
+    <div class="rounded-xl border p-5 ${L.color}">
+      <p class="text-xs font-semibold text-white">${L.tier}</p>
+      <p class="text-[11px] text-zinc-500 mt-0.5">${L.title}</p>
+      <p class="mt-2 text-xs text-zinc-400 leading-relaxed">${L.summary}</p>
+      <ul class="mt-3 space-y-1.5 text-xs text-zinc-400 list-disc pl-4">${L.acts.map((a) => `<li>${a}</li>`).join('')}</ul>
+    </div>`).join('');
+
+  const healthLayers = {
+    sources: {
+      label: 'Data sources',
+      body: 'Structured EHR/EMR, semi-structured HL7 & FHIR claims, unstructured clinical notes, and real-time ICU / wearable vitals—all enter through batch and streaming ingestion.',
+    },
+    bronze: {
+      label: 'Bronze tier',
+      body: 'Untransformed landing lake: append-only history, original payloads (HL7, FHIR, DB dumps, IoT logs), full timestamps—nothing deleted before compliance review.',
+    },
+    silver: {
+      label: 'Silver tier',
+      body: 'Single source of truth: PHI de-identified, vocabularies aligned (SNOMED-CT, ICD-10, LOINC), conformed patient · encounter · observation tables after validation and deduplication.',
+    },
+    gold: {
+      label: 'Gold tier',
+      body: 'Business analytics layer: diabetic cohorts, readmission & length-of-stay metrics, department efficiency, billing dashboards—aggregated for fast reads.',
+    },
+    consume: {
+      label: 'Consumption',
+      body: 'Power BI / QuickSight dashboards, clinical decision alerts, readmission ML models, and clinical-trial matching—each reads curated Gold, not raw Bronze.',
+    },
+  };
+  let healthK = 'sources';
+  const hBtns = document.getElementById('health-btns');
+  Object.keys(healthLayers).forEach((k) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.k = k;
+    b.className = 'med-btn px-3 py-2 rounded-lg border border-zinc-700 text-xs text-zinc-300';
+    b.textContent = healthLayers[k].label;
+    b.onclick = () => {
+      healthK = k;
+      hBtns.querySelectorAll('button').forEach((x) => x.classList.toggle('active', x.dataset.k === k));
+      const L = healthLayers[k];
+      document.getElementById('health-panel').innerHTML = `<p class="text-amber-200/90 text-xs font-semibold mb-2">${L.label}</p><p>${L.body}</p>`;
+      bump('m1');
+    };
+    hBtns.appendChild(b);
+  });
+  hBtns.querySelector('[data-k="sources"]').classList.add('active');
+  hBtns.querySelector('[data-k="sources"]').click();
+
+  const scenarios = {
+    new: {
+      etl: 'ETL waits for staging capacity: extract, transform, then load. A bad day on the ETL server delays the whole warehouse refresh and may require another pull from the source.',
+      elt: 'ELT copies files into S3 Bronze immediately; Glue or a scheduled Redshift load promotes them to Silver on the next run—sources stay untouched.',
+    },
+    cfo: {
+      etl: 'If only transformed copies were kept, a new revenue definition usually means re-extracting from OLTP or rebuilding the staging pipeline.',
+      elt: 'Because Bronze still holds raw history, you replay Gold SQL or a Glue job against Silver—no second full extract from production.',
+    },
+  };
+  let sc = 'new';
+  function setScenario(key) {
+    sc = key;
+    document.getElementById('sc-new').classList.toggle('pill-active', key === 'new');
+    document.getElementById('sc-cfo').classList.toggle('pill-active', key === 'cfo');
+    const s = scenarios[key];
+    document.getElementById('elt-scenario').innerHTML = `<span class="text-rose-300">ETL:</span> ${s.etl}<br><span class="text-emerald-300 mt-2 inline-block">ELT:</span> ${s.elt}`;
+    bump('m2');
+  }
+  document.getElementById('sc-new').onclick = () => setScenario('new');
+  document.getElementById('sc-cfo').onclick = () => setScenario('cfo');
+  setScenario('new');
+
+  document.getElementById('eco-metaphor-left').innerHTML = `<svg viewBox="0 0 320 140" class="w-full h-auto">
+    <text x="160" y="18" text-anchor="middle" fill="#e4e4e7" font-size="11" font-weight="600">Pay for what you use</text>
+    <rect x="40" y="35" width="100" height="70" rx="8" fill="#052e16" stroke="#34d399"/><circle cx="90" cy="55" r="12" fill="#fde68a"/><text x="90" y="59" text-anchor="middle" fill="#422006" font-size="10">ON</text>
+    <text x="90" y="92" text-anchor="middle" fill="#a7f3d0" font-size="8">Glue stops → meter slows</text>
+    <rect x="180" y="35" width="100" height="70" rx="8" fill="#450a0a" stroke="#f87171"/><text x="230" y="55" text-anchor="middle" fill="#fecaca" font-size="9">AC 24/7</text>
+    <text x="230" y="72" text-anchor="middle" fill="#fca5a5" font-size="8">Empty store weekend</text>
+  </svg>`;
+  document.getElementById('eco-metaphor-right').innerHTML = `<svg viewBox="0 0 320 140" class="w-full h-auto">
+    <text x="160" y="18" text-anchor="middle" fill="#e4e4e7" font-size="11" font-weight="600">Right-size scans</text>
+    <rect x="30" y="55" width="90" height="40" fill="#3f3f46"/><rect x="15" y="70" width="120" height="25" fill="#52525b" opacity="0.5"/>
+    <text x="75" y="50" text-anchor="middle" fill="#71717a" font-size="7">CSV truck</text>
+    <circle cx="230" cy="75" r="22" fill="#0f172a" stroke="#34d399" stroke-width="2"/>
+    <rect x="218" y="68" width="24" height="14" fill="#34d399" opacity="0.8"/><text x="230" y="108" text-anchor="middle" fill="#6ee7b7" font-size="8">Parquet scooter</text>
+  </svg>`;
+
+  let gb = 500, cm = 'serverless', fmt = 'parquet';
+  const gbSl = document.getElementById('gb-slider');
+
+  function bindEco(sel, key, val) {
+    document.querySelectorAll(sel).forEach((b) => {
+      b.onclick = () => {
+        if (key === 'cm') cm = b.dataset.cm;
+        if (key === 'fmt') fmt = b.dataset.fmt;
+        document.querySelectorAll(sel).forEach((x) => x.classList.toggle('pill-active', x === b));
+        runCost();
+      };
+    });
+  }
+  bindEco('[data-cm]', 'cm');
+  bindEco('[data-fmt]', 'fmt');
+  document.querySelector('[data-cm="serverless"]').classList.add('pill-active');
+  document.querySelector('[data-fmt="parquet"]').classList.add('pill-active');
+
+  gbSl.oninput = () => { gb = Number(gbSl.value); document.getElementById('gb-label').textContent = gb + ' GB'; runCost(); };
+
+  function runCost() {
+    const storage = gb * 0.023;
+    const compute = cm === 'serverless' ? 45 + gb * 0.004 : 180 + gb * 0.002;
+    const waste = fmt === 'csv' ? gb * 0.012 * 8 : gb * 0.012 * 0.4;
+    const total = storage + compute + waste;
+    document.getElementById('cost-bars').innerHTML = `
+      <div style="width:${storage/total*100}%" class="bg-emerald-600" title="Storage"></div>
+      <div style="width:${compute/total*100}%" class="bg-sky-600" title="Compute"></div>
+      <div style="width:${waste/total*100}%" class="bg-rose-600" title="Scan waste"></div>`;
+    document.getElementById('cost-total').textContent = `≈ $${total.toFixed(0)} / month (illustrative)`;
+    document.getElementById('cost-tip').textContent = fmt === 'parquet'
+      ? 'Parquet + partition filters — queries read only the slices they need.'
+      : 'Wide CSV scans bill for every column and row touched, even when the question is narrow.';
+    bump('m4');
+  }
+  runCost();
+
+  lucide.createIcons();
+})();
+</script>
+</body>
+</html>
