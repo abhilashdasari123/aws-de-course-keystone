@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day 3 — Git, GitHub &amp; Repository Setup Lab | KeystoneEduTech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-feature-settings: 'ss01' on; }
+    .glass { background: rgba(24, 27, 34, 0.72); backdrop-filter: blur(12px); }
+    .progress-ring { transition: stroke-dashoffset 0.4s ease; }
+    .callout-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 1.5rem; height: 1.5rem; border-radius: 9999px;
+      font-size: 0.7rem; font-weight: 700;
+      background: rgba(251, 191, 36, 0.2); color: rgb(253 230 138);
+      border: 1px solid rgb(251 191 36 / 0.5); flex-shrink: 0;
+    }
+    .cmd-block { position: relative; }
+    .cmd-copy {
+      position: absolute; top: 0.5rem; right: 0.5rem;
+    }
+    .cmd-block pre.cmd-text,
+    .cmd-block .cmd-sheet code {
+      display: block;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .cmd-sheet ul { list-style: none; padding: 0; margin: 0; }
+    .cmd-sheet li + li { margin-top: 0.35rem; }
+    .cmd-sheet li.cmd-comment { color: rgb(113 113 122); font-style: italic; margin-top: 0.5rem; }
+    .cmd-sheet .cmd-group-title {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: rgb(161 161 170);
+      margin: 0.75rem 0 0.35rem;
+      font-family: Inter, system-ui, sans-serif;
+    }
+    .cmd-sheet .cmd-group-title:first-child { margin-top: 0; }
+  </style>
+</head>
+<body class="bg-slate-950 text-zinc-100 antialiased min-h-screen">
+
+<header class="sticky top-0 z-50 border-b border-zinc-800 glass">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Primary">
+    <div class="flex flex-wrap items-center justify-between gap-3 py-3">
+      <div class="flex items-center gap-3 flex-wrap">
+        <a href="index.html" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-emerald-500/50 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25 text-sm font-semibold shrink-0 transition-colors" title="Return to Week 1 day list">
+          <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i>
+          Week 1 index
+        </a>
+        <a href="#top" class="flex items-center gap-2 font-semibold text-white tracking-tight">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+            <i data-lucide="github" class="w-4 h-4"></i>
+          </span>
+          KeystoneEduTech
+        </a>
+      </div>
+      <div class="hidden lg:flex items-center gap-1 text-sm">
+        <a href="#setup" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Setup</a>
+        <a href="#m0" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Why Git</a>
+        <a href="#m1" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">1. Create Repo</a>
+        <a href="#m2" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">2. Clone &amp; Config</a>
+        <a href="#m2b" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">IDE</a>
+        <a href="#m3" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">3. Push</a>
+        <a href="#m4" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">4. Branch &amp; PR</a>
+        <a href="#m5" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">5. Cheat Sheet</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-xs text-zinc-500">
+          <svg class="w-9 h-9 -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="#27272a" stroke-width="3"/>
+            <circle id="progress-ring" class="progress-ring" cx="18" cy="18" r="15" fill="none" stroke="#34d399" stroke-width="3" stroke-linecap="round" stroke-dasharray="94.2" stroke-dashoffset="94.2"/>
+          </svg>
+          <span><span id="progress-pct" class="text-emerald-400 font-mono font-medium">0</span>% explored</span>
+        </div>
+        <a href="Day_02_Cloud_and_Architecture.html" class="text-xs text-zinc-500 hover:text-zinc-300">Prev: Day 2</a>
+        <a href="../../index.html" class="text-xs text-zinc-500 hover:text-emerald-300 underline-offset-2 hover:underline">Course home</a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="relative border-b border-zinc-800 overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(56,189,248,0.12),transparent_50%),radial-gradient(ellipse_at_bottom_left,rgba(167,139,250,0.1),transparent_45%)]"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-20 relative">
+      <p class="text-emerald-400 text-sm font-medium tracking-wide uppercase mb-3">Week 1 · Day 3 · Concept + Hands-On Lab</p>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white max-w-4xl">
+        Git, GitHub &amp; Your First Pipeline Push
+      </h1>
+      <p class="mt-4 text-lg text-zinc-400 max-w-3xl leading-relaxed">
+        Install Git and your editor first, see <em class="text-zinc-300 not-italic">why</em> version control saves data teams from chaos, then run the lab: GitHub repo, clone, commit in the IDE, push, and open a pull request. No dataset deep-dive today—just skills you will reuse every week.
+      </p>
+
+      <a href="#setup" class="inline-flex items-center gap-2 mt-8 px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm transition-colors">
+        Start with setup <i data-lucide="arrow-down" class="w-4 h-4"></i>
+      </a>
+    </div>
+  </section>
+
+  <section id="setup" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-sky-400/90">Before the lab</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Install Git &amp; your editor</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        Do this <strong class="font-medium text-zinc-300">before</strong> you sign in to GitHub or clone anything. You need the <code class="font-mono text-zinc-400">git</code> CLI in a terminal and either VS Code or Cursor to edit and commit files like a working data engineer.
+      </p>
+
+      <h3 class="text-sm font-semibold text-white mt-8 flex items-center gap-2">
+        <i data-lucide="download" class="w-4 h-4 text-sky-400"></i> Install Git (Windows &amp; macOS)
+      </h3>
+      <p class="text-xs text-zinc-500 mt-1 max-w-3xl">Run <code class="font-mono text-zinc-400">git --version</code> in a terminal. If you see a version number (e.g. <code class="font-mono text-zinc-400">git version 2.47.x</code>), skip to the editor section. If the command is not found, install from the official sources—do not use random third-party bundles.</p>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-5">
+        <article class="rounded-2xl border border-sky-500/25 bg-sky-950/10 p-5 text-sm">
+          <p class="text-xs font-semibold text-sky-200 uppercase tracking-wide flex items-center gap-2">
+            <i data-lucide="monitor" class="w-3.5 h-3.5"></i> Windows
+          </p>
+          <ol class="mt-3 space-y-2.5 text-xs text-zinc-300 leading-relaxed list-decimal pl-4">
+            <li>Download <strong class="font-medium text-zinc-200">Git for Windows</strong> from the official site: <a href="https://git-scm.com/download/win" class="text-sky-300 hover:text-sky-200 underline underline-offset-2 break-all" target="_blank" rel="noopener">git-scm.com/download/win</a> (64-bit installer is fine for most laptops).</li>
+            <li>Run the installer. Accept defaults unless your instructor says otherwise; keep <strong class="font-medium text-zinc-200">Git from the command line and also from 3rd-party software</strong> so <code class="font-mono">git</code> works in PowerShell and Command Prompt.</li>
+            <li>Optional: install <a href="https://desktop.github.com/" class="text-sky-300 hover:text-sky-200 underline underline-offset-2" target="_blank" rel="noopener">GitHub Desktop</a> if you prefer a GUI—you still need the CLI for this course.</li>
+            <li>Open a <strong class="font-medium text-zinc-200">new</strong> PowerShell or Windows Terminal window and run <code class="font-mono text-emerald-300/90">git --version</code>.</li>
+          </ol>
+        </article>
+        <article class="rounded-2xl border border-violet-500/25 bg-violet-950/10 p-5 text-sm">
+          <p class="text-xs font-semibold text-violet-200 uppercase tracking-wide flex items-center gap-2">
+            <i data-lucide="laptop" class="w-3.5 h-3.5"></i> macOS
+          </p>
+          <ol class="mt-3 space-y-2.5 text-xs text-zinc-300 leading-relaxed list-decimal pl-4">
+            <li><strong class="font-medium text-zinc-200">Recommended:</strong> install Apple’s command-line tools: open Terminal and run <code class="font-mono text-emerald-300/90">xcode-select --install</code>, then follow the dialog (includes Git).</li>
+            <li><strong class="font-medium text-zinc-200">Or</strong> use the official macOS installer: <a href="https://git-scm.com/download/mac" class="text-violet-300 hover:text-violet-200 underline underline-offset-2 break-all" target="_blank" rel="noopener">git-scm.com/download/mac</a>.</li>
+            <li><strong class="font-medium text-zinc-200">Homebrew</strong> (if you already use it): <code class="font-mono text-emerald-300/90">brew install git</code> from <a href="https://brew.sh" class="text-violet-300 hover:text-violet-200 underline underline-offset-2" target="_blank" rel="noopener">brew.sh</a>.</li>
+            <li>Quit and reopen Terminal, then run <code class="font-mono text-emerald-300/90">git --version</code>.</li>
+          </ol>
+        </article>
+      </div>
+
+      <div class="mt-4 cmd-block rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 text-xs font-mono text-emerald-300/95 overflow-x-auto max-w-xl">
+        <button type="button" class="cmd-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white hover:border-zinc-400" data-copy-target="verify-git">Copy</button>
+        <code id="code-verify-git">git --version</code>
+      </div>
+
+      <h3 class="text-sm font-semibold text-white mt-10 flex items-center gap-2">
+        <i data-lucide="code-2" class="w-4 h-4 text-indigo-400"></i> Install an editor (VS Code or Cursor)
+      </h3>
+      <p class="text-xs text-zinc-500 mt-1 max-w-3xl">Either editor works for this course. Enable the shell command so you can open a cloned repo from the terminal with <code class="font-mono">code .</code> or <code class="font-mono">cursor .</code>.</p>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-5">
+        <article class="rounded-2xl border border-blue-500/25 bg-blue-950/10 p-5 text-sm">
+          <p class="text-xs font-semibold text-blue-200 uppercase tracking-wide">Visual Studio Code</p>
+          <ol class="mt-3 space-y-2.5 text-xs text-zinc-300 leading-relaxed list-decimal pl-4">
+            <li>Download from <a href="https://code.visualstudio.com/download" class="text-blue-300 hover:text-blue-200 underline underline-offset-2" target="_blank" rel="noopener">code.visualstudio.com/download</a> (Windows User Installer 64-bit or macOS Apple Silicon/Intel).</li>
+            <li><strong class="text-zinc-200">Windows:</strong> During setup, check <strong class="text-zinc-200">Add to PATH</strong> (and “Open with Code”) so <code class="font-mono">code</code> works in PowerShell.</li>
+            <li><strong class="text-zinc-200">macOS:</strong> Drag VS Code into Applications; from the Command Palette run <strong class="text-zinc-200">Shell Command: Install ‘code’ command in PATH</strong>.</li>
+            <li>Optional: install the <strong class="text-zinc-200">Python</strong> and <strong class="text-zinc-200">GitHub Pull Requests</strong> extensions for labs later.</li>
+          </ol>
+        </article>
+        <article class="rounded-2xl border border-violet-500/25 bg-violet-950/10 p-5 text-sm">
+          <p class="text-xs font-semibold text-violet-200 uppercase tracking-wide">Cursor</p>
+          <ol class="mt-3 space-y-2.5 text-xs text-zinc-300 leading-relaxed list-decimal pl-4">
+            <li>Download from <a href="https://cursor.com/download" class="text-violet-300 hover:text-violet-200 underline underline-offset-2" target="_blank" rel="noopener">cursor.com/download</a> (same platforms as VS Code—it is a VS Code fork with AI built in).</li>
+            <li>Sign in when prompted (Google/GitHub)—optional for this lab but useful for later sessions.</li>
+            <li>Open Command Palette (<kbd class="px-1 rounded bg-zinc-800 text-[10px]">Ctrl+Shift+P</kbd> / <kbd class="px-1 rounded bg-zinc-800 text-[10px]">Cmd+Shift+P</kbd>) → run <strong class="text-zinc-200">Shell Command: Install ‘cursor’ command in PATH</strong>.</li>
+            <li>After cloning, open the repo folder via <strong class="text-zinc-200">File → Open Folder</strong> or <code class="font-mono">cursor .</code> in the repo directory.</li>
+          </ol>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="m0" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-violet-400/90">Why this matters</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Chaos vs. collaboration: why data teams need Git</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        Glue jobs, dbt models, and Airflow DAGs are not “side scripts”—they <strong class="font-medium text-zinc-300">move money and metrics</strong>. Without version control, teams email <code class="font-mono text-rose-300/90">glue_job_FINAL_v3_really_final.py</code>, overwrite each other’s work, and cannot explain why production broke at 2&nbsp;a.m. Git turns that mess into <strong class="font-medium text-zinc-300">history, branches, and review</strong> before anything touches a shared environment.
+      </p>
+
+      <figure class="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+        <img src="images/day03_why_version_control.png" alt="Infographic comparing chaos without version control versus collaboration with Git: overwrites and lost work on the left; branches, pull requests, and recoverable history on the right" class="w-full h-auto block" loading="lazy">
+        <figcaption class="px-4 py-5 lg:px-6 border-t border-zinc-800 bg-zinc-900/60 text-sm text-zinc-300">
+          <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-4">Read the poster — map each side to your future role</p>
+          <div class="grid md:grid-cols-2 gap-6">
+            <ul class="space-y-2.5 text-xs leading-relaxed list-none">
+              <li class="flex gap-2 items-start"><span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold">✕</span><span><strong class="text-rose-200">Without Git:</strong> “Who overwrote my pipeline?” Untracked copies, no audit trail, overnight outages with no rollback.</span></li>
+              <li class="flex gap-2 items-start"><span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold">✕</span><span><strong class="text-rose-200">File chaos:</strong> <code class="font-mono text-zinc-400">model_v3_FINAL_EDITED.py</code> — sound familiar? That is what happens when S3 or a laptop folder is your “source of truth.”</span></li>
+              <li class="flex gap-2 items-start"><span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold">✕</span><span><strong class="text-rose-200">Core pain:</strong> overwrite conflicts, unmarked backups, lost work, untraceable bugs.</span></li>
+            </ul>
+            <ul class="space-y-2.5 text-xs leading-relaxed list-none">
+              <li class="flex gap-2 items-start"><span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">✓</span><span><strong class="text-emerald-200">With Git:</strong> every change is a <code class="font-mono text-zinc-300">commit</code> with author, time, and message—restore “two hours ago” without guessing which ZIP file was right.</span></li>
+              <li class="flex gap-2 items-start"><span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">✓</span><span><strong class="text-emerald-200">Branch &amp; merge:</strong> feature branches for new transforms; <code class="font-mono text-zinc-300">main</code> stays deployable while you experiment.</span></li>
+              <li class="flex gap-2 items-start"><span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">✓</span><span><strong class="text-emerald-200">Pull requests:</strong> readable diff + review before merge—the same habit you will use with Glue, Airflow, and CI in later weeks.</span></li>
+            </ul>
+          </div>
+        </figcaption>
+      </figure>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-8 text-sm">
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <h3 class="font-semibold text-white text-sm flex items-center gap-2"><i data-lucide="hard-drive" class="w-4 h-4 text-emerald-400"></i> Git — on your laptop</h3>
+          <p class="mt-2 text-xs text-zinc-400 leading-relaxed">The engine: <code class="font-mono text-zinc-300">add</code>, <code class="font-mono text-zinc-300">commit</code>, <code class="font-mono text-zinc-300">branch</code>, <code class="font-mono text-zinc-300">merge</code>. Works offline; every lab folder you clone is a full copy of history.</p>
+        </article>
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <h3 class="font-semibold text-white text-sm flex items-center gap-2"><i data-lucide="cloud" class="w-4 h-4 text-sky-400"></i> GitHub — shared with the team</h3>
+          <p class="mt-2 text-xs text-zinc-400 leading-relaxed">The meeting room in the cloud: remote backup, pull requests, issues. Instructors review your public repo; later modules wire deployments to <code class="font-mono text-zinc-300">main</code>.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="m1" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-amber-400/90">Module 1</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Create Your Repository on GitHub</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        Sign in first, then open <a href="https://github.com/new" class="text-sky-300 hover:text-sky-200 underline underline-offset-2" target="_blank" rel="noopener">github.com/new</a>. Match the screenshot field-by-field before you click <strong class="font-medium text-zinc-300">Create repository</strong>.
+      </p>
+
+      <h3 class="text-sm font-semibold text-white mt-8 flex items-center gap-2">
+        <i data-lucide="log-in" class="w-4 h-4 text-sky-400"></i> Sign in to GitHub
+      </h3>
+      <p class="text-xs text-zinc-500 mt-1 max-w-3xl">Use a browser you trust (Chrome, Edge, or Firefox). If you already have an account, sign in with your password or a passkey. New students can use <strong class="text-zinc-400">Continue with Google</strong> (or Apple) and complete the Google email + password screens—your GitHub username may differ from your Gmail handle.</p>
+
+      <div class="grid lg:grid-cols-3 gap-4 mt-5">
+        <figure class="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+          <img src="images/day03_gh_login.png" alt="GitHub sign-in page with username, password, and social login options" class="w-full h-auto block" loading="lazy">
+          <figcaption class="px-3 py-3 border-t border-zinc-800 text-xs text-zinc-400">
+            <span class="callout-num">①</span> Go to <a href="https://github.com/login" class="text-sky-300 hover:text-sky-200 underline" target="_blank" rel="noopener">github.com/login</a>. Enter credentials or choose <strong class="text-zinc-300">Continue with Google</strong> / Apple.
+          </figcaption>
+        </figure>
+        <figure class="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+          <img src="images/day03_gh_login_google_email.png" alt="Google sign-in email step for GitHub OAuth" class="w-full h-auto block" loading="lazy">
+          <figcaption class="px-3 py-3 border-t border-zinc-800 text-xs text-zinc-400">
+            <span class="callout-num">②</span> If using Google: confirm the <strong class="text-zinc-300">email or phone</strong> for your account, then click <strong class="text-zinc-300">Next</strong>.
+          </figcaption>
+        </figure>
+        <figure class="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+          <img src="images/day03_gh_login_google_password.png" alt="Google password step authorizing GitHub access" class="w-full h-auto block" loading="lazy">
+          <figcaption class="px-3 py-3 border-t border-zinc-800 text-xs text-zinc-400">
+            <span class="callout-num">③</span> Enter your Google <strong class="text-zinc-300">password</strong> (or passkey), click <strong class="text-zinc-300">Next</strong>—you should land back on GitHub, signed in.
+          </figcaption>
+        </figure>
+      </div>
+
+      <h3 class="text-sm font-semibold text-white mt-10 flex items-center gap-2">
+        <i data-lucide="folder-plus" class="w-4 h-4 text-amber-400"></i> Create the repository
+      </h3>
+
+      <figure class="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+        <img src="images/day03_gh_new_repo.png" alt="GitHub Create a new repository screen" class="w-full h-auto block" loading="lazy">
+        <figcaption class="px-4 py-4 border-t border-zinc-800 bg-zinc-900/60 text-sm text-zinc-300 space-y-2">
+          <ul class="space-y-2 list-none">
+            <li class="flex gap-2 items-start"><span class="callout-num">①</span><span><strong class="text-zinc-200">Repository name</strong> — Enter your course repo name (e.g., <code class="font-mono text-amber-200/90">aws-data-engineering-labs</code>).</span></li>
+            <li class="flex gap-2 items-start"><span class="callout-num">②</span><span><strong class="text-zinc-200">Visibility</strong> — Select <strong class="text-zinc-200">Public</strong> (so instructors can review your lab links) or <strong class="text-zinc-200">Private</strong>.</span></li>
+            <li class="flex gap-2 items-start"><span class="callout-num">③</span><span><strong class="text-zinc-200">Initialize repository</strong> — Check <strong class="text-zinc-200">Add a README file</strong> and choose <strong class="text-zinc-200">Python</strong> under <strong class="text-zinc-200">Add .gitignore</strong> (keeps <code class="font-mono">.env</code> and <code class="font-mono">__pycache__</code> out of Git).</span></li>
+            <li class="flex gap-2 items-start"><span class="callout-num">④</span><span>Click <strong class="text-zinc-200">Create repository</strong>.</span></li>
+          </ul>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="m2" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-emerald-400/90">Module 2</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Copy Clone URL &amp; Configure Local Git Identity</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        With Git and your editor installed, copy the HTTPS clone URL from the repo you created in Module 1 and set your global name and email so every commit is attributed correctly.
+      </p>
+
+      <h3 class="text-sm font-semibold text-white mt-8 flex items-center gap-2">
+        <i data-lucide="link" class="w-4 h-4 text-emerald-400"></i> Copy the HTTPS clone URL
+      </h3>
+      <p class="text-xs text-zinc-500 mt-1">On your new repo page, open the green <strong class="font-medium text-zinc-300">Code</strong> button, choose <strong class="font-medium text-zinc-300">HTTPS</strong>, and copy the URL.</p>
+
+      <figure class="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+        <img src="images/day03_gh_code_url.png" alt="GitHub Code dropdown showing HTTPS clone URL" class="w-full h-auto block" loading="lazy">
+        <figcaption class="px-4 py-4 border-t border-zinc-800 bg-zinc-900/60 text-sm text-zinc-300 space-y-2">
+          <ul class="space-y-2 list-none">
+            <li class="flex gap-2 items-start"><span class="callout-num">①</span><span>Click <strong class="text-zinc-200">Code</strong> on the repository home page.</span></li>
+            <li class="flex gap-2 items-start"><span class="callout-num">②</span><span>Confirm <strong class="text-zinc-200">HTTPS</strong> is selected.</span></li>
+            <li class="flex gap-2 items-start"><span class="callout-num">③</span><span>Copy your <code class="font-mono text-xs">https://github.com/&lt;username&gt;/&lt;repo&gt;.git</code> URL — you will paste this when cloning.</span></li>
+          </ul>
+        </figcaption>
+      </figure>
+
+      <h3 class="text-sm font-semibold text-white mt-10 flex items-center gap-2">
+        <i data-lucide="user-cog" class="w-4 h-4 text-amber-400"></i> Configure your Git identity
+      </h3>
+      <div class="mt-4 space-y-4" id="cmd-m2">
+        <div class="cmd-block rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 text-xs font-mono text-emerald-300/95 overflow-x-auto" data-cmd-id="config">
+          <button type="button" class="cmd-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white hover:border-zinc-400" data-copy-target="config">Copy</button>
+          <div class="cmd-sheet max-w-xl" aria-label="Git identity commands">
+            <p class="cmd-group-title">Setup &amp; identity</p>
+            <ul>
+              <li><code>git config --global user.name "&lt;Your Name&gt;"</code></li>
+              <li><code>git config --global user.email "you@example.com"</code></li>
+              <li><code>git config --list</code></li>
+            </ul>
+          </div>
+          <pre id="code-config" class="sr-only" aria-hidden="true">git config --global user.name "&lt;Your Name&gt;"
+git config --global user.email "you@example.com"
+git config --list</pre>
+        </div>
+      </div>
+      <p class="mt-3 text-xs text-zinc-500">Use the same email you registered on GitHub—commits won’t link to your profile otherwise.</p>
+    </div>
+  </section>
+
+  <section id="m2b" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-indigo-400/90">Between Modules 2 &amp; 3</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Clone &amp; Work Locally (Terminal + IDE)</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        This is the bridge from “Git is installed” to “GitHub shows my files.” Use the <strong class="font-medium text-zinc-300">terminal</strong> to clone, then <strong class="font-medium text-zinc-300">VS Code</strong> or <strong class="font-medium text-zinc-300">Cursor</strong> to add your script and commit—same flow on Windows and macOS (<kbd class="px-1 rounded bg-zinc-800 text-zinc-400 text-[10px]">File → Open Folder</kbd> after cloning).
+      </p>
+
+      <figure class="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+        <img src="images/day03_ide_terminal_clone.png" alt="Windows PowerShell running git clone for the course repository" class="w-full h-auto block" loading="lazy">
+        <figcaption class="px-4 py-4 border-t border-zinc-800 bg-zinc-900/60 text-sm text-zinc-300 space-y-2">
+          <ul class="space-y-2 list-none">
+            <li class="flex gap-2 items-start"><span class="callout-num">①</span><span>In PowerShell or Terminal, <code class="font-mono text-xs">cd</code> to your projects folder (e.g. <code class="font-mono">~/projects</code>).</span></li>
+            <li class="flex gap-2 items-start"><span class="callout-num">②</span><span>Run <code class="font-mono text-xs">git clone https://github.com/&lt;username&gt;/&lt;repo&gt;.git</code> — paste the HTTPS URL from Module 2.</span></li>
+            <li class="flex gap-2 items-start"><span class="callout-num">③</span><span><code class="font-mono text-xs">cd</code> into the new repo folder; open it in your IDE (<code class="font-mono">code .</code> or <code class="font-mono">cursor .</code> if those commands are installed).</span></li>
+          </ul>
+        </figcaption>
+      </figure>
+
+      <div class="grid lg:grid-cols-3 gap-4 mt-6">
+        <figure class="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+          <img src="images/day03_ide_workspace.png" alt="Cursor Explorer showing the cloned aws-data-engineering-labs repository" class="w-full h-auto block" loading="lazy">
+          <figcaption class="px-3 py-3 border-t border-zinc-800 text-xs text-zinc-400">
+            <span class="callout-num">④</span> <strong class="text-zinc-300">Explorer</strong> (<kbd class="text-[10px] px-1 rounded bg-zinc-800">Ctrl+Shift+E</kbd>) — confirm <code class="font-mono">.gitignore</code>, <code class="font-mono">README.md</code>, and your future <code class="font-mono">week01_git_intro/</code> folder live here.
+          </figcaption>
+        </figure>
+        <figure class="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+          <img src="images/day03_ide_add_file.png" alt="Cursor editor with hello_pipeline.py open" class="w-full h-auto block" loading="lazy">
+          <figcaption class="px-3 py-3 border-t border-zinc-800 text-xs text-zinc-400">
+            <span class="callout-num">⑤</span> Create <code class="font-mono">week01_git_intro/hello_pipeline.py</code>, paste the sample from Module 3, and save (<kbd class="text-[10px] px-1 rounded bg-zinc-800">Ctrl+S</kbd>).
+          </figcaption>
+        </figure>
+        <figure class="rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+          <img src="images/day03_ide_source_control_commit.png" alt="Cursor Source Control view with staged changes ready to commit" class="w-full h-auto block" loading="lazy">
+          <figcaption class="px-3 py-3 border-t border-zinc-800 text-xs text-zinc-400">
+            <span class="callout-num">⑥</span> Open <strong class="text-zinc-300">Source Control</strong> (<kbd class="text-[10px] px-1 rounded bg-zinc-800">Ctrl+Shift+G</kbd>), stage the file (+), type a commit message, click <strong class="text-zinc-300">Commit</strong> (or use the terminal block in Module 3).
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="m3" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-sky-400/90">Module 3</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Push to GitHub &amp; Verify on the Web</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        After your local commit (screenshot ⑥ above), run <code class="font-mono text-emerald-300/90">git push -u origin main</code>. Refresh GitHub—you should see your folder and latest commit at the top of the file list.
+      </p>
+
+      <figure class="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+        <img src="images/day03_gh_first_push.png" alt="GitHub repository file list after first push" class="w-full h-auto block" loading="lazy">
+        <figcaption class="px-4 py-4 border-t border-zinc-800 bg-zinc-900/60 text-sm text-zinc-300 space-y-2">
+          <ul class="space-y-2 list-none">
+            <li class="flex gap-2 items-start"><span class="callout-num">①</span><span><strong class="text-zinc-200">week01_git_intro/</strong> — folder for Week 1 lab files.</span></li>
+            <li class="flex gap-2 items-start"><span class="callout-num">②</span><span><strong class="text-zinc-200">hello_pipeline.py</strong> — your first pipeline stub inside that folder.</span></li>
+            <li class="flex gap-2 items-start"><span class="callout-num">③</span><span><strong class="text-zinc-200">Latest commit message</strong> — should describe what you added (e.g. “first lab push”).</span></li>
+          </ul>
+        </figcaption>
+      </figure>
+
+      <article class="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 text-xs font-mono text-zinc-300 overflow-x-auto">
+        <p class="text-zinc-500 text-[10px] uppercase mb-2 font-sans font-semibold">Sample — week01_git_intro/hello_pipeline.py</p>
+<pre class="text-emerald-300/90">"""Week 1 lab — minimal data pipeline stub for Git push demo."""
+
+def main() -> None:
+    rows = [{"store_id": 12, "sku": "SKU-4421", "qty": 3}]
+    print(f"Loaded {len(rows)} bronze row(s) — ready for Glue later.")
+
+if __name__ == "__main__":
+    main()</pre>
+      </article>
+
+      <div class="mt-6 space-y-4">
+        <div class="cmd-block rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 text-xs font-mono text-emerald-300/95 overflow-x-auto">
+          <button type="button" class="cmd-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white hover:border-zinc-400" data-copy-target="clone-push">Copy</button>
+          <div class="cmd-sheet max-w-2xl" aria-label="Clone and push workflow">
+            <p class="cmd-group-title">Setup &amp; clone</p>
+            <ul>
+              <li><code>cd ~/projects</code></li>
+              <li><code>git clone https://github.com/&lt;username&gt;/&lt;repo&gt;.git</code></li>
+              <li><code>cd &lt;repo&gt;</code></li>
+            </ul>
+            <p class="cmd-group-title">Add lab file</p>
+            <ul>
+              <li><code>mkdir -p week01_git_intro</code></li>
+              <li class="cmd-comment"><code># create hello_pipeline.py (paste sample above)</code></li>
+              <li><code>git status</code></li>
+            </ul>
+            <p class="cmd-group-title">Sync with GitHub</p>
+            <ul>
+              <li><code>git add week01_git_intro/hello_pipeline.py</code></li>
+              <li><code>git commit -m "Add week01_git_intro/hello_pipeline.py — first lab push"</code></li>
+              <li><code>git push -u origin main</code></li>
+            </ul>
+          </div>
+          <pre id="code-clone-push" class="sr-only" aria-hidden="true">cd ~/projects
+git clone https://github.com/&lt;username&gt;/&lt;repo&gt;.git
+cd &lt;repo&gt;
+mkdir -p week01_git_intro
+# create hello_pipeline.py (paste sample above)
+git status
+git add week01_git_intro/hello_pipeline.py
+git commit -m "Add week01_git_intro/hello_pipeline.py — first lab push"
+git push -u origin main</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="m4" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-violet-400/90">Module 4</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Branch, Pull Request &amp; Merge</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        Never commit directly to <code class="font-mono text-zinc-400">main</code> for shared course work. Create a feature branch, push it, open a PR on GitHub, request review, then merge. This mirrors how data teams ship Glue and Airflow changes safely.
+      </p>
+
+      <figure class="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+        <img src="images/day03_gh_pull_request.png" alt="GitHub open pull request screen comparing branches" class="w-full h-auto block" loading="lazy">
+        <figcaption class="px-4 py-4 border-t border-zinc-800 bg-zinc-900/60 text-sm text-zinc-300 space-y-2">
+          <ul class="space-y-2 list-none">
+            <li class="flex gap-2 items-start"><span class="callout-num">①</span><span><strong class="text-zinc-200">Base</strong> = <code class="font-mono">main</code> · <strong class="text-zinc-200">Compare</strong> = your feature branch (e.g. <code class="font-mono text-amber-200/90">feature/add-readme-notes</code>).</span></li>
+            <li class="flex gap-2 items-start"><span class="callout-num">②</span><span>Write a clear <strong class="text-zinc-200">title</strong> and <strong class="text-zinc-200">description</strong>—what changed and why.</span></li>
+            <li class="flex gap-2 items-start"><span class="callout-num">③</span><span>Click <strong class="text-zinc-200">Create pull request</strong>, then <strong class="text-zinc-200">Merge pull request</strong> after review (or self-merge for this solo lab).</span></li>
+          </ul>
+        </figcaption>
+      </figure>
+
+      <div class="mt-6 cmd-block rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 text-xs font-mono text-emerald-300/95 overflow-x-auto">
+        <button type="button" class="cmd-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white hover:border-zinc-400" data-copy-target="branch-pr">Copy</button>
+        <div class="cmd-sheet max-w-2xl" aria-label="Branch and pull request workflow">
+          <p class="cmd-group-title">Sync main</p>
+          <ul>
+            <li><code>git checkout main</code></li>
+            <li><code>git pull origin main</code></li>
+          </ul>
+          <p class="cmd-group-title">Branches &amp; PRs</p>
+          <ul>
+            <li><code>git checkout -b feature/add-readme-notes</code></li>
+            <li class="cmd-comment"><code># edit README.md — add a "## Student notes" section</code></li>
+            <li><code>git add README.md</code></li>
+            <li><code>git commit -m "Add README cohort notes section"</code></li>
+            <li><code>git push -u origin feature/add-readme-notes</code></li>
+            <li class="cmd-comment"><code># On GitHub: Compare &amp; pull request → merge when ready</code></li>
+          </ul>
+        </div>
+        <pre id="code-branch-pr" class="sr-only" aria-hidden="true">git checkout main
+git pull origin main
+git checkout -b feature/add-readme-notes
+# edit README.md — add a "## Student notes" section
+git add README.md
+git commit -m "Add README cohort notes section"
+git push -u origin feature/add-readme-notes
+# On GitHub: Compare & pull request → merge when ready</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="m5" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-rose-400/90">Module 5</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Git Cheat Sheet</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">Keep this open during Weeks 1–4. Substitute your GitHub username, repo name, and email in the command blocks above.</p>
+
+      <div class="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <h3 class="font-semibold text-white text-sm">Setup &amp; clone</h3>
+          <ul class="mt-3 space-y-1.5 text-xs font-mono text-zinc-300 list-none">
+            <li><code>git clone &lt;url&gt;</code></li>
+            <li><code>git config --global user.name "..."</code></li>
+            <li><code>git config --global user.email "..."</code></li>
+            <li><code>git remote -v</code></li>
+          </ul>
+        </article>
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <h3 class="font-semibold text-white text-sm">Daily save loop</h3>
+          <ul class="mt-3 space-y-1.5 text-xs font-mono text-zinc-300 list-none">
+            <li><code>git status</code></li>
+            <li><code>git diff</code></li>
+            <li><code>git add &lt;file&gt;</code> / <code>git add .</code></li>
+            <li><code>git commit -m "msg"</code></li>
+          </ul>
+        </article>
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <h3 class="font-semibold text-white text-sm">Sync with GitHub</h3>
+          <ul class="mt-3 space-y-1.5 text-xs font-mono text-zinc-300 list-none">
+            <li><code>git pull</code></li>
+            <li><code>git push</code></li>
+            <li><code>git push -u origin main</code></li>
+            <li><code>git log --oneline -10</code></li>
+          </ul>
+        </article>
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <h3 class="font-semibold text-white text-sm">Branches &amp; PRs</h3>
+          <ul class="mt-3 space-y-1.5 text-xs font-mono text-zinc-300 list-none">
+            <li><code>git branch</code></li>
+            <li><code>git checkout -b feature/name</code></li>
+            <li><code>git checkout main</code></li>
+            <li><code>git merge feature/name</code></li>
+          </ul>
+        </article>
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <h3 class="font-semibold text-white text-sm">Undo &amp; inspect</h3>
+          <ul class="mt-3 space-y-1.5 text-xs font-mono text-zinc-300 list-none">
+            <li><code>git restore &lt;file&gt;</code></li>
+            <li><code>git restore --staged &lt;file&gt;</code></li>
+            <li><code>git show &lt;commit&gt;</code></li>
+            <li><code>git stash</code> / <code>git stash pop</code></li>
+          </ul>
+        </article>
+        <article class="rounded-2xl border border-rose-500/25 bg-rose-950/10 p-5">
+          <h3 class="font-semibold text-rose-200 text-sm">Never commit</h3>
+          <p class="mt-2 text-xs text-zinc-400 leading-relaxed"><code class="text-rose-200/90">.env</code>, AWS keys, <code class="text-rose-200/90">git_token</code>, credential JSON, huge raw data dumps, <code class="text-rose-200/90">__pycache__/</code>. Rely on your Python <code class="font-mono">.gitignore</code>—still run <code class="font-mono">git status</code> before every commit.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="border-t border-zinc-800 py-8 text-center text-xs text-zinc-600">
+  Week 1 Day 3 · Git &amp; GitHub lab ·
+  <a href="index.html" class="text-emerald-400 hover:text-emerald-300 font-medium">← Back to Week 1 index</a>
+</footer>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+(function () {
+  const explored = new Set();
+  const CIRC = 94.2;
+  function bump(id) {
+    if (id) explored.add(id);
+    const n = document.querySelectorAll('[data-module]').length;
+    document.getElementById('progress-pct').textContent = String(Math.round((explored.size / n) * 100));
+    document.getElementById('progress-ring').style.strokeDashoffset = String(CIRC - (CIRC * explored.size / n));
+  }
+  document.querySelectorAll('[data-module]').forEach((s) => {
+    new IntersectionObserver((e) => e.forEach((x) => { if (x.isIntersecting) bump(s.id); }), { threshold: 0.3 }).observe(s);
+  });
+
+  document.querySelectorAll('[data-copy-target]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-copy-target');
+      let text = '';
+      if (id === 'config' || id === 'clone-push' || id === 'branch-pr') {
+        const pre = document.getElementById('code-' + id);
+        text = pre ? pre.textContent : '';
+      } else if (id === 'verify-git') {
+        text = 'git --version';
+      }
+      navigator.clipboard.writeText(text).then(() => {
+        const prev = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = prev; }, 1600);
+      });
+    });
+  });
+
+  lucide.createIcons();
+})();
+</script>
+</body>
+</html>
