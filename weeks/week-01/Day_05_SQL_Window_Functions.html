@@ -114,7 +114,7 @@
       </h1>
       <p class="text-xs text-zinc-500 mt-2">Section 2: SQL for Data Engineers (2 of 5)</p>
       <p class="mt-4 text-lg text-zinc-400 max-w-3xl leading-relaxed">
-        Rank and compare rows <strong class="font-medium text-zinc-300">without collapsing them</strong>, step through time with <code class="font-mono text-violet-300/90">LAG</code>/<code class="font-mono text-violet-300/90">LEAD</code>, and chain logic with modular <code class="font-mono text-violet-300/90">WITH</code> steps—on NYC taxi Parquet + city/zone lookup CSV + HR hierarchy in <code class="font-mono text-emerald-300/90">de_keystone_shared</code>.
+        Rank and compare rows <strong class="font-medium text-zinc-300">without collapsing them</strong>, step through time with <code class="font-mono text-violet-300/90">LAG</code>/<code class="font-mono text-violet-300/90">LEAD</code>, and chain logic with modular <code class="font-mono text-violet-300/90">WITH</code> steps—using <strong class="font-medium text-zinc-300">tiny inline practice tables</strong> in Athena (no S3 datasets for today’s window labs).
       </p>
       <div class="flex flex-wrap gap-3 mt-10">
         <a href="#recap" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm transition-colors">
@@ -130,15 +130,16 @@
   <section id="setup" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
       <span class="text-xs font-mono text-sky-400/90">Before the lab</span>
-      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Recap Day 4 + verify shared tables</h2>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Athena setup (practice queries only)</h2>
       <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
-        Day 4’s execution order still matters: <code class="font-mono text-zinc-300">WHERE</code> runs <em>before</em> window functions in <code class="font-mono text-zinc-300">SELECT</code>, so you cannot write <code class="font-mono">WHERE ROW_NUMBER() … = 1</code> in the same query block—filter in an outer CTE instead.
+        Day 4’s execution order still matters: <code class="font-mono text-zinc-300">WHERE</code> runs <em>before</em> window functions in <code class="font-mono">SELECT</code>, so you cannot write <code class="font-mono">WHERE ROW_NUMBER() … = 1</code> in the same query block—filter in an outer CTE instead.
       </p>
       <ul class="mt-6 space-y-3 text-sm text-zinc-300 max-w-3xl list-none">
-        <li class="flex gap-3 items-start"><span class="step-num">1</span><span><strong class="text-zinc-200">Athena</strong> → your workgroup · database <code class="font-mono text-emerald-300/90">de_keystone_shared</code>.</span></li>
-        <li class="flex gap-3 items-start"><span class="step-num">2</span><span>Tables: <code class="font-mono">nyc_yellow_trips</code>, <code class="font-mono">nyc_taxi_zone_lookup</code> (join on <code class="font-mono">LocationID</code>). The file labels pickup area as <code class="font-mono">Borough</code>; in this course we read that as <strong class="text-zinc-200">city</strong> and alias <code class="font-mono">Borough AS city</code> in results. HR: <code class="font-mono">employees_hierarchy</code> (or <code class="font-mono">hr_employees</code>).</span></li>
-        <li class="flex gap-3 items-start"><span class="step-num">3</span><span>Keep <a href="Day_05_sql_queries.sql" class="text-sky-300 hover:text-sky-200 underline">Day_05_sql_queries.sql</a> open; copy one statement at a time (no extra statements in the editor).</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">1</span><span>Open <strong class="text-zinc-200">Athena</strong> → your workgroup. Database can stay <code class="font-mono">default</code> or <code class="font-mono">de_keystone_shared</code>—today’s labs only use <code class="font-mono">VALUES</code> inside the query.</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">2</span><span>No joins to S3 for Modules 0–6: each lab builds a 3–6 row toy table inline, then applies windows on top.</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">3</span><span>Keep <a href="Day_05_sql_queries.sql" class="text-sky-300 hover:text-sky-200 underline">Day_05_sql_queries.sql</a> open; copy <strong class="text-zinc-200">one</strong> statement at a time (clear the editor between runs).</span></li>
       </ul>
+      <p class="text-xs text-zinc-500 mt-4 max-w-3xl">Later in the course you’ll rerun the same patterns on lakehouse tables (e.g. NYC taxi, Olist). Today is syntax + mental model only.</p>
     </div>
   </section>
 
@@ -186,9 +187,9 @@
       <div class="mt-8 rounded-2xl border border-amber-500/30 bg-amber-950/20 p-5 lg:p-6 max-w-4xl">
         <p class="text-xs font-semibold text-amber-200 uppercase tracking-wide">Bridge to today’s labs</p>
         <ul class="mt-3 space-y-2 text-xs text-zinc-400 list-disc pl-5 leading-relaxed">
-          <li><strong class="text-zinc-300">Join</strong> (recap §2): Lab 1 <code class="font-mono">INNER JOIN</code> trips → zone lookup.</li>
-          <li><strong class="text-zinc-300">WHERE</strong> (recap §1): filter city and month before ranking.</li>
-          <li><strong class="text-zinc-300">SUM</strong> (recap §3): Lab 2 groups by day, then <code class="font-mono">LAG</code> on those daily totals.</li>
+          <li><strong class="text-zinc-300">WHERE</strong> (recap §1): outer <code class="font-mono">WHERE trip_rank = 1</code> after the window runs.</li>
+          <li><strong class="text-zinc-300">Aggregates</strong> (recap §3): Lab 2 starts from <em>pre-summed</em> daily revenue rows (like after <code class="font-mono">GROUP BY</code>).</li>
+          <li><strong class="text-zinc-300">Joins</strong> (recap §2): not needed in window labs today—data is already one flat practice table.</li>
           <li><strong class="text-zinc-300">Outer filter:</strong> <code class="font-mono">ROW_NUMBER()</code> in a CTE, <code class="font-mono">WHERE trip_rank = 1</code> outside—like <code class="font-mono">HAVING</code> after <code class="font-mono">GROUP BY</code>.</li>
         </ul>
       </div>
@@ -196,7 +197,7 @@
       <details class="mt-6 rounded-xl border border-zinc-700 bg-zinc-900/40 p-4 max-w-4xl text-sm">
         <summary class="font-medium text-zinc-300">Instructor note — what is still “next level” on this page?</summary>
         <div class="mt-3 text-xs text-zinc-400 space-y-3 leading-relaxed">
-          <p><strong class="text-emerald-300">Core / teach slowly:</strong> recap WHERE/HAVING + joins + COUNT vs SUM; INNER join in Lab 1; daily <code class="font-mono">GROUP BY</code> + <code class="font-mono">SUM</code> then <code class="font-mono">LAG</code> in Lab 2; two-step <code class="font-mono">WITH</code>.</p>
+          <p><strong class="text-emerald-300">Core / teach slowly:</strong> recap visuals; Lab 1 rank on 6 rows; Lab 2 <code class="font-mono">LAG</code> on 5 daily numbers; outer filter after <code class="font-mono">ROW_NUMBER()</code>.</p>
           <p><strong class="text-amber-300">Medium stretch:</strong> <code class="font-mono">PARTITION BY</code> + <code class="font-mono">ORDER BY</code>; ranking tie behavior (Module 0 poster); <code class="font-mono">LEAD</code>; challenge (rank days after aggregate).</p>
           <p><strong class="text-rose-300">Save for extension or Day 6:</strong> <code class="font-mono">WITH RECURSIVE</code> (Lab 3)—skip live if the room is tired; interview <strong>gaps &amp; islands</strong>; rolling <code class="font-mono">ROWS BETWEEN</code> frames; multi-city challenge variants.</p>
         </div>
@@ -213,7 +214,7 @@
       </figure>
       <figure class="mt-6 rounded-2xl border border-zinc-800 overflow-hidden bg-zinc-900/40">
         <img src="assets/day05_window_ranking_table.png" width="1200" height="900" alt="Six-row sample showing city_total SUM OVER, ROW_NUMBER, RANK, and DENSE_RANK with tied fares" class="w-full h-auto block" loading="lazy">
-        <figcaption class="px-4 py-3 text-[11px] text-zinc-500 border-t border-zinc-800">One glance at ties: Manhattan fares $50 / $50 / $40 → ranks 1,1,3 vs 1,1,2.</figcaption>
+        <figcaption class="px-4 py-3 text-[11px] text-zinc-500 border-t border-zinc-800">One glance at ties: same city fares $50 / $50 / $40 → ranks 1,1,3 vs 1,1,2.</figcaption>
       </figure>
     </div>
   </section>
@@ -221,23 +222,35 @@
   <section id="m1" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
       <span class="text-xs font-mono text-cyan-400/90">Hands-on · Lab 1</span>
-      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Highest-fare trip in each city (starter rank lab)</h2>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Highest fare in each city (6-row practice table)</h2>
       <div class="mt-6 rounded-2xl border border-cyan-500/30 bg-cyan-950/10 p-5 lg:p-6 max-w-4xl">
         <p class="text-xs font-semibold text-cyan-200 uppercase tracking-wide">Problem statement</p>
         <p class="text-sm text-zinc-300 mt-3 leading-relaxed">
-          January 2025 only. For pickup cities <strong class="text-zinc-200">Manhattan</strong> and <strong class="text-zinc-200">Queens</strong>, find the <strong class="text-zinc-200">one most expensive trip</strong> in each city (highest <code class="font-mono">fare_amount</code>). Show <code class="font-mono">city</code>, fare, pickup time, and rank. No zone or distance columns—keep the first win small.
+          Using only the toy <code class="font-mono">practice_trips</code> table below, find the <strong class="text-zinc-200">single highest <code class="font-mono">fare_amount</code></strong> in <strong class="text-zinc-200">Hyderabad</strong> and in <strong class="text-zinc-200">Bengaluru</strong>. Expected: Hyderabad <strong class="text-zinc-200">120</strong>, Bengaluru <strong class="text-zinc-200">200</strong>.
         </p>
+        <div class="overflow-x-auto mt-4 rounded-lg border border-zinc-700">
+          <table class="w-full text-xs font-mono text-left">
+            <thead class="bg-zinc-900 text-zinc-500"><tr><th class="p-2">trip_id</th><th class="p-2">city</th><th class="p-2">fare_amount</th></tr></thead>
+            <tbody class="text-zinc-300">
+              <tr class="border-t border-zinc-800"><td class="p-2">T1</td><td class="p-2">Hyderabad</td><td class="p-2">120</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">T2</td><td class="p-2">Hyderabad</td><td class="p-2">90</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">T3</td><td class="p-2">Hyderabad</td><td class="p-2">85</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">T4</td><td class="p-2">Bengaluru</td><td class="p-2">200</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">T5</td><td class="p-2">Bengaluru</td><td class="p-2">150</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">T6</td><td class="p-2">Bengaluru</td><td class="p-2">40</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       <div class="mt-6 rounded-2xl border thought-card p-5 lg:p-6 max-w-4xl">
         <p class="text-xs font-semibold text-amber-200 uppercase tracking-wide">Thought process (plain English → SQL)</p>
         <ol class="mt-4 space-y-3.5 text-xs text-zinc-400 list-none leading-relaxed">
-          <li><span class="step-num">1</span><strong class="text-zinc-300">What is one row?</strong> In <code class="font-mono">nyc_yellow_trips</code>, one row = one trip. We are <em>not</em> summing fares yet—we are comparing individual trips.</li>
-          <li><span class="step-num">2</span><strong class="text-zinc-300">Add city name:</strong> trips only have <code class="font-mono">PULocationID</code>. Join <code class="font-mono">nyc_taxi_zone_lookup</code> and pick <code class="font-mono">Borough AS city</code> (same value; friendlier label).</li>
-          <li><span class="step-num">3</span><strong class="text-zinc-300">Shrink the data first:</strong> <code class="font-mono">WHERE year/month = '2025'/'01'</code> and <code class="font-mono">city IN ('Manhattan','Queens')</code> so Athena scans less and the answer is easy to eyeball.</li>
-          <li><span class="step-num">4</span><strong class="text-zinc-300">PARTITION BY city</strong> = “start a separate leaderboard per city.” Manhattan trips only compete with Manhattan; Queens only with Queens.</li>
-          <li><span class="step-num">5</span><strong class="text-zinc-300">ORDER BY fare_amount DESC</strong> = highest fare gets rank 1 inside each city.</li>
-          <li><span class="step-num">6</span><strong class="text-zinc-300">Why ROW_NUMBER?</strong> We want exactly <em>one</em> winner per city; ties get different row numbers (fine for this lab).</li>
-          <li><span class="step-num">7</span><strong class="text-zinc-300">Filter last:</strong> compute rank in an inner CTE, then <code class="font-mono">WHERE trip_rank = 1</code> outside—because <code class="font-mono">WHERE</code> cannot see window columns in the same <code class="font-mono">SELECT</code> (Day 4 execution order).</li>
+          <li><span class="step-num">1</span><strong class="text-zinc-300">Grain:</strong> one row = one trip (already true in <code class="font-mono">VALUES</code>).</li>
+          <li><span class="step-num">2</span><strong class="text-zinc-300">Load data:</strong> first CTE <code class="font-mono">practice_trips</code> from the 6 <code class="font-mono">VALUES</code> rows—no Glue table.</li>
+          <li><span class="step-num">3</span><strong class="text-zinc-300">PARTITION BY city</strong> — separate leaderboard per city.</li>
+          <li><span class="step-num">4</span><strong class="text-zinc-300">ORDER BY fare_amount DESC</strong> — biggest fare first.</li>
+          <li><span class="step-num">5</span><strong class="text-zinc-300">ROW_NUMBER()</strong> — pick exactly one winner per city.</li>
+          <li><span class="step-num">6</span><strong class="text-zinc-300">Outer WHERE trip_rank = 1</strong> — window first, filter second (Day 4 order).</li>
         </ol>
       </div>
       <div class="sql-block mt-6 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
@@ -257,7 +270,7 @@
       <p class="text-sm text-zinc-400 mt-6 max-w-3xl leading-relaxed">
         <strong class="text-zinc-300">Two-step CTE pattern:</strong> (1) <code class="font-mono">GROUP BY trip_day</code> to daily revenue grain, (2) apply <code class="font-mono">LAG</code>/<code class="font-mono">LEAD</code> on that CTE—never mix raw trips and day-level windows in one pass.
       </p>
-      <p class="text-xs text-emerald-300/90 mt-3 max-w-3xl">Runnable demo (Manhattan city · first 5 days of Jan 2025 · LAG + LEAD only):</p>
+      <p class="text-xs text-emerald-300/90 mt-3 max-w-3xl">Runnable demo — 5 daily revenue numbers (already aggregated · LAG + LEAD):</p>
       <div class="sql-block mt-4 rounded-xl border border-emerald-500/30 bg-black/80 p-4 pr-24 relative">
         <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="laglead-sql">Copy SQL</button>
         <pre id="laglead-sql" class="sql-text"></pre>
@@ -268,18 +281,17 @@
   <section id="m3" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
       <span class="text-xs font-mono text-emerald-400/90">Hands-on · Lab 2</span>
-      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Daily revenue in one city + yesterday (<code class="font-mono">LAG</code>)</h2>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Yesterday’s revenue on 5 days (<code class="font-mono">LAG</code>)</h2>
       <div class="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/10 p-5 max-w-4xl">
         <p class="text-xs font-semibold text-emerald-200 uppercase">Problem statement</p>
-        <p class="text-sm text-zinc-300 mt-3 leading-relaxed">City = <strong class="text-zinc-200">Manhattan</strong>. Jan <strong class="text-zinc-200">1–5</strong>, 2025: for each day, show total fare revenue and <strong class="text-zinc-200">yesterday’s</strong> revenue using <code class="font-mono">LAG</code> (no rolling average in this lab—master LAG first).</p>
+        <p class="text-sm text-zinc-300 mt-3 leading-relaxed">Use the same 5-row <code class="font-mono">daily_revenue</code> series (100 → 150 → 120 → 180 → 90). Show each day’s revenue and <code class="font-mono">LAG</code> = previous day’s value (Jan 1 has <code class="font-mono">NULL</code> yesterday).</p>
       </div>
       <div class="mt-6 rounded-2xl border thought-card p-5 max-w-4xl">
         <p class="text-xs font-semibold text-amber-200 uppercase">Thought process</p>
         <ol class="mt-4 space-y-3 text-xs text-zinc-400 list-none leading-relaxed">
-          <li><span class="step-num">1</span><strong class="text-zinc-300">New grain:</strong> we need <em>one row per day</em>, not per trip—so step 1 is always <code class="font-mono">GROUP BY trip_day</code>.</li>
-          <li><span class="step-num">2</span><strong class="text-zinc-300">Why two steps?</strong> You cannot <code class="font-mono">LAG()</code> across days while still on raw trip rows—you would “look at the previous trip,” not the previous <em>day’s total</em>.</li>
-          <li><span class="step-num">3</span><strong class="text-zinc-300">Filter city in step 1:</strong> join lookup, <code class="font-mono">Borough = 'Manhattan'</code>, restrict dates to five days.</li>
-          <li><span class="step-num">4</span><strong class="text-zinc-300">LAG in step 2:</strong> <code class="font-mono">ORDER BY trip_day</code> tells the engine which row is “yesterday.”</li>
+          <li><span class="step-num">1</span><strong class="text-zinc-300">Grain is already daily</strong> — we typed the totals in <code class="font-mono">VALUES</code> (skips <code class="font-mono">GROUP BY</code> for this lab).</li>
+          <li><span class="step-num">2</span><strong class="text-zinc-300">On real data</strong> you would <code class="font-mono">SUM(amount) GROUP BY sale_day</code> first, then <code class="font-mono">LAG</code> in step 2.</li>
+          <li><span class="step-num">3</span><strong class="text-zinc-300">LAG(... ORDER BY sale_day)</strong> walks backward one row = one calendar day.</li>
         </ol>
       </div>
       <div class="sql-block mt-6 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
@@ -308,7 +320,7 @@
       <span class="text-xs font-mono text-violet-400/90">Hands-on · Lab 3</span>
       <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Who reports to whom — depth level only</h2>
       <div class="mt-6 rounded-2xl border border-violet-500/30 bg-violet-950/10 p-5 max-w-4xl">
-        <p class="text-sm text-zinc-300 leading-relaxed">Start at the CEO (<code class="font-mono">manager_id IS NULL</code>). Walk down the org and output <code class="font-mono">emp_name</code>, <code class="font-mono">role</code>, and <code class="font-mono">lvl</code> (1 = top, 2 = direct reports, …). Skip the long “reporting path” string in this lab—levels only.</p>
+        <p class="text-sm text-zinc-300 leading-relaxed">Three-person org in <code class="font-mono">VALUES</code>: Anita (CEO) → Rahul → Priya. Walk down with <code class="font-mono">WITH RECURSIVE</code> and print <code class="font-mono">lvl</code> (1, 2, 3). No HR table on S3.</p>
       </div>
       <div class="mt-6 rounded-2xl border thought-card p-5 max-w-4xl">
         <p class="text-xs font-semibold text-amber-200 uppercase">Thought process</p>
@@ -328,8 +340,8 @@
   <section id="m6" class="scroll-mt-20 border-b border-zinc-800" data-module>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
       <span class="text-xs font-mono text-amber-400/90">10-minute challenge</span>
-      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">2nd-busiest day in Manhattan (one city)</h2>
-      <p class="text-sm text-zinc-400 mt-3 max-w-3xl leading-relaxed">January 2025, pickup city <strong class="text-zinc-300">Manhattan</strong> only: which <em>calendar day</em> had the <strong class="text-zinc-300">second-highest</strong> number of trips? Return that date and trip count.</p>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">2nd-busiest day (5-day visit counts)</h2>
+      <p class="text-sm text-zinc-400 mt-3 max-w-3xl leading-relaxed">Toy counts: 10, 25, 18, 12, 8 visits per day. Which day is <strong class="text-zinc-300">rank 2</strong> by volume? (Expected: <strong class="text-zinc-300">2025-01-03</strong> with <strong class="text-zinc-300">18</strong>.)</p>
       <details class="mt-6 rounded-xl border border-zinc-700 bg-zinc-900/50 p-4 max-w-3xl text-sm">
         <summary class="font-medium text-zinc-300">Need a hint? (3-step thought guide)</summary>
         <ol class="mt-3 space-y-2 text-xs text-zinc-400 list-decimal pl-5">
@@ -359,7 +371,7 @@
       <h2 class="text-2xl font-bold text-white mt-1">Window functions &amp; execution order</h2>
       <article class="interview-card mt-6 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
         <p class="font-medium text-emerald-400">E · ROW_NUMBER vs RANK vs DENSE_RANK</p>
-        <p class="interview-q mt-2 text-xs text-zinc-400">Two trips both have fare $50; third has $40 within Manhattan. What are the three ranking functions’ values on the tied rows?</p>
+        <p class="interview-q mt-2 text-xs text-zinc-400">Two trips both have fare $50; third has $40 in the same city. What are the three ranking functions’ values on the tied rows?</p>
         <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
           <summary>Reveal strong answer</summary>
           <p class="text-xs text-zinc-400">Ordered by fare DESC: ROW_NUMBER → 1,2,3 (arbitrary tie-break). RANK → 1,1,3 (skips 2). DENSE_RANK → 1,1,2 (no gap).</p>
@@ -395,120 +407,110 @@
 (function () {
   const SQL = {
     laglead: `WITH daily_revenue AS (
-    SELECT
-        CAST(DATE(t.tpep_pickup_datetime) AS date) AS trip_day,
-        ROUND(SUM(t.fare_amount), 2) AS daily_revenue
-    FROM de_keystone_shared.nyc_yellow_trips t
-    INNER JOIN de_keystone_shared.nyc_taxi_zone_lookup z
-        ON t.PULocationID = z.LocationID
-    WHERE t.year = '2025'
-      AND t.month = '01'
-      AND z.Borough = 'Manhattan'
-      AND CAST(DATE(t.tpep_pickup_datetime) AS date)
-          BETWEEN DATE '2025-01-01' AND DATE '2025-01-05'
-    GROUP BY 1
+    SELECT *
+    FROM (
+        VALUES
+            (DATE '2025-01-01', 100.0),
+            (DATE '2025-01-02', 150.0),
+            (DATE '2025-01-03', 120.0),
+            (DATE '2025-01-04', 180.0),
+            (DATE '2025-01-05',  90.0)
+    ) AS d(sale_day, daily_revenue)
 )
 SELECT
-    trip_day,
+    sale_day,
     daily_revenue,
-    LAG(daily_revenue, 1) OVER (ORDER BY trip_day) AS prev_day_revenue,
-    LEAD(daily_revenue, 1) OVER (ORDER BY trip_day) AS next_day_revenue
+    LAG(daily_revenue, 1) OVER (ORDER BY sale_day) AS prev_day_revenue,
+    LEAD(daily_revenue, 1) OVER (ORDER BY sale_day) AS next_day_revenue
 FROM daily_revenue
-ORDER BY trip_day`,
-    lab1: `WITH trips_with_city AS (
-    SELECT
-        z.Borough AS city,
-        t.fare_amount,
-        t.tpep_pickup_datetime
-    FROM de_keystone_shared.nyc_yellow_trips t
-    INNER JOIN de_keystone_shared.nyc_taxi_zone_lookup z
-        ON t.PULocationID = z.LocationID
-    WHERE t.year = '2025'
-      AND t.month = '01'
-      AND z.Borough IN ('Manhattan', 'Queens')
+ORDER BY sale_day`,
+    lab1: `WITH practice_trips AS (
+    SELECT *
+    FROM (
+        VALUES
+            ('T1', 'Hyderabad',  120.00),
+            ('T2', 'Hyderabad',   90.00),
+            ('T3', 'Hyderabad',   85.00),
+            ('T4', 'Bengaluru',  200.00),
+            ('T5', 'Bengaluru',  150.00),
+            ('T6', 'Bengaluru',   40.00)
+    ) AS t(trip_id, city, fare_amount)
 ),
 ranked AS (
     SELECT
+        trip_id,
         city,
         fare_amount,
-        tpep_pickup_datetime,
         ROW_NUMBER() OVER (
             PARTITION BY city
             ORDER BY fare_amount DESC
         ) AS trip_rank
-    FROM trips_with_city
+    FROM practice_trips
 )
-SELECT
-    city,
-    fare_amount,
-    tpep_pickup_datetime,
-    trip_rank
+SELECT city, trip_id, fare_amount, trip_rank
 FROM ranked
 WHERE trip_rank = 1
 ORDER BY city`,
     lab2: `WITH daily_revenue AS (
-    SELECT
-        CAST(DATE(t.tpep_pickup_datetime) AS date) AS trip_day,
-        ROUND(SUM(t.fare_amount), 2) AS daily_revenue
-    FROM de_keystone_shared.nyc_yellow_trips t
-    INNER JOIN de_keystone_shared.nyc_taxi_zone_lookup z
-        ON t.PULocationID = z.LocationID
-    WHERE t.year = '2025'
-      AND t.month = '01'
-      AND z.Borough = 'Manhattan'
-      AND CAST(DATE(t.tpep_pickup_datetime) AS date)
-          BETWEEN DATE '2025-01-01' AND DATE '2025-01-05'
-    GROUP BY 1
+    SELECT *
+    FROM (
+        VALUES
+            (DATE '2025-01-01', 100.0),
+            (DATE '2025-01-02', 150.0),
+            (DATE '2025-01-03', 120.0),
+            (DATE '2025-01-04', 180.0),
+            (DATE '2025-01-05',  90.0)
+    ) AS d(sale_day, daily_revenue)
 )
 SELECT
-    trip_day,
+    sale_day,
     daily_revenue,
-    LAG(daily_revenue, 1) OVER (ORDER BY trip_day) AS yesterday_revenue
+    LAG(daily_revenue, 1) OVER (ORDER BY sale_day) AS yesterday_revenue
 FROM daily_revenue
-ORDER BY trip_day`,
-    lab3: `WITH RECURSIVE org_tree AS (
-    SELECT
-        emp_id,
-        emp_name,
-        role,
-        1 AS lvl
-    FROM de_keystone_shared.employees_hierarchy
+ORDER BY sale_day`,
+    lab3: `WITH
+employees AS (
+    SELECT *
+    FROM (
+        VALUES
+            (1, 'Anita', 'CEO',     CAST(NULL AS INTEGER)),
+            (2, 'Rahul', 'Manager', 1),
+            (3, 'Priya', 'Analyst', 2)
+    ) AS e(emp_id, emp_name, role, manager_id)
+),
+RECURSIVE org_tree AS (
+    SELECT emp_id, emp_name, role, 1 AS lvl
+    FROM employees
     WHERE manager_id IS NULL
-       OR TRIM(CAST(manager_id AS varchar)) = ''
     UNION ALL
-    SELECT
-        e.emp_id,
-        e.emp_name,
-        e.role,
-        t.lvl + 1
-    FROM de_keystone_shared.employees_hierarchy e
+    SELECT e.emp_id, e.emp_name, e.role, t.lvl + 1
+    FROM employees e
     INNER JOIN org_tree t
         ON e.manager_id = t.emp_id
-    WHERE t.lvl < 6
+    WHERE t.lvl < 5
 )
 SELECT emp_id, emp_name, role, lvl
 FROM org_tree
 ORDER BY lvl, emp_id`,
-    challenge: `WITH trips_per_day AS (
-    SELECT
-        CAST(DATE(t.tpep_pickup_datetime) AS date) AS trip_day,
-        COUNT(*) AS trip_count
-    FROM de_keystone_shared.nyc_yellow_trips t
-    INNER JOIN de_keystone_shared.nyc_taxi_zone_lookup z
-        ON t.PULocationID = z.LocationID
-    WHERE t.year = '2025'
-      AND t.month = '01'
-      AND z.Borough = 'Manhattan'
-    GROUP BY 1
+    challenge: `WITH visits_per_day AS (
+    SELECT *
+    FROM (
+        VALUES
+            (DATE '2025-01-01', 10),
+            (DATE '2025-01-02', 25),
+            (DATE '2025-01-03', 18),
+            (DATE '2025-01-04', 12),
+            (DATE '2025-01-05',  8)
+    ) AS v(visit_day, visit_count)
 ),
 ranked_days AS (
     SELECT
-        trip_day,
-        trip_count,
-        RANK() OVER (ORDER BY trip_count DESC) AS day_rank
-    FROM trips_per_day
+        visit_day,
+        visit_count,
+        RANK() OVER (ORDER BY visit_count DESC) AS day_rank
+    FROM visits_per_day
 )
-SELECT trip_day, trip_count
+SELECT visit_day, visit_count
 FROM ranked_days
 WHERE day_rank = 2`
   };
