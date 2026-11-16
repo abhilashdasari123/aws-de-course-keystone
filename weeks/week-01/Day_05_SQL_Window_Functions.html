@@ -164,13 +164,11 @@
 
       <h3 class="text-lg font-semibold text-white mt-10">WHERE → GROUP BY → HAVING (filter funnel)</h3>
       <p class="text-xs text-zinc-400 mt-2 max-w-3xl leading-relaxed">
-        <code class="font-mono text-zinc-300">WHERE</code> drops raw rows <em>before</em> grouping (here: only <code class="font-mono">delivered</code>).
-        <code class="font-mono text-zinc-300">GROUP BY city</code> collapses to one row per city with <code class="font-mono">SUM(amount)</code>.
-        <code class="font-mono text-zinc-300">HAVING</code> filters those grouped buckets—not the same as <code class="font-mono">WHERE</code>.
-        This is why <code class="font-mono">WHERE SUM(...)</code> and <code class="font-mono">WHERE ROW_NUMBER()</code> are invalid in the same <code class="font-mono">SELECT</code> block.
+        Seven <code class="font-mono">sales_orders</code> rows → <code class="font-mono">WHERE status = 'delivered'</code> keeps five rows → <code class="font-mono">GROUP BY city</code> builds Hyderabad / Bengaluru / Chennai buckets with <code class="font-mono">SUM(amount)</code> and <code class="font-mono">COUNT(*)</code> → <code class="font-mono">HAVING SUM(amount) &gt; 600 AND COUNT(*) &gt;= 2</code> drops Chennai (too small). <strong class="text-zinc-300">Golden rule:</strong> <code class="font-mono">WHERE</code> filters raw rows; <code class="font-mono">HAVING</code> filters grouped results—same reason window ranks belong in an outer query.
       </p>
       <figure class="mt-6 rounded-2xl border border-violet-500/25 overflow-hidden bg-zinc-900/50">
-        <img src="assets/day05_recap_where_groupby_having.png" width="1200" height="675" alt="Three-stage funnel: WHERE on raw orders, GROUP BY city with SUM, HAVING SUM greater than 600" class="w-full h-auto block" loading="lazy" decoding="async">
+        <img src="assets/day05_recap_where_groupby_having.png" width="1200" height="675" alt="SQL filtering stages: WHERE delivered orders, GROUP BY city with SUM and COUNT, HAVING revenue over 600 and at least two orders" class="w-full h-auto block" loading="lazy" decoding="async">
+        <figcaption class="px-4 py-3 text-[11px] text-zinc-500 border-t border-zinc-800">SQL filtering: WHERE vs GROUP BY vs HAVING — rows filtered, collapsed, then bucket-checked.</figcaption>
       </figure>
 
       <div class="mt-8 rounded-2xl border border-amber-500/30 bg-amber-950/20 p-5 lg:p-6 max-w-4xl">
