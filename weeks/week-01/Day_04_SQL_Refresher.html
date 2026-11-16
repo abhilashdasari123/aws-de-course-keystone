@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day 4 — Basic SQL &amp; Relational Refresher | KeystoneEduTech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-feature-settings: 'ss01' on; }
+    .glass { background: rgba(24, 27, 34, 0.78); backdrop-filter: blur(12px); }
+    .progress-ring { transition: stroke-dashoffset 0.4s ease; }
+    .sql-block { position: relative; }
+    .sql-copy {
+      position: absolute; top: 0.5rem; right: 0.5rem; z-index: 2;
+    }
+    pre.sql-text {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 0.72rem;
+      line-height: 1.55;
+    }
+    .sql-text .kw { color: #c4b5fd; font-weight: 600; }
+    .sql-text .kw2 { color: #67e8f9; font-weight: 500; }
+    .sql-text .fn { color: #7dd3fc; }
+    .sql-text .str { color: #86efac; }
+    .sql-text .cmt { color: #71717a; font-style: italic; }
+    .sql-text .num { color: #fcd34d; }
+    details summary { cursor: pointer; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    .interview-card .interview-q { white-space: normal; }
+    details.interview-answer > summary {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.75rem; font-weight: 600; color: rgb(161 161 170);
+    }
+    details.interview-answer > summary:hover { color: rgb(228 228 231); }
+    details.interview-answer[open] > summary { color: rgb(52 211 153); margin-bottom: 0.75rem; }
+    .callout-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 1.5rem; height: 1.5rem; border-radius: 9999px;
+      font-size: 0.7rem; font-weight: 700;
+      background: rgba(251, 191, 36, 0.2); color: rgb(253 230 138);
+      border: 1px solid rgb(251 191 36 / 0.5); flex-shrink: 0;
+    }
+    .step-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 1.75rem; height: 1.75rem; border-radius: 0.5rem;
+      background: rgba(56, 189, 248, 0.15); border: 1px solid rgb(56 189 248 / 0.45);
+      color: rgb(186 230 253); font-size: 0.75rem; font-weight: 600; margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-zinc-100 antialiased min-h-screen">
+
+<header class="sticky top-0 z-50 border-b border-zinc-800 glass">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Primary">
+    <div class="flex flex-wrap items-center justify-between gap-3 py-3">
+      <div class="flex items-center gap-3 flex-wrap">
+        <a href="index.html" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-emerald-500/50 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25 text-sm font-semibold shrink-0 transition-colors" title="Return to Week 1 day list">
+          <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i>
+          Week 1 index
+        </a>
+        <a href="#top" class="flex items-center gap-2 font-semibold text-white tracking-tight">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+            <i data-lucide="database" class="w-4 h-4"></i>
+          </span>
+          KeystoneEduTech
+        </a>
+      </div>
+      <div class="hidden lg:flex flex-wrap items-center gap-1 text-sm">
+        <a href="#setup" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Setup</a>
+        <a href="#m0" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">SQL basics</a>
+        <a href="#m1" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Clauses</a>
+        <a href="#m2" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Schema</a>
+        <a href="#m3" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Keys</a>
+        <a href="#m4" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Execution</a>
+        <a href="#m5" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Joins</a>
+        <a href="#m6" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Labs</a>
+        <a href="#interview" class="px-2.5 py-1.5 rounded-md text-emerald-300/90 hover:text-white hover:bg-emerald-500/10">Interview</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-xs text-zinc-500">
+          <svg class="w-9 h-9 -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="#27272a" stroke-width="3"/>
+            <circle id="progress-ring" class="progress-ring" cx="18" cy="18" r="15" fill="none" stroke="#34d399" stroke-width="3" stroke-linecap="round" stroke-dasharray="94.2" stroke-dashoffset="94.2"/>
+          </svg>
+          <span><span id="progress-pct" class="text-emerald-400 font-mono font-medium">0</span>% explored</span>
+        </div>
+        <a href="Day_03_GitHub_Repo_Setup_Lab.html" class="text-xs text-zinc-500 hover:text-zinc-300">Prev: Day 3</a>
+        <a href="Day_05_SQL_Window_Functions.html" class="text-xs text-zinc-500 hover:text-emerald-300">Next: Day 5</a>
+        <a href="../../index.html" class="text-xs text-zinc-500 hover:text-emerald-300 underline-offset-2 hover:underline">Course home</a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="relative border-b border-zinc-800 overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.14),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(167,139,250,0.12),transparent_50%)]"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-20 relative">
+      <p class="text-emerald-400 text-sm font-medium tracking-wide uppercase mb-3">Week 1 · Day 4 (Thu) · Concept + Hands-On Lab</p>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white max-w-4xl">
+        SQL Refresher for Data Engineers
+      </h1>
+      <p class="text-xs text-zinc-500 mt-2">Section 2: SQL for Data Engineers (1 of 5)</p>
+      <p class="mt-4 text-lg text-zinc-400 max-w-3xl leading-relaxed">
+        Revisit <strong class="font-medium text-zinc-300">what each SQL clause does</strong>, then query the Olist lakehouse on Athena—<strong class="font-medium text-zinc-300">Parquet facts</strong> joined to a <strong class="font-medium text-zinc-300">CSV dimension</strong> at
+        <code class="font-mono text-emerald-300/90">s3://aws-de-keystone-datasets/olist/</code>.
+      </p>
+      <a href="#setup" class="inline-flex items-center gap-2 mt-10 px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm transition-colors">
+        Start with Athena setup <i data-lucide="arrow-down" class="w-4 h-4"></i>
+      </a>
+    </div>
+  </section>
+
+  <section id="setup" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-sky-400/90">Before the lab</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Open Amazon Athena with your lab workgroup</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        Do this <strong class="font-medium text-zinc-300">before</strong> you paste SQL. Every student has a personal Athena workgroup and results prefix from the login email (e.g. <code class="font-mono text-zinc-400">wg_vinay7</code>).
+      </p>
+      <ol class="mt-6 space-y-3 text-sm text-zinc-300 max-w-3xl list-none">
+        <li class="flex gap-3 items-start"><span class="step-num">1</span><span>Sign in to the AWS console with your lab IAM user; region <strong class="text-zinc-200">ap-south-1</strong> (unless instructed otherwise).</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">2</span><span>Open <strong class="text-zinc-200">Amazon Athena</strong> → Query editor.</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">3</span><span>Top right: <strong class="text-zinc-200">Workgroup</strong> → select <em>your</em> workgroup (not <code class="font-mono">primary</code>).</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">4</span><span>Data source: <strong class="text-zinc-200">AwsDataCatalog</strong>; database: <code class="font-mono text-emerald-300/90">de_keystone_shared</code> (or table names your instructor registered).</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">5</span><span>Keep <a href="Day_04_sql_queries.sql" class="text-sky-300 hover:text-sky-200 underline">Day_04_sql_queries.sql</a> open—copy labs from this page or the file.</span></li>
+      </ol>
+      <details class="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 text-sm max-w-3xl">
+        <summary class="cursor-pointer font-medium text-zinc-300">Recap from Day 3 (30 seconds)</summary>
+        <p class="mt-2 text-xs text-zinc-400 leading-relaxed">You version pipeline code in Git and push to GitHub. Today you query <strong class="text-zinc-300">curated data on S3</strong> with SQL in Athena—the lakehouse pattern from Day 2 (Bronze/ELT) in action. Same discipline: test in your workgroup, paste from a reviewed script, don't email <code class="font-mono">query_FINAL.sql</code>.</p>
+      </details>
+    </div>
+  </section>
+
+  <section id="m0" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-violet-400/90">Module 0</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">What is SQL—relational building blocks</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        <strong class="font-medium text-zinc-300">SQL</strong> (Structured Query Language) is the shared language for reading and shaping <strong class="font-medium text-zinc-300">relational</strong> data: rows and columns linked by keys. Athena, Redshift, Spark SQL, and dbt use the same core ideas—<code class="font-mono text-zinc-500">SELECT</code>, <code class="font-mono text-zinc-500">JOIN</code>, <code class="font-mono text-zinc-500">GROUP BY</code>—even when the “database” is really <strong class="font-medium text-zinc-300">files on S3</strong> plus a catalog (Glue).
+      </p>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        SQL is <strong class="font-medium text-zinc-300">declarative</strong>: you describe <em>what</em> result you want; the engine chooses <em>how</em> to scan, join, and aggregate. As a data engineer you care about <strong class="font-medium text-zinc-300">correct grain</strong>, <strong class="font-medium text-zinc-300">join keys</strong>, and <strong class="font-medium text-zinc-300">filters in the right clause</strong> (<code class="font-mono text-zinc-500">WHERE</code> vs <code class="font-mono text-zinc-500">HAVING</code>) so pipelines and ad hoc queries stay trustworthy.
+      </p>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-sm">
+          <h3 class="font-semibold text-white text-sm flex items-center gap-2"><i data-lucide="table-2" class="w-4 h-4 text-sky-400"></i> Table, row, column</h3>
+          <ul class="mt-3 space-y-2 text-xs text-zinc-400 list-disc pl-4">
+            <li><strong class="text-zinc-300">Table</strong> — one entity (orders, customers). In the lakehouse it is often a <strong class="text-zinc-300">folder</strong> of Parquet/CSV files.</li>
+            <li><strong class="text-zinc-300">Row</strong> — one record (a single order).</li>
+            <li><strong class="text-zinc-300">Column</strong> — one attribute (<code class="font-mono">order_status</code>, <code class="font-mono">price</code>).</li>
+            <li><strong class="text-zinc-300">Grain</strong> — what one row <em>means</em> (per order vs per line item).</li>
+          </ul>
+        </article>
+        <article class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 text-sm">
+          <h3 class="font-semibold text-white text-sm flex items-center gap-2"><i data-lucide="key" class="w-4 h-4 text-amber-400"></i> Keys &amp; relationships</h3>
+          <ul class="mt-3 space-y-2 text-xs text-zinc-400 list-disc pl-4">
+            <li><strong class="text-zinc-300">Primary key (PK)</strong> — unique ID for a row (<code class="font-mono">order_id</code>).</li>
+            <li><strong class="text-zinc-300">Foreign key (FK)</strong> — column that points to another table’s PK (<code class="font-mono">customer_id</code> on orders).</li>
+            <li><strong class="text-zinc-300">JOIN</strong> — combine tables on matching keys (customer → orders).</li>
+            <li><strong class="text-zinc-300">NULL</strong> — “unknown / not applicable”—not zero, not empty string.</li>
+          </ul>
+        </article>
+        <article class="rounded-2xl border border-sky-500/20 bg-sky-950/10 p-5 text-sm md:col-span-2 lg:col-span-1">
+          <h3 class="font-semibold text-white text-sm flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-sky-400"></i> Lakehouse vs classic DB</h3>
+          <ul class="mt-3 space-y-2 text-xs text-zinc-400 list-disc pl-4">
+            <li><strong class="text-zinc-300">Storage</strong> — objects in S3 (Parquet, CSV), not rows inside a single server disk.</li>
+            <li><strong class="text-zinc-300">Catalog</strong> — Glue table name + column types tell Athena what to read and how.</li>
+            <li><strong class="text-zinc-300">Query</strong> — you still write SQL; the engine pushes work down to scan files.</li>
+            <li><strong class="text-zinc-300">Today</strong> — shared read-only tables in <code class="font-mono">de_keystone_shared</code>; your workgroup writes results elsewhere.</li>
+          </ul>
+        </article>
+        <article class="rounded-2xl border border-violet-500/20 bg-violet-950/10 p-5 text-sm md:col-span-2">
+          <h3 class="font-semibold text-white text-sm flex items-center gap-2"><i data-lucide="git-branch" class="w-4 h-4 text-violet-400"></i> What you do with SQL as a DE</h3>
+          <div class="mt-3 grid sm:grid-cols-3 gap-3 text-xs text-zinc-400">
+            <div class="rounded-lg border border-zinc-800 bg-black/30 p-3">
+              <p class="font-mono text-violet-300 text-[11px]">Explore</p>
+              <p class="mt-1">Ad hoc <code class="font-mono">SELECT</code> in Athena to validate data, counts, and joins before you ship a pipeline.</p>
+            </div>
+            <div class="rounded-lg border border-zinc-800 bg-black/30 p-3">
+              <p class="font-mono text-violet-300 text-[11px]">Transform</p>
+              <p class="mt-1"><code class="font-mono">CREATE TABLE AS SELECT</code>, inserts, or dbt models that build curated layers from raw or staging tables.</p>
+            </div>
+            <div class="rounded-lg border border-zinc-800 bg-black/30 p-3">
+              <p class="font-mono text-violet-300 text-[11px]">Register</p>
+              <p class="mt-1"><code class="font-mono">CREATE EXTERNAL TABLE</code> (instructor/admin) so Parquet/CSV paths become queryable names in the catalog.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+      <p class="text-xs text-zinc-500 mt-6 max-w-3xl">Data engineering angle: your job is to write SQL (or Spark) that respects <strong class="text-zinc-400">grain</strong> and <strong class="text-zinc-400">keys</strong> so metrics are not double-counted when tables are joined. Dialects differ in functions and types—always check <strong class="text-zinc-400">Glue types match Parquet</strong> before blaming the query.</p>
+    </div>
+  </section>
+
+  <section id="m1" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-cyan-400/90">Module 1</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">SQL clauses—what each keyword does</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm">You <em>write</em> queries top-to-bottom like English, but the engine runs them in a different order (Module 4). Learn the vocabulary first.</p>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-8 text-xs">
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4"><p class="font-mono text-violet-300 font-semibold">SELECT</p><p class="text-zinc-400 mt-2">Which columns or expressions appear in the result (including <code class="font-mono">CASE</code>, <code class="font-mono">COALESCE</code>).</p></div>
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4"><p class="font-mono text-violet-300 font-semibold">FROM</p><p class="text-zinc-400 mt-2">Which table(s) to read—on Athena, Glue table names or S3-backed external tables.</p></div>
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4"><p class="font-mono text-violet-300 font-semibold">JOIN</p><p class="text-zinc-400 mt-2"><code class="font-mono">INNER</code> keeps matches only; <code class="font-mono">LEFT</code> keeps all left rows.</p></div>
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4"><p class="font-mono text-violet-300 font-semibold">WHERE</p><p class="text-zinc-400 mt-2">Filter <strong class="text-zinc-300">rows</strong> before grouping—cannot use SELECT aliases here.</p></div>
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4"><p class="font-mono text-violet-300 font-semibold">GROUP BY</p><p class="text-zinc-400 mt-2">Collapse rows into buckets for <code class="font-mono">COUNT</code>, <code class="font-mono">SUM</code>, <code class="font-mono">AVG</code>.</p></div>
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4"><p class="font-mono text-violet-300 font-semibold">HAVING</p><p class="text-zinc-400 mt-2">Filter <strong class="text-zinc-300">groups</strong> after aggregation (e.g. revenue &gt; 10k).</p></div>
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4"><p class="font-mono text-violet-300 font-semibold">ORDER BY</p><p class="text-zinc-400 mt-2">Sort final output; can use SELECT aliases.</p></div>
+        <div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4"><p class="font-mono text-violet-300 font-semibold">LIMIT</p><p class="text-zinc-400 mt-2">Cap rows returned—great for labs; in prod, prefer filters/partitions.</p></div>
+        <div class="rounded-xl border border-rose-500/25 bg-rose-950/10 p-4 sm:col-span-2 lg:col-span-3"><p class="font-mono text-rose-300 font-semibold">NULL handling</p><p class="text-zinc-400 mt-2"><code class="font-mono">IS NULL</code> / <code class="font-mono">IS NOT NULL</code> for missing data—see <strong class="text-zinc-300">Lab 2</strong> for <code class="font-mono">COALESCE</code> and <code class="font-mono">CASE WHEN</code> in full.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="m2" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-amber-400/90">Module 2</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Meet the Olist E-Commerce schema</h2>
+      <div class="grid lg:grid-cols-2 gap-8 mt-8 items-start">
+        <figure class="rounded-2xl border border-zinc-800 bg-zinc-900/50 overflow-hidden">
+          <img src="assets/olist_er_diagram.png" alt="Olist E-Commerce ER diagram: customers, orders, order_items, products, order_reviews, category translation with PK and FK relationships" class="w-full h-auto block" loading="lazy" decoding="async">
+          <figcaption class="px-4 py-3 border-t border-zinc-800 text-xs text-zinc-500">Parquet core tables + CSV translation for cross-format demos</figcaption>
+        </figure>
+        <div class="space-y-3 text-sm">
+          <article class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
+            <h3 class="font-semibold text-white text-sm flex items-center gap-2"><span class="text-sky-400 font-mono text-xs">orders</span> Parquet</h3>
+            <p class="text-xs text-zinc-400 mt-2"><strong class="text-zinc-300">PK:</strong> <code class="font-mono">order_id</code> · <strong class="text-zinc-300">FK:</strong> <code class="font-mono">customer_id</code> · <strong class="text-zinc-300">Grain:</strong> 1 row per order</p>
+          </article>
+          <article class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
+            <h3 class="font-semibold text-white text-sm"><span class="text-violet-400 font-mono text-xs">order_items</span> Parquet</h3>
+            <p class="text-xs text-zinc-400 mt-2"><strong class="text-zinc-300">PK:</strong> <code class="font-mono">(order_id, order_item_id)</code> · <strong class="text-zinc-300">FK:</strong> product, seller · <strong class="text-zinc-300">Grain:</strong> 1 row per line item</p>
+          </article>
+          <article class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
+            <h3 class="font-semibold text-white text-sm"><span class="text-emerald-400 font-mono text-xs">customers</span> Parquet</h3>
+            <p class="text-xs text-zinc-400 mt-2"><strong class="text-zinc-300">PK:</strong> <code class="font-mono">customer_id</code> · includes <code class="font-mono">customer_unique_id</code> (person vs order customer)</p>
+          </article>
+          <article class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
+            <h3 class="font-semibold text-white text-sm"><span class="text-rose-400 font-mono text-xs">products</span> · <span class="text-rose-400 font-mono text-xs">order_reviews</span> Parquet</h3>
+            <p class="text-xs text-zinc-400 mt-2">Products PK <code class="font-mono">product_id</code>; reviews PK <code class="font-mono">review_id</code>, FK <code class="font-mono">order_id</code> (optional 0..1 per order)</p>
+          </article>
+          <article class="rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-4">
+            <h3 class="font-semibold text-emerald-200 text-sm"><span class="font-mono text-xs">category_translation</span> CSV</h3>
+            <p class="text-xs text-zinc-400 mt-2"><strong class="text-zinc-300">PK:</strong> <code class="font-mono">product_category_name</code> → English label. Stored as CSV deliberately so students join <strong class="text-zinc-300">Parquet facts</strong> to a <strong class="text-zinc-300">text-file dimension</strong> in Athena.</p>
+            <p class="text-[11px] text-zinc-500 mt-2 font-mono break-all">s3://aws-de-keystone-datasets/olist/csv/category_translation/</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 3 -->
+  <section id="m3" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-rose-400/90">Module 3</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Primary keys, foreign keys &amp; real-world quirks</h2>
+      <div class="grid md:grid-cols-3 gap-4 mt-8">
+        <article class="rounded-2xl border border-amber-500/25 bg-amber-950/10 p-5">
+          <h3 class="font-semibold text-amber-200 text-sm">customer_id vs customer_unique_id</h3>
+          <table class="mt-3 w-full text-[11px] font-mono text-zinc-300 border border-zinc-800 rounded-lg overflow-hidden">
+            <tr class="bg-zinc-900"><th class="p-2 text-left text-zinc-500">customer_id</th><th class="p-2 text-left text-zinc-500">customer_unique_id</th></tr>
+            <tr><td class="p-2 border-t border-zinc-800">9ef432eb625129</td><td class="p-2 border-t border-zinc-800">761402c2b40c9385f356cd41e0143952</td></tr>
+            <tr><td class="p-2 border-t border-zinc-800">9ef432eb625129</td><td class="p-2 border-t border-zinc-800">4e5538241f941e53e1698e4c164e79bf</td></tr>
+          </table>
+          <p class="text-xs text-zinc-400 mt-3">Same <code class="font-mono">customer_id</code> can map to different people—use <code class="font-mono">customer_unique_id</code> for lifetime metrics.</p>
+        </article>
+        <article class="rounded-2xl border border-violet-500/25 bg-violet-950/10 p-5">
+          <h3 class="font-semibold text-violet-200 text-sm">Composite PK in order_items</h3>
+          <table class="mt-3 w-full text-[11px] font-mono text-zinc-300 border border-zinc-800 rounded-lg overflow-hidden">
+            <tr class="bg-zinc-900"><th class="p-2">order_id</th><th class="p-2">order_item_id</th><th class="p-2">price</th></tr>
+            <tr><td class="p-2 border-t border-zinc-800">7e4953327c7625ec</td><td class="p-2 border-t border-zinc-800">1</td><td class="p-2 border-t border-zinc-800">58.90</td></tr>
+            <tr><td class="p-2 border-t border-zinc-800">7e4953327c7625ec</td><td class="p-2 border-t border-zinc-800">2</td><td class="p-2 border-t border-zinc-800">239.90</td></tr>
+          </table>
+          <p class="text-xs text-zinc-400 mt-3">Joining orders → items <strong class="text-rose-200">multiplies rows</strong>—count orders with <code class="font-mono">COUNT(DISTINCT order_id)</code>.</p>
+        </article>
+        <article class="rounded-2xl border border-rose-500/25 bg-rose-950/10 p-5">
+          <h3 class="font-semibold text-rose-200 text-sm">NULLs &amp; missing children</h3>
+          <ul class="mt-3 space-y-2 text-xs text-zinc-400 list-disc pl-4">
+            <li><code class="font-mono">order_delivered_customer_date</code> is NULL when status is <code class="font-mono">shipped</code> or <code class="font-mono">canceled</code></li>
+            <li>Many <code class="font-mono">delivered</code> orders have <strong class="text-zinc-300">no</strong> row in <code class="font-mono">order_reviews</code> → anti-join pattern</li>
+            <li>Use <code class="font-mono">COALESCE</code> + <code class="font-mono">CASE WHEN</code> instead of assuming complete dates</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 4 -->
+  <section id="m4" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-cyan-400/90">Module 4</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">SQL logical order of execution</h2>
+      <figure class="mt-6 rounded-2xl border border-zinc-800 overflow-hidden bg-zinc-900/40">
+        <img src="assets/sql_execution_pipeline.png" alt="Infographic comparing SQL write order vs engine execution order: FROM JOIN WHERE GROUP BY HAVING SELECT ORDER BY LIMIT" class="w-full h-auto block" loading="lazy" decoding="async">
+      </figure>
+      <div class="grid md:grid-cols-2 gap-4 mt-6 text-sm">
+        <div class="rounded-xl border border-rose-500/30 bg-rose-950/10 p-4">
+          <p class="text-rose-200 font-semibold text-xs uppercase tracking-wide">Why WHERE ≠ SELECT aliases</p>
+          <p class="text-xs text-zinc-400 mt-2"><code class="font-mono">WHERE</code> filters <strong class="text-zinc-300">before</strong> <code class="font-mono">SELECT</code> computes aliases. Reference expressions again or use a subquery/CTE.</p>
+        </div>
+        <div class="rounded-xl border border-violet-500/30 bg-violet-950/10 p-4">
+          <p class="text-violet-200 font-semibold text-xs uppercase tracking-wide">Why HAVING follows GROUP BY</p>
+          <p class="text-xs text-zinc-400 mt-2"><code class="font-mono">HAVING</code> filters <strong class="text-zinc-300">aggregated buckets</strong> (e.g. <code class="font-mono">SUM(price) &gt; 10000</code>). <code class="font-mono">WHERE</code> cannot see those sums.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="m5" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-fuchsia-400/90">Module 5</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">SQL JOINs (Venn diagrams)</h2>
+      <p class="text-sm text-zinc-400 mt-3 max-w-3xl leading-relaxed">
+        Map each shaded region to SQL, then run <strong class="font-medium text-zinc-300">Lab 1</strong> below. Today’s Olist chain uses <strong class="font-medium text-zinc-300">INNER JOIN</strong> for facts, <strong class="font-medium text-zinc-300">LEFT JOIN</strong> for optional dimensions, and <strong class="font-medium text-zinc-300">LEFT JOIN + <code class="font-mono">WHERE … IS NULL</code></strong> for “rows in A with no match in B.”
+      </p>
+      <figure class="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden">
+        <img src="assets/sql_joins_reference.png" width="1200" height="900" alt="SQL JOINs reference: INNER, LEFT, RIGHT, FULL OUTER, and excluding variants with sample SQL for TableA and TableB" class="w-full h-auto block" loading="lazy" decoding="async">
+        <figcaption class="px-4 py-5 lg:px-6 border-t border-zinc-800 bg-zinc-900/60 text-sm text-zinc-300">
+          <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-4">How to read each diagram (Table A = left, Table B = right)</p>
+          <div class="grid md:grid-cols-2 gap-x-8 gap-y-3 text-xs text-zinc-400 leading-relaxed">
+            <p><strong class="text-cyan-200">INNER JOIN</strong> — only the overlap. Olist: <code class="font-mono">orders</code> INNER JOIN <code class="font-mono">order_items</code> keeps orders that have at least one line item.</p>
+            <p><strong class="text-sky-200">LEFT JOIN</strong> — all of A, plus B columns when a key matches; otherwise B is NULL. Use for <code class="font-mono">category_translation</code> and <code class="font-mono">order_reviews</code> when the match is optional.</p>
+            <p><strong class="text-emerald-200">LEFT excluding</strong> — <code class="font-mono">LEFT JOIN B … WHERE B.key IS NULL</code>. Same shade as “A minus overlap.” <strong class="text-zinc-300">Lab 3:</strong> delivered orders with <em>no</em> review row (<code class="font-mono">review_id IS NULL</code>).</p>
+            <p><strong class="text-violet-200">RIGHT JOIN / RIGHT excluding</strong> — mirror of LEFT from B’s side. Athena/Presto support them; we rarely need them if you put the “all rows” table on the left.</p>
+            <p><strong class="text-amber-200">FULL OUTER JOIN</strong> — all keys from both sides; unmatched columns are NULL. Useful for reconciliation (“in orders but not items” <em>or</em> the reverse).</p>
+            <p><strong class="text-rose-200">FULL OUTER excluding</strong> — mismatches only: <code class="font-mono">WHERE A.key IS NULL OR B.key IS NULL</code>. Orphan detection on both sides.</p>
+          </div>
+          <div class="mt-6 pt-5 border-t border-zinc-800">
+            <p class="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-3">Row multiplication (still applies after any join)</p>
+            <p class="text-xs text-zinc-400 leading-relaxed max-w-3xl">
+              One <code class="font-mono">order_id</code> × many <code class="font-mono">order_items</code> rows <strong class="text-zinc-300">multiplies</strong> the result set. Summing or counting without thinking about <em>grain</em> inflates metrics.
+              Use <code class="font-mono">COUNT(DISTINCT o.order_id)</code> when the question is “how many orders?” (Lab 4). Aggregate to order grain before seller-level averages in the <strong class="text-zinc-300">challenge</strong>.
+            </p>
+          </div>
+          <p class="text-[10px] text-zinc-600 mt-4">Join reference diagram: C.L. Moffatt (2008); adapted for this session.</p>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="m6" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-cyan-400/90">Hands-on · Lab 1</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Join warmup on Olist (run each query)</h2>
+      <p class="text-sm text-zinc-400 mt-3 max-w-3xl leading-relaxed">
+        Tiny Athena queries on <code class="font-mono text-zinc-300">de_keystone_shared</code>—run them <strong class="font-medium text-zinc-300">one at a time</strong> (highlight one statement, execute). Maps to Module 5’s Venn diagrams before the business labs.
+      </p>
+      <ol class="mt-6 space-y-2 text-xs text-zinc-400 max-w-3xl list-decimal pl-5">
+        <li><strong class="text-zinc-300">INNER JOIN</strong> — orders that have at least one line item.</li>
+        <li><strong class="text-zinc-300">LEFT JOIN</strong> — all orders; review columns NULL when missing.</li>
+        <li><strong class="text-zinc-300">Anti-join pattern</strong> — <code class="font-mono">LEFT JOIN</code> + <code class="font-mono">review_id IS NULL</code>.</li>
+        <li><strong class="text-zinc-300">INNER chain</strong> — order → item → product (watch row multiply).</li>
+        <li><strong class="text-zinc-300">LEFT JOIN CSV</strong> — Parquet category + English translation.</li>
+      </ol>
+      <a href="Day_04_sql_queries.sql" class="inline-block mt-8 text-xs text-emerald-400 hover:text-emerald-300 underline">Full script: Day_04_sql_queries.sql</a>
+      <div class="sql-block mt-4 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="lab1-sql">Copy all (Lab 1)</button>
+        <pre id="lab1-sql" class="sql-text"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="m7" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-emerald-400/90">Hands-on · Lab 2</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">NULL handling with COALESCE &amp; CASE WHEN</h2>
+
+      <div class="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/10 p-5 lg:p-6 max-w-4xl">
+        <p class="text-xs font-semibold text-emerald-200 uppercase tracking-wide">Problem statement</p>
+        <p class="text-sm text-zinc-300 mt-3 leading-relaxed">
+          <strong class="text-zinc-200">Business context:</strong> The Olist logistics team wants a quick <em>delivery SLA</em> report for orders placed from 2017 onward. Operations needs one row per order with a human-readable label: early, late, on time, in transit, or canceled—not raw timestamps scattered across nullable columns.
+        </p>
+        <ul class="mt-4 space-y-2.5 text-xs text-zinc-400 leading-relaxed list-none">
+          <li><strong class="text-zinc-300">Source table:</strong> <code class="font-mono text-zinc-300">de_keystone_shared.olist_orders</code> (Parquet on S3: <code class="font-mono">olist/parquet/orders/</code>).</li>
+          <li><strong class="text-zinc-300">Scope filter:</strong> Only orders with <code class="font-mono">order_purchase_timestamp &gt;= TIMESTAMP '2017-01-01'</code>.</li>
+          <li><strong class="text-zinc-300">NULL rule:</strong> Many rows have NULL <code class="font-mono">order_delivered_customer_date</code> (still shipping or canceled). Build <code class="font-mono">effective_delivery_ts</code> using <code class="font-mono">COALESCE(actual, estimated)</code> so you still have a timestamp to reason about when actual delivery is missing.</li>
+          <li><strong class="text-zinc-300">Classification rule:</strong> Add column <code class="font-mono">delivery_sla</code> with <code class="font-mono">CASE WHEN</code>:
+            <ul class="mt-1.5 ml-4 list-disc text-zinc-500">
+              <li><code class="font-mono">canceled</code> / <code class="font-mono">unavailable</code> → <code class="font-mono">'In Transit / Canceled'</code></li>
+              <li>NULL actual delivery date → <code class="font-mono">'In Transit / Canceled'</code></li>
+              <li>Actual &lt; estimated → <code class="font-mono">'Delivered Early'</code></li>
+              <li>Actual &gt; estimated → <code class="font-mono">'Late'</code></li>
+              <li>Otherwise → <code class="font-mono">'On Time'</code></li>
+            </ul>
+          </li>
+          <li><strong class="text-zinc-300">Required output columns:</strong> <code class="font-mono">order_id</code>, <code class="font-mono">customer_id</code>, <code class="font-mono">order_status</code>, <code class="font-mono">order_purchase_timestamp</code>, <code class="font-mono">effective_delivery_ts</code>, <code class="font-mono">delivery_sla</code>.</li>
+          <li><strong class="text-zinc-300">Presentation:</strong> Order by purchase time ascending; return <strong class="text-zinc-300">20 rows</strong> (<code class="font-mono">LIMIT 20</code>) for inspection in Athena.</li>
+        </ul>
+        <p class="text-[11px] text-emerald-300/90 mt-4">Done when: query runs in your workgroup, NULLs do not break comparisons, and <code class="font-mono">delivery_sla</code> has no unexpected NULLs.</p>
+      </div>
+
+      <h3 class="text-sm font-semibold text-white mt-8 flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4 text-sky-400"></i> What these two expressions do (same lab)</h3>
+      <div class="grid md:grid-cols-2 gap-4 mt-4">
+        <article class="rounded-2xl border border-sky-500/25 bg-sky-950/10 p-5 text-sm">
+          <p class="text-xs font-semibold text-sky-200 uppercase tracking-wide">COALESCE</p>
+          <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Returns the <strong class="text-zinc-300">first non-NULL</strong> argument left to right.</p>
+          <pre class="mt-3 rounded-lg border border-zinc-800 bg-black/60 p-3 text-[11px] font-mono text-emerald-300/90 overflow-x-auto">COALESCE(
+  actual_delivery_ts,
+  estimated_delivery_ts
+) AS effective_delivery_ts</pre>
+          <p class="text-[11px] text-zinc-500 mt-2">If the customer delivery date is NULL, fall back to the estimated date so downstream logic still has a timestamp to compare.</p>
+        </article>
+        <article class="rounded-2xl border border-violet-500/25 bg-violet-950/10 p-5 text-sm">
+          <p class="text-xs font-semibold text-violet-200 uppercase tracking-wide">CASE WHEN</p>
+          <p class="text-xs text-zinc-400 mt-2 leading-relaxed">SQL’s <strong class="text-zinc-300">if / else</strong>—evaluates conditions top to bottom and returns the first match.</p>
+          <pre class="mt-3 rounded-lg border border-zinc-800 bg-black/60 p-3 text-[11px] font-mono text-emerald-300/90 overflow-x-auto">CASE
+  WHEN order_status IN ('canceled','unavailable')
+    THEN 'In Transit / Canceled'
+  WHEN delivered_ts &lt; estimated_ts
+    THEN 'Delivered Early'
+  WHEN delivered_ts &gt; estimated_ts
+    THEN 'Late'
+  ELSE 'On Time'
+END AS delivery_sla</pre>
+          <p class="text-[11px] text-zinc-500 mt-2">Handle status and NULLs <em>before</em> comparing dates—otherwise <code class="font-mono">NULL &lt; date</code> stays unknown.</p>
+        </article>
+      </div>
+
+      <div class="sql-block mt-6 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="lab2-sql">Copy SQL</button>
+        <pre id="lab2-sql" class="sql-text"></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Labs 3–4 -->
+  <section id="m8" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-indigo-400/90">Hands-on · Labs 3 &amp; 4</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Cross-format joins &amp; GROUP BY / HAVING</h2>
+
+      <h3 class="text-lg font-semibold text-white mt-8">Lab 3 — Parquet chain + CSV translation + anti-join</h3>
+
+      <div class="mt-4 rounded-2xl border border-sky-500/30 bg-sky-950/10 p-5 lg:p-6 max-w-4xl">
+        <p class="text-xs font-semibold text-sky-200 uppercase tracking-wide">Problem statement</p>
+        <p class="text-sm text-zinc-300 mt-3 leading-relaxed">
+          <strong class="text-zinc-200">Business context:</strong> Customer experience wants to prioritize <em>delivered orders that never received a review</em>—those customers were not asked (or did not respond), but the order completed. Merchandising also wants each row enriched with line-item counts, order GMV, and an <strong class="text-zinc-200">English</strong> product category name for outreach templates.
+        </p>
+        <ul class="mt-4 space-y-2.5 text-xs text-zinc-400 leading-relaxed list-none">
+          <li><strong class="text-zinc-300">Join path (inner chain):</strong>
+            <code class="font-mono">olist_orders</code> → <code class="font-mono">olist_order_items</code> → <code class="font-mono">olist_products</code> on the usual keys (<code class="font-mono">order_id</code>, <code class="font-mono">product_id</code>).</li>
+          <li><strong class="text-zinc-300">Cross-format join:</strong> <code class="font-mono">LEFT JOIN</code> <code class="font-mono">olist_category_translation</code> (CSV in S3) on <code class="font-mono">product_category_name</code> to populate <code class="font-mono">product_category_name_english</code>.</li>
+          <li><strong class="text-zinc-300">Reviews (anti-join):</strong> <code class="font-mono">LEFT JOIN olist_order_reviews</code> on <code class="font-mono">order_id</code>, then keep only rows where <code class="font-mono">review_id IS NULL</code>—delivered orders with <em>no</em> review record.</li>
+          <li><strong class="text-zinc-300">Row filter:</strong> <code class="font-mono">order_status = 'delivered'</code> (apply in <code class="font-mono">WHERE</code>, before grouping).</li>
+          <li><strong class="text-zinc-300">Aggregates per order:</strong> <code class="font-mono">COUNT(DISTINCT order_item_id)</code> as <code class="font-mono">item_count</code>; <code class="font-mono">ROUND(SUM(price), 2)</code> as <code class="font-mono">order_gmv</code>. Group by order, status, English category, and review fields so one row per order in the result.</li>
+          <li><strong class="text-zinc-300">Sort &amp; limit:</strong> Highest GMV first; show top <strong class="text-zinc-300">25</strong> orders for the CS queue.</li>
+        </ul>
+        <p class="text-[11px] text-sky-300/90 mt-4">Done when: every row is a <em>delivered</em> order with null review, category names read in English, and GMV matches the sum of line items for that order.</p>
+      </div>
+
+        <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="lab3-sql">Copy SQL</button>
+          <pre id="lab3-sql" class="sql-text"></pre>
+        </div>
+
+      <h3 class="text-lg font-semibold text-white mt-10">Lab 4 — Category revenue rollup with HAVING</h3>
+
+      <div class="mt-4 rounded-2xl border border-violet-500/30 bg-violet-950/10 p-5 lg:p-6 max-w-4xl">
+        <p class="text-xs font-semibold text-violet-200 uppercase tracking-wide">Problem statement</p>
+        <p class="text-sm text-zinc-300 mt-3 leading-relaxed">
+          <strong class="text-zinc-200">Business context:</strong> The category management team is planning a promotions budget. They need a rollup of <em>product categories</em> (English labels) ranked by revenue—but only categories that materially contributed to sales, not long-tail noise.
+        </p>
+        <ul class="mt-4 space-y-2.5 text-xs text-zinc-400 leading-relaxed list-none">
+          <li><strong class="text-zinc-300">Grain:</strong> One output row per <code class="font-mono">product_category_name_english</code> (after joining items → products → CSV translation, same chain as Lab 3).</li>
+          <li><strong class="text-zinc-300">Metrics to compute:</strong>
+            <ul class="mt-1.5 ml-4 list-disc text-zinc-500">
+              <li><code class="font-mono">COUNT(DISTINCT o.order_id)</code> — number of distinct orders (not line items).</li>
+              <li><code class="font-mono">SUM(oi.price)</code> — total item revenue in the category (rounded to 2 decimals).</li>
+              <li><code class="font-mono">AVG(oi.freight_value)</code> — average shipping cost per line item (rounded).</li>
+            </ul>
+          </li>
+          <li><strong class="text-zinc-300">Group filter:</strong> Use <code class="font-mono">HAVING SUM(oi.price) &gt; 10000</code> so only categories with more than <strong class="text-zinc-300">R$10,000</strong> total item revenue appear—this cannot go in <code class="font-mono">WHERE</code> because it is an aggregate.</li>
+          <li><strong class="text-zinc-300">Sort:</strong> Descending by total revenue so leadership sees top categories first.</li>
+          <li><strong class="text-zinc-300">No row limit:</strong> Return all categories that pass the <code class="font-mono">HAVING</code> threshold.</li>
+        </ul>
+        <p class="text-[11px] text-violet-300/90 mt-4">Done when: row count drops after <code class="font-mono">HAVING</code>, category names are English, and <code class="font-mono">distinct_orders</code> does not inflate because of the items join.</p>
+      </div>
+
+      <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="lab4-sql">Copy SQL</button>
+        <pre id="lab4-sql" class="sql-text"></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Challenge -->
+  <section id="m9" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-amber-400/90">Challenge &amp; recap</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Student challenge &amp; recap</h2>
+      <div class="rounded-2xl border border-amber-500/35 bg-amber-950/15 p-6 lg:p-7 mt-6 max-w-4xl">
+        <p class="text-xs font-semibold text-amber-200 uppercase tracking-wide">Problem statement · 10-minute challenge</p>
+        <p class="text-sm text-zinc-300 mt-3 leading-relaxed">
+          <strong class="text-zinc-200">Business context:</strong> Marketplace quality is auditing <em>sellers</em> who fulfill a high volume of orders but still receive poor customer feedback. The team wants to intervene with training or delisting— but seller-level metrics must be computed at the correct grain so multi-item orders and multi-review rows do not distort averages.
+        </p>
+        <ul class="mt-4 space-y-2.5 text-xs text-zinc-400 leading-relaxed list-none">
+          <li><strong class="text-zinc-300">Population:</strong> Only orders with <code class="font-mono">order_status = 'delivered'</code>.</li>
+          <li><strong class="text-zinc-300">Tables:</strong> <code class="font-mono">olist_order_items</code> (for <code class="font-mono">seller_id</code>), <code class="font-mono">olist_orders</code>, <code class="font-mono">olist_order_reviews</code> (<code class="font-mono">review_score</code>).</li>
+          <li><strong class="text-zinc-300">Grain discipline:</strong> First compute an <strong class="text-zinc-200">average review score per (seller_id, order_id)</strong> when a review exists; then roll up to seller level. (Joining items directly to reviews without an order-level step double-counts lines.)</li>
+          <li><strong class="text-zinc-300">Seller filters (after aggregation):</strong>
+            <ul class="mt-1.5 ml-4 list-disc text-zinc-500">
+              <li>At least <strong class="text-zinc-300">20 distinct delivered orders</strong>: <code class="font-mono">COUNT(DISTINCT order_id) &gt;= 20</code></li>
+              <li>Average review score <strong class="text-zinc-300">strictly below 3.5</strong> across that seller’s order-level averages</li>
+            </ul>
+          </li>
+          <li><strong class="text-zinc-300">Output columns:</strong> <code class="font-mono">seller_id</code>, <code class="font-mono">delivered_orders</code>, <code class="font-mono">avg_review_score</code> (rounded).</li>
+          <li><strong class="text-zinc-300">Ranking:</strong> Return the <strong class="text-zinc-300">top 5 sellers</strong> with the <em>lowest</em> average review scores; break ties by higher delivered order volume.</li>
+        </ul>
+        <p class="text-[11px] text-amber-200/90 mt-4">Try on your own first; open <strong class="text-amber-100">Reveal solution</strong> only after you have a query or get stuck.</p>
+      </div>
+
+      <details class="mt-8 rounded-2xl border border-zinc-700 bg-zinc-900/60 open:border-emerald-500/30">
+        <summary class="px-5 py-4 text-sm font-semibold text-emerald-300 hover:text-emerald-200">Reveal solution &amp; walkthrough</summary>
+        <div class="px-5 pb-5 border-t border-zinc-800 pt-4">
+          <p class="text-xs text-zinc-400 mb-4"><strong class="text-rose-200">Pitfall:</strong> Joining items × reviews without grouping by order first double-counts lines. Aggregate to <em>order grain</em>, then apply <code class="font-mono">COUNT(DISTINCT order_id)</code>.</p>
+          <div class="sql-block rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+            <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="challenge-sql">Copy SQL</button>
+            <pre id="challenge-sql" class="sql-text"></pre>
+          </div>
+          <ul class="mt-6 space-y-2 text-xs text-zinc-400 list-disc pl-5">
+            <li>Day 5: window functions (<code class="font-mono">ROW_NUMBER</code>, <code class="font-mono">LAG</code>) on the same Olist / NYC datasets.</li>
+            <li>Logical execution order drives where filters and aggregates belong.</li>
+            <li>Lakehouse joins routinely mix <strong class="text-zinc-300">Parquet facts</strong> and <strong class="text-zinc-300">CSV dimensions</strong>—catalog both in Glue.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+  </section>
+  <section id="interview" class="scroll-mt-20 border-t border-zinc-800 bg-zinc-900/30" data-module>
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <h2 class="text-lg font-semibold text-white">Interview practice</h2>
+      <p class="text-sm text-zinc-500 mt-1">Day 4 focus: SQL execution order, joins, grain, and NULL handling. Answer in under 90 seconds.</p>
+      <article class="interview-card mt-4 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <p class="font-medium text-emerald-400">E · Explain the difference between WHERE and HAVING.</p>
+        <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
+          <summary>Reveal strong answer</summary>
+          <p class="text-zinc-400 text-xs leading-relaxed"><code class="font-mono">WHERE</code> filters <strong class="text-zinc-300">individual rows</strong> before <code class="font-mono">GROUP BY</code>—only non-aggregated columns allowed. <code class="font-mono">HAVING</code> filters <strong class="text-zinc-300">groups</strong> after aggregates exist (<code class="font-mono">SUM</code>, <code class="font-mono">COUNT</code>, <code class="font-mono">AVG</code>). <code class="font-mono">WHERE SUM(amount) &gt; 100</code> is invalid; that condition belongs in <code class="font-mono">HAVING</code>. Order: <code class="font-mono">FROM</code> → joins → <code class="font-mono">WHERE</code> → <code class="font-mono">GROUP BY</code> → <code class="font-mono">HAVING</code> → <code class="font-mono">SELECT</code> → <code class="font-mono">ORDER BY</code>.</p>
+        </details>
+      </article>
+      <article class="interview-card mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <p class="font-medium text-amber-400">M · Second-highest salary (no window functions)</p>
+        <div class="interview-q mt-3 space-y-2 text-xs text-zinc-400 leading-relaxed">
+          <p>Table <code class="font-mono">employees(emp_id, name, salary)</code>:</p>
+          <div class="overflow-x-auto rounded-lg border border-zinc-800">
+            <table class="w-full text-xs font-mono text-left text-zinc-300">
+              <thead class="bg-zinc-900 text-zinc-500"><tr><th class="p-2">emp_id</th><th class="p-2">name</th><th class="p-2">salary</th></tr></thead>
+              <tbody>
+                <tr class="border-t border-zinc-800"><td class="p-2">1</td><td class="p-2">Alice</td><td class="p-2">90000</td></tr>
+                <tr class="border-t border-zinc-800"><td class="p-2">2</td><td class="p-2">Bob</td><td class="p-2">120000</td></tr>
+                <tr class="border-t border-zinc-800"><td class="p-2">3</td><td class="p-2">Carol</td><td class="p-2">120000</td></tr>
+                <tr class="border-t border-zinc-800"><td class="p-2">4</td><td class="p-2">Dan</td><td class="p-2">75000</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Write SQL to return the <strong class="text-zinc-300">second-highest salary value</strong> (here: <strong class="text-zinc-300">90000</strong>). Do not use <code class="font-mono">ROW_NUMBER</code>, <code class="font-mono">RANK</code>, or <code class="font-mono">DENSE_RANK</code>.</p>
+        </div>
+        <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
+          <summary>Reveal strong answer</summary>
+          <pre class="rounded-lg border border-zinc-800 bg-black/50 p-3 text-[11px] font-mono text-emerald-300/90 overflow-x-auto">SELECT MAX(salary) AS second_highest_salary
+FROM employees
+WHERE salary &lt; (SELECT MAX(salary) FROM employees);</pre>
+          <p class="mt-2 text-xs text-zinc-500">Nested <code class="font-mono">MAX</code> finds the top distinct level below the maximum (handles ties at the top). Alternative: <code class="font-mono">ORDER BY salary DESC OFFSET 1 LIMIT 1</code>—returns one row at the second position, not always the same as “second distinct salary” when ties exist.</p>
+        </details>
+      </article>
+      <article class="interview-card mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <p class="font-medium text-rose-400">H1 · Why can NOT IN return no rows when NULL is in the list?</p>
+        <div class="interview-q mt-3 text-xs text-zinc-400 leading-relaxed space-y-2">
+          <p><code class="font-mono">departments_active(dept_id)</code> contains <code class="font-mono">10, 20, NULL</code>.</p>
+          <p>You filter <code class="font-mono">employees</code> with:</p>
+          <p class="font-mono text-zinc-300 text-[11px]">WHERE dept_id NOT IN (SELECT dept_id FROM departments_active)</p>
+          <p>Why might you get <strong class="text-zinc-300">zero rows</strong> even when employees exist whose <code class="font-mono">dept_id</code> is neither 10 nor 20?</p>
+        </div>
+        <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
+          <summary>Reveal strong answer</summary>
+          <p class="text-zinc-400 text-xs leading-relaxed"><strong class="text-zinc-300">What actually happens:</strong> <code class="font-mono">col NOT IN (v1, v2, …)</code> means <code class="font-mono">col &lt;&gt; v1 AND col &lt;&gt; v2 AND …</code> for every value in the list (literals or subquery rows). That is standard SQL three-valued logic—same in Athena, PostgreSQL, SQL Server, Oracle, and MySQL; not table-format or engine-specific.</p>
+          <p class="text-zinc-400 text-xs leading-relaxed mt-2">If the list is <code class="font-mono">(10, 20, NULL)</code> and <code class="font-mono">dept_id = 99</code>, SQL evaluates <code class="font-mono">99 &lt;&gt; 10 AND 99 &lt;&gt; 20 AND 99 &lt;&gt; NULL</code>. The first two parts are true, but <code class="font-mono">99 &lt;&gt; NULL</code> is <strong class="text-zinc-300">UNKNOWN</strong> (not TRUE—comparisons to <code class="font-mono">NULL</code> never yield TRUE/FALSE). With <code class="font-mono">AND</code>, if any part is UNKNOWN, the whole condition is not TRUE, so <code class="font-mono">WHERE</code> drops the row. One NULL in the subquery can therefore empty the result for <em>every</em> employee, even those not in 10 or 20.</p>
+          <p class="text-zinc-400 text-xs leading-relaxed mt-2"><strong class="text-zinc-300">Fixes:</strong> <code class="font-mono">WHERE NOT EXISTS (SELECT 1 FROM departments_active d WHERE d.dept_id = e.dept_id)</code>, or <code class="font-mono">WHERE dept_id NOT IN (SELECT dept_id FROM departments_active WHERE dept_id IS NOT NULL)</code>.</p>
+        </details>
+      </article>
+      <article class="interview-card mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <p class="font-medium text-rose-400">H2 · Earnings above your department average</p>
+        <div class="interview-q mt-3 text-xs text-zinc-400 leading-relaxed">
+          <p><code class="font-mono">employees(emp_id, name, dept_id, salary)</code>—list employees who earn <strong class="text-zinc-300">strictly more than the average salary in their own department</strong> (not the company-wide average).</p>
+        </div>
+        <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
+          <summary>Reveal strong answer</summary>
+          <pre class="rounded-lg border border-zinc-800 bg-black/50 p-3 text-[11px] font-mono text-emerald-300/90 overflow-x-auto">SELECT e.emp_id, e.name, e.dept_id, e.salary
+FROM employees e
+WHERE e.salary &gt; (
+    SELECT AVG(e2.salary)
+    FROM employees e2
+    WHERE e2.dept_id = e.dept_id
+);</pre>
+          <p class="mt-2 text-xs text-zinc-500">Inner query is <strong class="text-zinc-400">correlated</strong>—re-evaluated per outer row. A single global <code class="font-mono">AVG(salary)</code> answers a different question.</p>
+        </details>
+      </article>
+      <article class="interview-card mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <p class="font-medium text-rose-400">H3 · Customers with repeat orders on different days</p>
+        <div class="interview-q mt-3 text-xs text-zinc-400 leading-relaxed">
+          <p><code class="font-mono">orders(order_id, customer_id, order_date)</code>—find <code class="font-mono">customer_id</code> values who placed <strong class="text-zinc-300">at least two orders on different calendar dates</strong>.</p>
+        </div>
+        <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
+          <summary>Reveal strong answer</summary>
+          <pre class="rounded-lg border border-zinc-800 bg-black/50 p-3 text-[11px] font-mono text-emerald-300/90 overflow-x-auto">SELECT DISTINCT a.customer_id
+FROM orders a
+INNER JOIN orders b
+    ON a.customer_id = b.customer_id
+   AND a.order_id &lt; b.order_id
+WHERE a.order_date &lt;&gt; b.order_date;</pre>
+          <p class="mt-2 text-xs text-zinc-500"><code class="font-mono">order_id</code> ordering picks one pair per two orders once; date inequality enforces different days. <code class="font-mono">HAVING COUNT(*) &gt; 1</code> alone does not require different dates.</p>
+        </details>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="border-t border-zinc-800 py-8 text-center text-xs text-zinc-600">
+  Week 1 Day 4 · SQL Refresher lab · <a href="Day_04_sql_queries.sql" class="text-emerald-400 hover:text-emerald-300 font-medium">Day_04_sql_queries.sql</a> ·
+  <a href="index.html" class="text-emerald-400 hover:text-emerald-300 font-medium">← Back to Week 1 index</a>
+</footer>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+(function () {
+  const SQL = {
+    lab1: `-- Lab 1 — Join warmup (run ONE query at a time in Athena)
+
+-- (1) INNER JOIN — orders with at least one line item
+SELECT o.order_id, o.order_status, oi.product_id, oi.price
+FROM de_keystone_shared.olist_orders o
+INNER JOIN de_keystone_shared.olist_order_items oi
+    ON o.order_id = oi.order_id
+LIMIT 5;
+
+-- (2) LEFT JOIN — delivered orders, review columns NULL when missing
+SELECT o.order_id, o.order_status, r.review_id, r.review_score
+FROM de_keystone_shared.olist_orders o
+LEFT JOIN de_keystone_shared.olist_order_reviews r
+    ON o.order_id = r.order_id
+WHERE o.order_status = 'delivered'
+LIMIT 5;
+
+-- (3) Anti-join pattern — delivered, no review row
+SELECT o.order_id, o.order_status
+FROM de_keystone_shared.olist_orders o
+LEFT JOIN de_keystone_shared.olist_order_reviews r
+    ON o.order_id = r.order_id
+WHERE o.order_status = 'delivered'
+  AND r.review_id IS NULL
+LIMIT 5;
+
+-- (4) INNER chain — order → item → product (row multiply)
+SELECT o.order_id, oi.order_item_id, p.product_category_name
+FROM de_keystone_shared.olist_orders o
+INNER JOIN de_keystone_shared.olist_order_items oi ON o.order_id = oi.order_id
+INNER JOIN de_keystone_shared.olist_products p ON oi.product_id = p.product_id
+LIMIT 8;
+
+-- (5) LEFT JOIN — Parquet category + CSV English label
+SELECT p.product_category_name, cat.product_category_name_english
+FROM de_keystone_shared.olist_products p
+LEFT JOIN de_keystone_shared.olist_category_translation cat
+    ON p.product_category_name = cat.product_category_name
+LIMIT 5;`,
+    lab2: `SELECT
+    order_id,
+    customer_id,
+    order_status,
+    order_purchase_timestamp,
+    -- Fallback timestamp: use actual delivery, else estimated (still NULL if both missing)
+    COALESCE(
+        order_delivered_customer_date,
+        order_estimated_delivery_date
+    ) AS effective_delivery_ts,
+    -- Label bucket for ops — evaluate status/NULL before comparing dates
+    CASE
+        WHEN order_status IN ('canceled', 'unavailable') THEN 'In Transit / Canceled'
+        WHEN order_delivered_customer_date IS NULL THEN 'In Transit / Canceled'
+        WHEN order_delivered_customer_date < order_estimated_delivery_date THEN 'Delivered Early'
+        WHEN order_delivered_customer_date > order_estimated_delivery_date THEN 'Late'
+        ELSE 'On Time'
+    END AS delivery_sla
+FROM de_keystone_shared.olist_orders
+WHERE order_purchase_timestamp >= TIMESTAMP '2017-01-01'  -- row filter (pre-aggregate)
+ORDER BY order_purchase_timestamp
+-- sample for inspection, not full report (LIMIT below)
+LIMIT 20;`,
+    lab3: `SELECT
+    o.order_id,
+    o.order_status,
+    COUNT(DISTINCT oi.order_item_id) AS item_count,   -- line items per order (not COUNT(*))
+    ROUND(SUM(oi.price), 2) AS order_gmv,              -- revenue at order grain after GROUP BY
+    cat.product_category_name_english,                 -- from CSV dimension (may be NULL)
+    r.review_score                                     -- always NULL here, in GROUP BY for SQL rules
+FROM de_keystone_shared.olist_orders o
+INNER JOIN de_keystone_shared.olist_order_items oi    -- must have line items
+    ON o.order_id = oi.order_id
+INNER JOIN de_keystone_shared.olist_products p
+    ON oi.product_id = p.product_id
+LEFT JOIN de_keystone_shared.olist_category_translation cat  -- Parquet → CSV
+    ON p.product_category_name = cat.product_category_name
+LEFT JOIN de_keystone_shared.olist_order_reviews r           -- keep all orders
+    ON o.order_id = r.order_id
+WHERE o.order_status = 'delivered'                  -- row filter before grouping
+  AND r.review_id IS NULL                          -- anti-join: no review row on the right
+GROUP BY
+    o.order_id,
+    o.order_status,
+    cat.product_category_name_english,
+    r.review_score
+ORDER BY order_gmv DESC                            -- highest-value outreach queue first
+LIMIT 25;`,
+    lab4: `SELECT
+    cat.product_category_name_english AS category,     -- grain: one row per English category
+    COUNT(DISTINCT o.order_id) AS distinct_orders,   -- orders, not multiplied line items
+    ROUND(SUM(oi.price), 2) AS total_revenue,
+    ROUND(AVG(oi.freight_value), 2) AS avg_freight    -- avg per line item in category
+FROM de_keystone_shared.olist_orders o
+INNER JOIN de_keystone_shared.olist_order_items oi    -- same join chain as Lab 3
+    ON o.order_id = oi.order_id
+INNER JOIN de_keystone_shared.olist_products p
+    ON oi.product_id = p.product_id
+LEFT JOIN de_keystone_shared.olist_category_translation cat
+    ON p.product_category_name = cat.product_category_name
+GROUP BY cat.product_category_name_english           -- collapse to category buckets
+HAVING SUM(oi.price) > 10000                         -- filter groups (cannot go in WHERE)
+ORDER BY total_revenue DESC;`,
+    challenge: `WITH seller_order_stats AS (
+    SELECT
+        oi.seller_id,
+        o.order_id,
+        AVG(r.review_score) AS order_avg_review
+    FROM de_keystone_shared.olist_order_items oi
+    INNER JOIN de_keystone_shared.olist_orders o
+        ON oi.order_id = o.order_id
+    LEFT JOIN de_keystone_shared.olist_order_reviews r
+        ON o.order_id = r.order_id
+    WHERE o.order_status = 'delivered'
+    GROUP BY oi.seller_id, o.order_id
+),
+seller_agg AS (
+    SELECT
+        seller_id,
+        COUNT(DISTINCT order_id) AS delivered_orders,
+        AVG(order_avg_review) AS avg_review_score
+    FROM seller_order_stats
+    GROUP BY seller_id
+    HAVING COUNT(DISTINCT order_id) >= 20
+       AND AVG(order_avg_review) < 3.5
+)
+SELECT seller_id, delivered_orders, ROUND(avg_review_score, 2) AS avg_review_score
+FROM seller_agg
+ORDER BY avg_review_score ASC, delivered_orders DESC
+LIMIT 5;`
+  };
+
+  const KEYWORDS = /\b(SELECT|FROM|WHERE|JOIN|LEFT|INNER|ON|GROUP|BY|HAVING|ORDER|LIMIT|CASE|WHEN|THEN|ELSE|END|AND|OR|AS|IN|IS|NULL|NOT|DISTINCT|COUNT|SUM|AVG|ROUND|COALESCE|TRY|CAST|TIMESTAMP|WITH|DESC|ASC|ALL)\b/gi;
+
+  function highlightSql(raw) {
+    const kw = raw.replace(KEYWORDS, (m) => '<span class="kw">' + m.toUpperCase() + '</span>');
+    return kw.replace(/(--[^\n]*)/g, '<span class="cmt">$1</span>');
+  }
+
+  function fill(id, raw) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.dataset.sqlRaw = raw;
+    el.innerHTML = highlightSql(raw);
+  }
+
+  fill('lab1-sql', SQL.lab1);
+  fill('lab2-sql', SQL.lab2);
+  fill('lab3-sql', SQL.lab3);
+  fill('lab4-sql', SQL.lab4);
+  fill('challenge-sql', SQL.challenge);
+
+  document.querySelectorAll('.sql-copy').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const from = btn.getAttribute('data-copy-from');
+      const el = document.getElementById(from);
+      const text = el ? (el.dataset.sqlRaw || el.textContent) : '';
+      navigator.clipboard.writeText(text).then(() => {
+        const prev = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = prev; }, 1400);
+      });
+    });
+  });
+
+  const explored = new Set();
+  const CIRC = 94.2;
+  const n = document.querySelectorAll('[data-module]').length;
+  function bump(id) {
+    if (id) explored.add(id);
+    document.getElementById('progress-pct').textContent = String(Math.round((explored.size / n) * 100));
+    document.getElementById('progress-ring').style.strokeDashoffset = String(CIRC - (CIRC * explored.size / n));
+  }
+  document.querySelectorAll('[data-module]').forEach((s) => {
+    new IntersectionObserver((e) => e.forEach((x) => { if (x.isIntersecting) bump(s.id); }), { threshold: 0.25 }).observe(s);
+  });
+
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+</body>
+</html>
