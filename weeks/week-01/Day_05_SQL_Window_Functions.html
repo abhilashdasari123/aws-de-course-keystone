@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day 5 — Window Functions &amp; CTE Patterns | KeystoneEduTech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-feature-settings: 'ss01' on; }
+    .glass { background: rgba(24, 27, 34, 0.78); backdrop-filter: blur(12px); }
+    .progress-ring { transition: stroke-dashoffset 0.4s ease; }
+    .sql-block { position: relative; }
+    .sql-copy {
+      position: absolute; top: 0.5rem; right: 0.5rem; z-index: 2;
+    }
+    pre.sql-text {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 0.72rem;
+      line-height: 1.55;
+    }
+    .sql-text .kw { color: #c4b5fd; font-weight: 600; }
+    .sql-text .kw2 { color: #67e8f9; font-weight: 500; }
+    .sql-text .fn { color: #7dd3fc; }
+    .sql-text .str { color: #86efac; }
+    .sql-text .cmt { color: #71717a; font-style: italic; }
+    .sql-text .num { color: #fcd34d; }
+    details summary { cursor: pointer; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    .interview-card .interview-q { white-space: normal; }
+    details.interview-answer > summary {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.75rem; font-weight: 600; color: rgb(161 161 170);
+    }
+    details.interview-answer > summary:hover { color: rgb(228 228 231); }
+    details.interview-answer[open] > summary { color: rgb(52 211 153); margin-bottom: 0.75rem; }
+    .step-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 1.75rem; height: 1.75rem; border-radius: 0.5rem;
+      background: rgba(56, 189, 248, 0.15); border: 1px solid rgb(56 189 248 / 0.45);
+      color: rgb(186 230 253); font-size: 0.75rem; font-weight: 600; margin-right: 0.5rem;
+    }
+    .thought-card { border-color: rgb(251 191 36 / 0.35); background: rgb(41 37 20 / 0.35); }
+  </style>
+</head>
+<body class="bg-slate-950 text-zinc-100 antialiased min-h-screen">
+
+<header class="sticky top-0 z-50 border-b border-zinc-800 glass">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Primary">
+    <div class="flex flex-wrap items-center justify-between gap-3 py-3">
+      <div class="flex items-center gap-3 flex-wrap">
+        <a href="index.html" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-emerald-500/50 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25 text-sm font-semibold shrink-0 transition-colors" title="Return to Week 1 day list">
+          <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i>
+          Week 1 index
+        </a>
+        <a href="#top" class="flex items-center gap-2 font-semibold text-white tracking-tight">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+            <i data-lucide="layout-template" class="w-4 h-4"></i>
+          </span>
+          KeystoneEduTech
+        </a>
+      </div>
+      <div class="hidden lg:flex flex-wrap items-center gap-1 text-sm">
+        <a href="#setup" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Setup</a>
+        <a href="#m0" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Why windows</a>
+        <a href="#m1" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Lab 1</a>
+        <a href="#m2" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">LAG / LEAD</a>
+        <a href="#m3" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Lab 2</a>
+        <a href="#m4" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">CTEs</a>
+        <a href="#m5" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Lab 3</a>
+        <a href="#m6" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Challenge</a>
+        <a href="#interview" class="px-2.5 py-1.5 rounded-md text-emerald-300/90 hover:text-white hover:bg-emerald-500/10">Interview</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-xs text-zinc-500">
+          <svg class="w-9 h-9 -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="#27272a" stroke-width="3"/>
+            <circle id="progress-ring" class="progress-ring" cx="18" cy="18" r="15" fill="none" stroke="#34d399" stroke-width="3" stroke-linecap="round" stroke-dasharray="94.2" stroke-dashoffset="94.2"/>
+          </svg>
+          <span><span id="progress-pct" class="text-emerald-400 font-mono font-medium">0</span>% explored</span>
+        </div>
+        <a href="Day_04_SQL_Refresher.html" class="text-xs text-zinc-500 hover:text-zinc-300">Prev: Day 4</a>
+        <a href="Day_06_SQL_CTEs_and_Optimisation.html" class="text-xs text-zinc-500 hover:text-emerald-300">Next: Day 6</a>
+        <a href="../../index.html" class="text-xs text-zinc-500 hover:text-emerald-300 underline-offset-2 hover:underline">Course home</a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="relative border-b border-zinc-800 overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(167,139,250,0.14),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(56,189,248,0.12),transparent_50%)]"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-20 relative">
+      <p class="text-emerald-400 text-sm font-medium tracking-wide uppercase mb-3">Week 1 · Day 5 · Concept + Hands-On Lab</p>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white max-w-4xl">
+        Window Functions &amp; Readable CTE Patterns
+      </h1>
+      <p class="text-xs text-zinc-500 mt-2">Section 2: SQL for Data Engineers (2 of 5)</p>
+      <p class="mt-4 text-lg text-zinc-400 max-w-3xl leading-relaxed">
+        Rank and compare rows <strong class="font-medium text-zinc-300">without collapsing them</strong>, step through time with <code class="font-mono text-violet-300/90">LAG</code>/<code class="font-mono text-violet-300/90">LEAD</code>, and chain logic with modular <code class="font-mono text-violet-300/90">WITH</code> steps—on NYC taxi Parquet + borough lookup CSV + HR hierarchy in <code class="font-mono text-emerald-300/90">de_keystone_shared</code>.
+      </p>
+      <a href="#setup" class="inline-flex items-center gap-2 mt-10 px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm transition-colors">
+        Athena setup check <i data-lucide="arrow-down" class="w-4 h-4"></i>
+      </a>
+    </div>
+  </section>
+
+  <section id="setup" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-sky-400/90">Before the lab</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Recap Day 4 + verify shared tables</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        Day 4’s execution order still matters: <code class="font-mono text-zinc-300">WHERE</code> runs <em>before</em> window functions in <code class="font-mono text-zinc-300">SELECT</code>, so you cannot write <code class="font-mono">WHERE ROW_NUMBER() … = 1</code> in the same query block—filter in an outer CTE instead.
+      </p>
+      <ul class="mt-6 space-y-3 text-sm text-zinc-300 max-w-3xl list-none">
+        <li class="flex gap-3 items-start"><span class="step-num">1</span><span><strong class="text-zinc-200">Athena</strong> → your workgroup · database <code class="font-mono text-emerald-300/90">de_keystone_shared</code>.</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">2</span><span>Tables for today: <code class="font-mono">nyc_yellow_trips</code> (partitioned Parquet <code class="font-mono">year</code>/<code class="font-mono">month</code>), <code class="font-mono">nyc_taxi_zone_lookup</code> (borough by <code class="font-mono">LocationID</code>), <code class="font-mono">employees_hierarchy</code> (if missing, your catalog may register the same file as <code class="font-mono">hr_employees</code>—swap the name in Lab 3 only).</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">3</span><span>Keep <a href="Day_05_sql_queries.sql" class="text-sky-300 hover:text-sky-200 underline">Day_05_sql_queries.sql</a> open; copy one statement at a time (no extra statements in the editor).</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="m0" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-violet-400/90">Module 0</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Why window functions? <code class="font-mono text-base text-zinc-400">GROUP BY</code> vs <code class="font-mono text-base text-zinc-400">OVER</code></h2>
+      <figure class="mt-8 rounded-2xl border border-zinc-800 overflow-hidden bg-zinc-900/40">
+        <img src="assets/day05_window_vs_groupby.png" width="1200" height="675" alt="Side by side: GROUP BY collapses rows to borough totals; OVER keeps every trip row and adds borough_total column" class="w-full h-auto block" loading="lazy">
+      </figure>
+      <figure class="mt-6 rounded-2xl border border-zinc-800 overflow-hidden bg-zinc-900/40">
+        <img src="assets/day05_window_ranking_table.png" width="1200" height="900" alt="Six-row sample showing borough_total SUM OVER, ROW_NUMBER, RANK, and DENSE_RANK with tied fares" class="w-full h-auto block" loading="lazy">
+        <figcaption class="px-4 py-3 text-[11px] text-zinc-500 border-t border-zinc-800">One glance at ties: Manhattan fares $50 / $50 / $40 → ranks 1,1,3 vs 1,1,2.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="m1" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-cyan-400/90">Hands-on · Lab 1</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Top 2 highest-fare trips per borough</h2>
+      <div class="mt-6 rounded-2xl border border-cyan-500/30 bg-cyan-950/10 p-5 lg:p-6 max-w-4xl">
+        <p class="text-xs font-semibold text-cyan-200 uppercase tracking-wide">Problem statement</p>
+        <p class="text-sm text-zinc-300 mt-3">For <strong class="text-zinc-200">January 2025</strong>, find the <strong class="text-zinc-200">top 2 highest <code class="font-mono">fare_amount</code></strong> yellow taxi trips in each pickup borough: Manhattan, Queens, Brooklyn. Show borough, zone, fare, distance, pickup time, and rank.</p>
+      </div>
+      <div class="mt-6 rounded-2xl border thought-card p-5 lg:p-6 max-w-4xl">
+        <p class="text-xs font-semibold text-amber-200 uppercase tracking-wide">Thought process (plain English → SQL)</p>
+        <ol class="mt-4 space-y-3 text-xs text-zinc-400 list-none">
+          <li><span class="step-num">1</span><strong class="text-zinc-300">Grain:</strong> raw table = one row per <em>trip</em>; after ranking we still want trip-level rows, not daily totals.</li>
+          <li><span class="step-num">2</span><strong class="text-zinc-300">Pre-aggregate?</strong> No—ranking needs each trip. Join lookup first in CTE <code class="font-mono">trip_with_borough</code> so every row has <code class="font-mono">Borough</code>.</li>
+          <li><span class="step-num">3</span><strong class="text-zinc-300">PARTITION BY</strong> <code class="font-mono">Borough</code> (reset leaderboard per borough) · <strong class="text-zinc-300">ORDER BY</strong> <code class="font-mono">fare_amount DESC</code>.</li>
+          <li><span class="step-num">4</span><strong class="text-zinc-300">Filter:</strong> <code class="font-mono">WHERE fare_rnk &lt;= 2</code> in the <em>outer</em> query—window runs in <code class="font-mono">SELECT</code>, filter after.</li>
+        </ol>
+      </div>
+      <div class="sql-block mt-6 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="lab1-sql">Copy SQL</button>
+        <pre id="lab1-sql" class="sql-text"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="m2" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-sky-400/90">Module 2</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Time-series windows: <code class="font-mono">LAG</code>, <code class="font-mono">LEAD</code>, rolling frames</h2>
+      <figure class="mt-6 rounded-2xl border border-zinc-800 overflow-hidden">
+        <img src="assets/day05_lag_lead_frames.png" alt="Daily revenue table with LAG previous day, LEAD next day, and 3-day rolling average frame" class="w-full h-auto block" loading="lazy">
+      </figure>
+      <p class="text-sm text-zinc-400 mt-6 max-w-3xl leading-relaxed">
+        <strong class="text-zinc-300">Two-step CTE pattern:</strong> (1) <code class="font-mono">GROUP BY trip_day</code> to daily revenue grain, (2) apply <code class="font-mono">LAG</code>/<code class="font-mono">LEAD</code> on that CTE—never mix raw trips and day-level windows in one pass.
+      </p>
+      <p class="text-xs text-emerald-300/90 mt-3 max-w-3xl">Full runnable Athena query (Manhattan · Jan 1–10 · 2025):</p>
+      <div class="sql-block mt-4 rounded-xl border border-emerald-500/30 bg-black/80 p-4 pr-24 relative">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="laglead-sql">Copy SQL</button>
+        <pre id="laglead-sql" class="sql-text"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="m3" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-emerald-400/90">Hands-on · Lab 2</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Day-over-day Manhattan revenue &amp; 3-day average</h2>
+      <div class="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/10 p-5 max-w-4xl">
+        <p class="text-xs font-semibold text-emerald-200 uppercase">Problem statement</p>
+        <p class="text-sm text-zinc-300 mt-3">First 10 days of Jan 2025, Manhattan only: daily total <code class="font-mono">fare_amount</code>, yesterday’s revenue (<code class="font-mono">LAG</code>), dollar change vs yesterday, and <strong class="text-zinc-200">3-day rolling average</strong> (<code class="font-mono">ROWS BETWEEN 2 PRECEDING AND CURRENT ROW</code>).</p>
+      </div>
+      <div class="mt-6 rounded-2xl border thought-card p-5 max-w-4xl">
+        <p class="text-xs font-semibold text-amber-200 uppercase">Thought process</p>
+        <ol class="mt-4 space-y-3 text-xs text-zinc-400 list-none">
+          <li><span class="step-num">1</span>Grain target: <strong class="text-zinc-300">one row per calendar day</strong> in Manhattan.</li>
+          <li><span class="step-num">2</span>CTE <code class="font-mono">daily_manhattan</code> aggregates trips → <code class="font-mono">SUM(fare_amount)</code> by <code class="font-mono">DATE(tpep_pickup_datetime)</code>.</li>
+          <li><span class="step-num">3</span><code class="font-mono">LAG(... ORDER BY trip_day)</code> walks backward in time; frame clause defines rolling <code class="font-mono">AVG</code>.</li>
+          <li><span class="step-num">4</span>No <code class="font-mono">WHERE</code> on window results—select from the windowed CTE (already at correct grain).</li>
+        </ol>
+      </div>
+      <div class="sql-block mt-6 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="lab2-sql">Copy SQL</button>
+        <pre id="lab2-sql" class="sql-text"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="m4" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-indigo-400/90">Module 4</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Modular CTEs &amp; recursive org walks</h2>
+      <figure class="mt-6 rounded-2xl border border-zinc-800 overflow-hidden">
+        <img src="assets/day05_standard_cte_pipeline.png" alt="Assembly line diagram: step_1 filter, step_2 join, step_3 aggregate as chained WITH clauses" class="w-full h-auto block" loading="lazy">
+      </figure>
+      <figure class="mt-6 rounded-2xl border border-zinc-800 overflow-hidden">
+        <img src="assets/day05_recursive_cte_loop.png" alt="Recursive CTE 3-pass trace: anchor seed, join iterations, empty stop" class="w-full h-auto block" loading="lazy">
+      </figure>
+      <p class="text-sm text-zinc-400 mt-6 max-w-3xl">Labs 1–2 already use modular <code class="font-mono">WITH</code>. Lab 3 adds <code class="font-mono">WITH RECURSIVE</code>: anchor rows (no manager) ∪ join employees whose <code class="font-mono">manager_id</code> matches the working set—stop when a pass returns zero rows (always add <code class="font-mono">lvl &lt; 10</code> in Athena).</p>
+    </div>
+  </section>
+
+  <section id="m5" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-violet-400/90">Hands-on · Lab 3</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Org chart level &amp; reporting path</h2>
+      <div class="mt-6 rounded-2xl border border-violet-500/30 bg-violet-950/10 p-5 max-w-4xl">
+        <p class="text-sm text-zinc-300">From the top of the org (<code class="font-mono">manager_id IS NULL</code>), list every employee with level <code class="font-mono">1, 2, 3…</code> and a string path like <code class="font-mono">Anita Rao -&gt; Rahul Mehta -&gt; …</code>.</p>
+      </div>
+      <div class="mt-6 rounded-2xl border thought-card p-5 max-w-4xl">
+        <p class="text-xs font-semibold text-amber-200 uppercase">Thought process</p>
+        <ol class="mt-4 space-y-3 text-xs text-zinc-400 list-none">
+          <li><span class="step-num">A</span><strong class="text-zinc-300">Anchor:</strong> seed CTE = leaders with no manager; set <code class="font-mono">lvl = 1</code>, path = name.</li>
+          <li><span class="step-num">R</span><strong class="text-zinc-300">Recursive:</strong> join employees where <code class="font-mono">manager_id = prior.emp_id</code>, increment level, append name to path.</li>
+          <li><span class="step-num">S</span><strong class="text-zinc-300">Stop:</strong> when no new rows (and <code class="font-mono">lvl &lt; 10</code> guard).</li>
+        </ol>
+      </div>
+      <div class="sql-block mt-6 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="lab3-sql">Copy SQL</button>
+        <pre id="lab3-sql" class="sql-text"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="m6" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-amber-400/90">10-minute challenge</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">2nd busiest pickup day per borough</h2>
+      <p class="text-sm text-zinc-400 mt-3 max-w-3xl">January 2025: for each borough, find the <strong class="text-zinc-300">second</strong> busiest day by trip count and how many fewer trips it had than the #1 day.</p>
+      <details class="mt-6 rounded-xl border border-zinc-700 bg-zinc-900/50 p-4 max-w-3xl text-sm">
+        <summary class="font-medium text-zinc-300">Need a hint? (3-step thought guide)</summary>
+        <ol class="mt-3 space-y-2 text-xs text-zinc-400 list-decimal pl-5">
+          <li>Aggregate to grain <code class="font-mono">borough + trip_day</code> with <code class="font-mono">COUNT(*)</code>.</li>
+          <li>Rank days inside each borough with <code class="font-mono">RANK() OVER (PARTITION BY Borough ORDER BY trip_count DESC)</code>.</li>
+          <li>Keep <code class="font-mono">day_rank = 2</code>; compare to <code class="font-mono">MAX(trip_count) OVER (PARTITION BY Borough)</code> for the gap vs #1.</li>
+        </ol>
+      </details>
+      <details class="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-4 max-w-3xl text-sm">
+        <summary class="font-medium text-emerald-300">Reveal solution &amp; walkthrough</summary>
+        <div class="thought-card rounded-lg border p-4 mt-4 text-xs text-zinc-400">
+          <p><span class="step-num">1</span>Daily counts CTE — do not window on raw trips.</p>
+          <p class="mt-2"><span class="step-num">2</span>Rank + max-in-partition in second CTE.</p>
+          <p class="mt-2"><span class="step-num">3</span>Outer filter <code class="font-mono">day_rank = 2</code>.</p>
+        </div>
+        <div class="sql-block mt-4 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="challenge-sql">Copy SQL</button>
+          <pre id="challenge-sql" class="sql-text"></pre>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section id="interview" class="scroll-mt-20 border-t border-zinc-800 bg-zinc-900/30" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-emerald-400/90">Interview practice</span>
+      <h2 class="text-2xl font-bold text-white mt-1">Window functions &amp; execution order</h2>
+      <article class="interview-card mt-6 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <p class="font-medium text-emerald-400">E · ROW_NUMBER vs RANK vs DENSE_RANK</p>
+        <p class="interview-q mt-2 text-xs text-zinc-400">Two trips both have fare $50; third has $40 within Manhattan. What are the three ranking functions’ values on the tied rows?</p>
+        <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
+          <summary>Reveal strong answer</summary>
+          <p class="text-xs text-zinc-400">Ordered by fare DESC: ROW_NUMBER → 1,2,3 (arbitrary tie-break). RANK → 1,1,3 (skips 2). DENSE_RANK → 1,1,2 (no gap).</p>
+        </details>
+      </article>
+      <article class="interview-card mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <p class="font-medium text-amber-400">M · Why not <code class="font-mono">WHERE ROW_NUMBER() = 1</code>?</p>
+        <p class="interview-q mt-2 text-xs text-zinc-400">Explain using Day 4’s logical order.</p>
+        <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
+          <summary>Reveal strong answer</summary>
+          <p class="text-xs text-zinc-400"><code class="font-mono">WHERE</code> is evaluated before <code class="font-mono">SELECT</code> window functions, so the rank column does not exist yet. Use a CTE that computes the window in <code class="font-mono">SELECT</code>, then filter in the next CTE with <code class="font-mono">WHERE rn = 1</code>.</p>
+        </details>
+      </article>
+      <article class="interview-card mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
+        <p class="font-medium text-rose-400">H · Consecutive login days (gaps &amp; islands starter)</p>
+        <p class="interview-q mt-2 text-xs text-zinc-400"><code class="font-mono">logins(user_id, login_date)</code>—sketch how <code class="font-mono">login_date - ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY login_date)</code> groups consecutive days.</p>
+        <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
+          <summary>Reveal strong answer</summary>
+          <p class="text-xs text-zinc-400">Within a streak, dates increase by 1 while row numbers increase by 1, so the difference is constant per island. Group by that difference (and user) to count streak length—classic gaps-and-islands pattern.</p>
+        </details>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="border-t border-zinc-800 py-8 text-center text-xs text-zinc-600">
+  Week 1 Day 5 · <a href="Day_05_sql_queries.sql" class="text-emerald-400 hover:text-emerald-300 font-medium">Day_05_sql_queries.sql</a> ·
+  <a href="index.html" class="text-emerald-400 hover:text-emerald-300 font-medium">← Week 1 index</a>
+</footer>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+(function () {
+  const SQL = {
+    laglead: `WITH daily_manhattan AS (
+    SELECT
+        CAST(DATE(t.tpep_pickup_datetime) AS date) AS trip_day,
+        ROUND(SUM(t.fare_amount), 2) AS daily_revenue
+    FROM de_keystone_shared.nyc_yellow_trips t
+    INNER JOIN de_keystone_shared.nyc_taxi_zone_lookup z
+        ON t.PULocationID = z.LocationID
+    WHERE t.year = '2025'
+      AND t.month = '01'
+      AND z.Borough = 'Manhattan'
+      AND CAST(DATE(t.tpep_pickup_datetime) AS date)
+          BETWEEN DATE '2025-01-01' AND DATE '2025-01-10'
+    GROUP BY 1
+),
+with_windows AS (
+    SELECT
+        trip_day,
+        daily_revenue,
+        LAG(daily_revenue, 1) OVER (ORDER BY trip_day) AS prev_day_revenue,
+        LEAD(daily_revenue, 1) OVER (ORDER BY trip_day) AS next_day_revenue,
+        daily_revenue
+            - LAG(daily_revenue, 1) OVER (ORDER BY trip_day) AS dollar_change_from_yesterday,
+        ROUND(
+            AVG(daily_revenue) OVER (
+                ORDER BY trip_day
+                ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+            ),
+            2
+        ) AS rolling_avg_3day
+    FROM daily_manhattan
+)
+SELECT *
+FROM with_windows
+ORDER BY trip_day`,
+    lab1: `WITH trip_with_borough AS (
+    SELECT
+        t.tpep_pickup_datetime,
+        t.fare_amount,
+        t.trip_distance,
+        z.Borough,
+        z.Zone,
+        t.PULocationID
+    FROM de_keystone_shared.nyc_yellow_trips t
+    INNER JOIN de_keystone_shared.nyc_taxi_zone_lookup z
+        ON t.PULocationID = z.LocationID
+    WHERE t.year = '2025'
+      AND t.month = '01'
+      AND z.Borough IN ('Manhattan', 'Queens', 'Brooklyn')
+),
+ranked AS (
+    SELECT
+        *,
+        DENSE_RANK() OVER (
+            PARTITION BY Borough
+            ORDER BY fare_amount DESC
+        ) AS fare_rnk
+    FROM trip_with_borough
+)
+SELECT
+    Borough,
+    Zone,
+    fare_amount,
+    trip_distance,
+    tpep_pickup_datetime,
+    fare_rnk
+FROM ranked
+WHERE fare_rnk <= 2
+ORDER BY Borough, fare_rnk, fare_amount DESC`,
+    lab2: `WITH daily_manhattan AS (
+    SELECT
+        CAST(DATE(t.tpep_pickup_datetime) AS date) AS trip_day,
+        ROUND(SUM(t.fare_amount), 2) AS daily_revenue
+    FROM de_keystone_shared.nyc_yellow_trips t
+    INNER JOIN de_keystone_shared.nyc_taxi_zone_lookup z
+        ON t.PULocationID = z.LocationID
+    WHERE t.year = '2025'
+      AND t.month = '01'
+      AND z.Borough = 'Manhattan'
+      AND CAST(DATE(t.tpep_pickup_datetime) AS date)
+          BETWEEN DATE '2025-01-01' AND DATE '2025-01-10'
+    GROUP BY 1
+),
+windowed AS (
+    SELECT
+        trip_day,
+        daily_revenue,
+        LAG(daily_revenue, 1) OVER (ORDER BY trip_day) AS yesterday_revenue,
+        daily_revenue
+            - LAG(daily_revenue, 1) OVER (ORDER BY trip_day) AS dollar_change_from_yesterday,
+        ROUND(
+            AVG(daily_revenue) OVER (
+                ORDER BY trip_day
+                ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+            ),
+            2
+        ) AS rolling_avg_3day
+    FROM daily_manhattan
+)
+SELECT *
+FROM windowed
+ORDER BY trip_day`,
+    lab3: `WITH RECURSIVE org_tree AS (
+    SELECT
+        emp_id,
+        emp_name,
+        role,
+        manager_id,
+        1 AS lvl,
+        CAST(emp_name AS varchar) AS reporting_path
+    FROM de_keystone_shared.employees_hierarchy
+    WHERE manager_id IS NULL
+       OR TRIM(CAST(manager_id AS varchar)) = ''
+    UNION ALL
+    SELECT
+        e.emp_id,
+        e.emp_name,
+        e.role,
+        e.manager_id,
+        t.lvl + 1,
+        t.reporting_path || ' -> ' || e.emp_name
+    FROM de_keystone_shared.employees_hierarchy e
+    INNER JOIN org_tree t
+        ON e.manager_id = t.emp_id
+    WHERE t.lvl < 10
+)
+SELECT
+    emp_id,
+    emp_name,
+    role,
+    lvl,
+    reporting_path
+FROM org_tree
+ORDER BY lvl, emp_id`,
+    challenge: `WITH trip_days AS (
+    SELECT
+        z.Borough,
+        CAST(DATE(t.tpep_pickup_datetime) AS date) AS trip_day,
+        COUNT(*) AS trip_count
+    FROM de_keystone_shared.nyc_yellow_trips t
+    INNER JOIN de_keystone_shared.nyc_taxi_zone_lookup z
+        ON t.PULocationID = z.LocationID
+    WHERE t.year = '2025'
+      AND t.month = '01'
+      AND z.Borough IN ('Manhattan', 'Queens', 'Brooklyn', 'Bronx', 'Staten Island')
+    GROUP BY 1, 2
+),
+ranked_days AS (
+    SELECT
+        Borough,
+        trip_day,
+        trip_count,
+        RANK() OVER (
+            PARTITION BY Borough
+            ORDER BY trip_count DESC
+        ) AS day_rank,
+        MAX(trip_count) OVER (PARTITION BY Borough) AS busiest_day_trips
+    FROM trip_days
+)
+SELECT
+    Borough,
+    trip_day AS second_busiest_day,
+    trip_count AS trips_on_that_day,
+    busiest_day_trips - trip_count AS trips_below_busiest_day
+FROM ranked_days
+WHERE day_rank = 2
+ORDER BY Borough`
+  };
+
+  const KEYWORDS = /\b(SELECT|FROM|WHERE|JOIN|LEFT|INNER|ON|GROUP|BY|HAVING|ORDER|LIMIT|CASE|WHEN|THEN|ELSE|END|AND|OR|AS|IN|IS|NULL|NOT|DISTINCT|COUNT|SUM|AVG|ROUND|COALESCE|CAST|DATE|WITH|RECURSIVE|UNION|ALL|DESC|ASC|OVER|PARTITION|ROWS|BETWEEN|PRECEDING|CURRENT|ROW|LAG|LEAD|RANK|DENSE_RANK|ROW_NUMBER|MAX|TRIM|varchar)\b/gi;
+
+  function highlightSql(raw) {
+    const kw = raw.replace(KEYWORDS, (m) => '<span class="kw">' + m.toUpperCase() + '</span>');
+    return kw.replace(/(--[^\n]*)/g, '<span class="cmt">$1</span>');
+  }
+
+  function fill(id, raw) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.dataset.sqlRaw = raw;
+    el.innerHTML = highlightSql(raw);
+  }
+
+  fill('laglead-sql', SQL.laglead);
+  fill('lab1-sql', SQL.lab1);
+  fill('lab2-sql', SQL.lab2);
+  fill('lab3-sql', SQL.lab3);
+  fill('challenge-sql', SQL.challenge);
+
+  document.querySelectorAll('.sql-copy').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const from = btn.getAttribute('data-copy-from');
+      const el = document.getElementById(from);
+      const text = el ? (el.dataset.sqlRaw || el.textContent) : '';
+      navigator.clipboard.writeText(text).then(() => {
+        const prev = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = prev; }, 1400);
+      });
+    });
+  });
+
+  const explored = new Set();
+  const CIRC = 94.2;
+  const n = document.querySelectorAll('[data-module]').length;
+  function bump(id) {
+    if (id) explored.add(id);
+    document.getElementById('progress-pct').textContent = String(Math.round((explored.size / n) * 100));
+    document.getElementById('progress-ring').style.strokeDashoffset = String(CIRC - (CIRC * explored.size / n));
+  }
+  document.querySelectorAll('[data-module]').forEach((s) => {
+    new IntersectionObserver((e) => e.forEach((x) => { if (x.isIntersecting) bump(s.id); }), { threshold: 0.25 }).observe(s);
+  });
+
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+</body>
+</html>
