@@ -1,31 +1,28 @@
 -- =============================================================================
--- Week 1 Day 5: Window Functions & Modular CTEs — NYC Taxi + HR on Athena
+-- Week 1 Day 5: Window Functions — NYC Taxi + HR (simplified labs)
 -- Database: de_keystone_shared
--- Tables: nyc_yellow_trips, nyc_taxi_zone_lookup, employees_hierarchy (or hr_employees)
--- Engine: Athena engine v3 (WITH RECURSIVE supported)
+-- Note: TLC zone file column is Borough — we alias it AS city in query results.
 -- =============================================================================
--- Table-name note: if SHOW TABLES lists hr_employees instead of employees_hierarchy,
--- replace the table name in Lab 3 / recursive demos only.
--- Zone lookup columns: LocationID, Borough, Zone (standard NYC TLC lookup file).
 
 -- -----------------------------------------------------------------------------
--- Sanity check — confirm January 2025 partitions & borough join (run once)
+-- Sanity check — Jan 2025 trips with city name from lookup (run once)
 -- -----------------------------------------------------------------------------
-SELECT t.year, t.month, z.Borough, COUNT(*) AS trips
+SELECT
+    z.Borough AS city,
+    COUNT(*) AS trips
 FROM de_keystone_shared.nyc_yellow_trips t
 INNER JOIN de_keystone_shared.nyc_taxi_zone_lookup z
     ON t.PULocationID = z.LocationID
 WHERE t.year = '2025'
   AND t.month = '01'
-  AND z.Borough IN ('Manhattan', 'Queens', 'Brooklyn')
-GROUP BY 1, 2, 3
+  AND z.Borough IN ('Manhattan', 'Queens')
+GROUP BY 1
 ORDER BY trips DESC;
 
 -- -----------------------------------------------------------------------------
--- Module 2 demo — LAG / LEAD / 3-day rolling average (Manhattan, Jan 1–10 2025)
--- Run as ONE statement in Athena
+-- Demo — LAG on daily revenue (Manhattan · Jan 1–5 2025 · one statement)
 -- -----------------------------------------------------------------------------
-WITH daily_manhattan AS (
+WITH daily_revenue AS (
     SELECT
         CAST(DATE(t.tpep_pickup_datetime) AS date) AS trip_day,
         ROUND(SUM(t.fare_amount), 2) AS daily_revenue
@@ -36,74 +33,56 @@ WITH daily_manhattan AS (
       AND t.month = '01'
       AND z.Borough = 'Manhattan'
       AND CAST(DATE(t.tpep_pickup_datetime) AS date)
-          BETWEEN DATE '2025-01-01' AND DATE '2025-01-10'
+          BETWEEN DATE '2025-01-01' AND DATE '2025-01-05'
     GROUP BY 1
-),
-with_windows AS (
-    SELECT
-        trip_day,
-        daily_revenue,
-        LAG(daily_revenue, 1) OVER (ORDER BY trip_day) AS prev_day_revenue,
-        LEAD(daily_revenue, 1) OVER (ORDER BY trip_day) AS next_day_revenue,
-        daily_revenue
-            - LAG(daily_revenue, 1) OVER (ORDER BY trip_day) AS dollar_change_from_yesterday,
-        ROUND(
-            AVG(daily_revenue) OVER (
-                ORDER BY trip_day
-                ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
-            ),
-            2
-        ) AS rolling_avg_3day
-    FROM daily_manhattan
 )
-SELECT *
-FROM with_windows
+SELECT
+    trip_day,
+    daily_revenue,
+    LAG(daily_revenue, 1) OVER (ORDER BY trip_day) AS prev_day_revenue,
+    LEAD(daily_revenue, 1) OVER (ORDER BY trip_day) AS next_day_revenue
+FROM daily_revenue
 ORDER BY trip_day;
 
 -- -----------------------------------------------------------------------------
--- Lab 1 — Top 2 highest-fare trips per borough (Manhattan, Queens, Brooklyn)
--- January 2025 · DENSE_RANK · filter rank in outer query
+-- Lab 1 — Highest-fare trip per city (Manhattan & Queens · Jan 2025)
 -- -----------------------------------------------------------------------------
-WITH trip_with_borough AS (
+WITH trips_with_city AS (
     SELECT
-        t.tpep_pickup_datetime,
+        z.Borough AS city,
         t.fare_amount,
-        t.total_amount,
-        t.trip_distance,
-        z.Borough,
-        z.Zone,
-        t.PULocationID
+        t.tpep_pickup_datetime
     FROM de_keystone_shared.nyc_yellow_trips t
     INNER JOIN de_keystone_shared.nyc_taxi_zone_lookup z
         ON t.PULocationID = z.LocationID
     WHERE t.year = '2025'
       AND t.month = '01'
-      AND z.Borough IN ('Manhattan', 'Queens', 'Brooklyn')
+      AND z.Borough IN ('Manhattan', 'Queens')
 ),
 ranked AS (
     SELECT
-        *,
-        DENSE_RANK() OVER (
-            PARTITION BY Borough
+        city,
+        fare_amount,
+        tpep_pickup_datetime,
+        ROW_NUMBER() OVER (
+            PARTITION BY city
             ORDER BY fare_amount DESC
-        ) AS fare_rnk
-    FROM trip_with_borough
+        ) AS trip_rank
+    FROM trips_with_city
 )
 SELECT
-    Borough,
-    Zone,
+    city,
     fare_amount,
-    trip_distance,
     tpep_pickup_datetime,
-    fare_rnk
+    trip_rank
 FROM ranked
-WHERE fare_rnk <= 2
-ORDER BY Borough, fare_rnk, fare_amount DESC;
+WHERE trip_rank = 1
+ORDER BY city;
 
 -- -----------------------------------------------------------------------------
--- Lab 2 — Manhattan daily revenue: LAG, change, 3-day rolling average (Jan 1–10)
+-- Lab 2 — Manhattan daily revenue + yesterday (LAG) · Jan 1–5 2025
 -- -----------------------------------------------------------------------------
-WITH daily_manhattan AS (
+WITH daily_revenue AS (
     SELECT
         CAST(DATE(t.tpep_pickup_datetime) AS date) AS trip_day,
         ROUND(SUM(t.fare_amount), 2) AS daily_revenue
@@ -114,41 +93,26 @@ WITH daily_manhattan AS (
       AND t.month = '01'
       AND z.Borough = 'Manhattan'
       AND CAST(DATE(t.tpep_pickup_datetime) AS date)
-          BETWEEN DATE '2025-01-01' AND DATE '2025-01-10'
+          BETWEEN DATE '2025-01-01' AND DATE '2025-01-05'
     GROUP BY 1
-),
-windowed AS (
-    SELECT
-        trip_day,
-        daily_revenue,
-        LAG(daily_revenue, 1) OVER (ORDER BY trip_day) AS yesterday_revenue,
-        daily_revenue
-            - LAG(daily_revenue, 1) OVER (ORDER BY trip_day) AS dollar_change_from_yesterday,
-        ROUND(
-            AVG(daily_revenue) OVER (
-                ORDER BY trip_day
-                ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
-            ),
-            2
-        ) AS rolling_avg_3day
-    FROM daily_manhattan
 )
-SELECT *
-FROM windowed
+SELECT
+    trip_day,
+    daily_revenue,
+    LAG(daily_revenue, 1) OVER (ORDER BY trip_day) AS yesterday_revenue
+FROM daily_revenue
 ORDER BY trip_day;
 
 -- -----------------------------------------------------------------------------
--- Lab 3 — Org chart from root (manager_id IS NULL): level + reporting path
--- Depth guard for Athena: lvl < 10
+-- Lab 3 — Org levels from CEO (simplified: name, role, level only)
+-- Replace employees_hierarchy with hr_employees if needed
 -- -----------------------------------------------------------------------------
 WITH RECURSIVE org_tree AS (
     SELECT
         emp_id,
         emp_name,
         role,
-        manager_id,
-        1 AS lvl,
-        CAST(emp_name AS varchar) AS reporting_path
+        1 AS lvl
     FROM de_keystone_shared.employees_hierarchy
     WHERE manager_id IS NULL
        OR TRIM(CAST(manager_id AS varchar)) = ''
@@ -157,29 +121,21 @@ WITH RECURSIVE org_tree AS (
         e.emp_id,
         e.emp_name,
         e.role,
-        e.manager_id,
-        t.lvl + 1,
-        t.reporting_path || ' -> ' || e.emp_name
+        t.lvl + 1
     FROM de_keystone_shared.employees_hierarchy e
     INNER JOIN org_tree t
         ON e.manager_id = t.emp_id
-    WHERE t.lvl < 10
+    WHERE t.lvl < 6
 )
-SELECT
-    emp_id,
-    emp_name,
-    role,
-    lvl,
-    reporting_path
+SELECT emp_id, emp_name, role, lvl
 FROM org_tree
 ORDER BY lvl, emp_id;
 
 -- -----------------------------------------------------------------------------
--- Challenge — 2nd busiest pickup day per borough (Jan 2025) vs #1 day trip count
+-- Challenge — Manhattan: which day was 2nd-busiest by trip count (Jan 2025)
 -- -----------------------------------------------------------------------------
-WITH trip_days AS (
+WITH trips_per_day AS (
     SELECT
-        z.Borough,
         CAST(DATE(t.tpep_pickup_datetime) AS date) AS trip_day,
         COUNT(*) AS trip_count
     FROM de_keystone_shared.nyc_yellow_trips t
@@ -187,26 +143,16 @@ WITH trip_days AS (
         ON t.PULocationID = z.LocationID
     WHERE t.year = '2025'
       AND t.month = '01'
-      AND z.Borough IN ('Manhattan', 'Queens', 'Brooklyn', 'Bronx', 'Staten Island')
-    GROUP BY 1, 2
+      AND z.Borough = 'Manhattan'
+    GROUP BY 1
 ),
 ranked_days AS (
     SELECT
-        Borough,
         trip_day,
         trip_count,
-        RANK() OVER (
-            PARTITION BY Borough
-            ORDER BY trip_count DESC
-        ) AS day_rank,
-        MAX(trip_count) OVER (PARTITION BY Borough) AS busiest_day_trips
-    FROM trip_days
+        RANK() OVER (ORDER BY trip_count DESC) AS day_rank
+    FROM trips_per_day
 )
-SELECT
-    Borough,
-    trip_day AS second_busiest_day,
-    trip_count AS trips_on_that_day,
-    busiest_day_trips - trip_count AS trips_below_busiest_day
+SELECT trip_day, trip_count
 FROM ranked_days
-WHERE day_rank = 2
-ORDER BY Borough;
+WHERE day_rank = 2;
