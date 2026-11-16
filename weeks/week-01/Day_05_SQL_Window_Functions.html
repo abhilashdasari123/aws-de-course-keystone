@@ -114,7 +114,7 @@
       </h1>
       <p class="text-xs text-zinc-500 mt-2">Section 2: SQL for Data Engineers (2 of 5)</p>
       <p class="mt-4 text-lg text-zinc-400 max-w-3xl leading-relaxed">
-        Rank and compare rows <strong class="font-medium text-zinc-300">without collapsing them</strong>, step through time with <code class="font-mono text-violet-300/90">LAG</code>/<code class="font-mono text-violet-300/90">LEAD</code>, and chain logic with modular <code class="font-mono text-violet-300/90">WITH</code> steps—using <strong class="font-medium text-zinc-300">tiny inline practice tables</strong> in Athena (no S3 datasets for today’s window labs).
+        Rank and compare rows <strong class="font-medium text-zinc-300">without collapsing them</strong>, step through time with <code class="font-mono text-violet-300/90">LAG</code>/<code class="font-mono text-violet-300/90">LEAD</code>, and chain logic with modular <code class="font-mono text-violet-300/90">WITH</code> steps—on <strong class="font-medium text-zinc-300">tiny <code class="font-mono">day05_*</code> tables</strong> you create once in Athena with <code class="font-mono">CREATE TABLE … AS SELECT</code>.
       </p>
       <div class="flex flex-wrap gap-3 mt-10">
         <a href="#recap" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm transition-colors">
@@ -130,16 +130,21 @@
   <section id="setup" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
       <span class="text-xs font-mono text-sky-400/90">Before the lab</span>
-      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Athena setup (practice queries only)</h2>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Athena setup — <code class="font-mono text-lg">CREATE TABLE</code> then query</h2>
       <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
         Day 4’s execution order still matters: <code class="font-mono text-zinc-300">WHERE</code> runs <em>before</em> window functions in <code class="font-mono">SELECT</code>, so you cannot write <code class="font-mono">WHERE ROW_NUMBER() … = 1</code> in the same query block—filter in an outer CTE instead.
       </p>
       <ul class="mt-6 space-y-3 text-sm text-zinc-300 max-w-3xl list-none">
-        <li class="flex gap-3 items-start"><span class="step-num">1</span><span>Open <strong class="text-zinc-200">Athena</strong> → your workgroup. Database can stay <code class="font-mono">default</code> or <code class="font-mono">de_keystone_shared</code>—today’s labs only use <code class="font-mono">VALUES</code> inside the query.</span></li>
-        <li class="flex gap-3 items-start"><span class="step-num">2</span><span>No joins to S3 for Modules 0–6: each lab builds a 3–6 row toy table inline, then applies windows on top.</span></li>
-        <li class="flex gap-3 items-start"><span class="step-num">3</span><span>Keep <a href="Day_05_sql_queries.sql" class="text-sky-300 hover:text-sky-200 underline">Day_05_sql_queries.sql</a> open; copy <strong class="text-zinc-200">one</strong> statement at a time (clear the editor between runs).</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">1</span><span><strong class="text-zinc-200">Athena</strong> → your workgroup. Pick a database where CTAS is allowed (often <code class="font-mono">default</code>).</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">2</span><span><strong class="text-zinc-200">Step 0</strong> in <a href="Day_05_sql_queries.sql" class="text-sky-300 hover:underline">Day_05_sql_queries.sql</a>: run each <code class="font-mono">DROP TABLE IF EXISTS</code> and <code class="font-mono">CREATE TABLE … AS SELECT</code> for <code class="font-mono">day05_*</code> tables—<strong class="text-zinc-200">one statement per run</strong>.</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">3</span><span><strong class="text-zinc-200">Labs</strong> query <code class="font-mono">FROM day05_practice_trips</code> (etc.). The <code class="font-mono">WITH ranked AS</code> block is only for the window—not for loading data.</span></li>
       </ul>
-      <p class="text-xs text-zinc-500 mt-4 max-w-3xl">Later in the course you’ll rerun the same patterns on lakehouse tables (e.g. NYC taxi, Olist). Today is syntax + mental model only.</p>
+      <p class="text-xs text-zinc-500 mt-4 max-w-3xl">CTAS registers the table in Glue and writes rows to your workgroup S3 path. Labs fail with “table not found” until Step 0 completes.</p>
+      <p class="text-xs text-emerald-300/90 mt-3">Step 0a — after <code class="font-mono">DROP TABLE IF EXISTS day05_practice_trips;</code>, run this CTAS:</p>
+      <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative max-w-4xl">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="setup-create-sql">Copy SQL</button>
+        <pre id="setup-create-sql" class="sql-text"></pre>
+      </div>
     </div>
   </section>
 
@@ -226,7 +231,7 @@
       <div class="mt-6 rounded-2xl border border-cyan-500/30 bg-cyan-950/10 p-5 lg:p-6 max-w-4xl">
         <p class="text-xs font-semibold text-cyan-200 uppercase tracking-wide">Problem statement</p>
         <p class="text-sm text-zinc-300 mt-3 leading-relaxed">
-          Using only the toy <code class="font-mono">practice_trips</code> table below, find the <strong class="text-zinc-200">single highest <code class="font-mono">fare_amount</code></strong> in <strong class="text-zinc-200">Hyderabad</strong> and in <strong class="text-zinc-200">Bengaluru</strong>. Expected: Hyderabad <strong class="text-zinc-200">120</strong>, Bengaluru <strong class="text-zinc-200">200</strong>.
+          Table <code class="font-mono">day05_practice_trips</code> (create with Step 0a). Find the <strong class="text-zinc-200">single highest <code class="font-mono">fare_amount</code></strong> in <strong class="text-zinc-200">Hyderabad</strong> and in <strong class="text-zinc-200">Bengaluru</strong>. Expected: Hyderabad <strong class="text-zinc-200">120</strong>, Bengaluru <strong class="text-zinc-200">200</strong>.
         </p>
         <div class="overflow-x-auto mt-4 rounded-lg border border-zinc-700">
           <table class="w-full text-xs font-mono text-left">
@@ -246,14 +251,15 @@
         <p class="text-xs font-semibold text-amber-200 uppercase tracking-wide">Thought process (plain English → SQL)</p>
         <ol class="mt-4 space-y-3.5 text-xs text-zinc-400 list-none leading-relaxed">
           <li><span class="step-num">1</span><strong class="text-zinc-300">Grain:</strong> one row = one trip (already true in <code class="font-mono">VALUES</code>).</li>
-          <li><span class="step-num">2</span><strong class="text-zinc-300">Load data:</strong> first CTE <code class="font-mono">practice_trips</code> from the 6 <code class="font-mono">VALUES</code> rows—no Glue table.</li>
+          <li><span class="step-num">2</span><strong class="text-zinc-300">Load data:</strong> you already ran Step 0 — read from <code class="font-mono">day05_practice_trips</code> (like any other table).</li>
           <li><span class="step-num">3</span><strong class="text-zinc-300">PARTITION BY city</strong> — separate leaderboard per city.</li>
           <li><span class="step-num">4</span><strong class="text-zinc-300">ORDER BY fare_amount DESC</strong> — biggest fare first.</li>
           <li><span class="step-num">5</span><strong class="text-zinc-300">ROW_NUMBER()</strong> — pick exactly one winner per city.</li>
           <li><span class="step-num">6</span><strong class="text-zinc-300">Outer WHERE trip_rank = 1</strong> — window first, filter second (Day 4 order).</li>
         </ol>
       </div>
-      <div class="sql-block mt-6 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+      <p class="text-xs text-amber-300/90 mt-4 max-w-3xl">Prerequisite: Step 0a created <code class="font-mono">day05_practice_trips</code>. Lab SQL reads that table only (no <code class="font-mono">VALUES</code> CTE).</p>
+      <div class="sql-block mt-4 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
         <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="lab1-sql">Copy SQL</button>
         <pre id="lab1-sql" class="sql-text"></pre>
       </div>
@@ -284,12 +290,12 @@
       <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Yesterday’s revenue on 5 days (<code class="font-mono">LAG</code>)</h2>
       <div class="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/10 p-5 max-w-4xl">
         <p class="text-xs font-semibold text-emerald-200 uppercase">Problem statement</p>
-        <p class="text-sm text-zinc-300 mt-3 leading-relaxed">Use the same 5-row <code class="font-mono">daily_revenue</code> series (100 → 150 → 120 → 180 → 90). Show each day’s revenue and <code class="font-mono">LAG</code> = previous day’s value (Jan 1 has <code class="font-mono">NULL</code> yesterday).</p>
+        <p class="text-sm text-zinc-300 mt-3 leading-relaxed">Query <code class="font-mono">day05_daily_revenue</code> (Step 0b). Show each day’s revenue and <code class="font-mono">LAG</code> = previous day’s value (Jan 1 has <code class="font-mono">NULL</code> yesterday).</p>
       </div>
       <div class="mt-6 rounded-2xl border thought-card p-5 max-w-4xl">
         <p class="text-xs font-semibold text-amber-200 uppercase">Thought process</p>
         <ol class="mt-4 space-y-3 text-xs text-zinc-400 list-none leading-relaxed">
-          <li><span class="step-num">1</span><strong class="text-zinc-300">Grain is already daily</strong> — we typed the totals in <code class="font-mono">VALUES</code> (skips <code class="font-mono">GROUP BY</code> for this lab).</li>
+          <li><span class="step-num">1</span><strong class="text-zinc-300">Grain is already daily</strong> — table <code class="font-mono">day05_daily_revenue</code> has one row per day (skips <code class="font-mono">GROUP BY</code> in the lab query).</li>
           <li><span class="step-num">2</span><strong class="text-zinc-300">On real data</strong> you would <code class="font-mono">SUM(amount) GROUP BY sale_day</code> first, then <code class="font-mono">LAG</code> in step 2.</li>
           <li><span class="step-num">3</span><strong class="text-zinc-300">LAG(... ORDER BY sale_day)</strong> walks backward one row = one calendar day.</li>
         </ol>
@@ -320,7 +326,7 @@
       <span class="text-xs font-mono text-violet-400/90">Hands-on · Lab 3</span>
       <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Who reports to whom — depth level only</h2>
       <div class="mt-6 rounded-2xl border border-violet-500/30 bg-violet-950/10 p-5 max-w-4xl">
-        <p class="text-sm text-zinc-300 leading-relaxed">Three-person org in <code class="font-mono">VALUES</code>: Anita (CEO) → Rahul → Priya. Walk down with <code class="font-mono">WITH RECURSIVE</code> and print <code class="font-mono">lvl</code> (1, 2, 3). No HR table on S3.</p>
+        <p class="text-sm text-zinc-300 leading-relaxed">Table <code class="font-mono">day05_employees</code> (Step 0c): Anita (CEO) → Rahul → Priya. Walk down with <code class="font-mono">WITH RECURSIVE</code> and print <code class="font-mono">lvl</code> (1, 2, 3).</p>
       </div>
       <div class="mt-6 rounded-2xl border thought-card p-5 max-w-4xl">
         <p class="text-xs font-semibold text-amber-200 uppercase">Thought process</p>
@@ -406,37 +412,26 @@
 <script>
 (function () {
   const SQL = {
-    laglead: `WITH daily_revenue AS (
-    SELECT *
-    FROM (
-        VALUES
-            (DATE '2025-01-01', 100.0),
-            (DATE '2025-01-02', 150.0),
-            (DATE '2025-01-03', 120.0),
-            (DATE '2025-01-04', 180.0),
-            (DATE '2025-01-05',  90.0)
-    ) AS d(sale_day, daily_revenue)
-)
-SELECT
+    setupCreate: `CREATE TABLE day05_practice_trips
+AS
+SELECT *
+FROM (
+    VALUES
+        ('T1', 'Hyderabad',  120.00),
+        ('T2', 'Hyderabad',   90.00),
+        ('T3', 'Hyderabad',   85.00),
+        ('T4', 'Bengaluru',  200.00),
+        ('T5', 'Bengaluru',  150.00),
+        ('T6', 'Bengaluru',   40.00)
+) AS t(trip_id, city, fare_amount)`,
+    laglead: `SELECT
     sale_day,
     daily_revenue,
     LAG(daily_revenue, 1) OVER (ORDER BY sale_day) AS prev_day_revenue,
     LEAD(daily_revenue, 1) OVER (ORDER BY sale_day) AS next_day_revenue
-FROM daily_revenue
+FROM day05_daily_revenue
 ORDER BY sale_day`,
-    lab1: `WITH practice_trips AS (
-    SELECT *
-    FROM (
-        VALUES
-            ('T1', 'Hyderabad',  120.00),
-            ('T2', 'Hyderabad',   90.00),
-            ('T3', 'Hyderabad',   85.00),
-            ('T4', 'Bengaluru',  200.00),
-            ('T5', 'Bengaluru',  150.00),
-            ('T6', 'Bengaluru',   40.00)
-    ) AS t(trip_id, city, fare_amount)
-),
-ranked AS (
+    lab1: `WITH ranked AS (
     SELECT
         trip_id,
         city,
@@ -445,46 +440,25 @@ ranked AS (
             PARTITION BY city
             ORDER BY fare_amount DESC
         ) AS trip_rank
-    FROM practice_trips
+    FROM day05_practice_trips
 )
 SELECT city, trip_id, fare_amount, trip_rank
 FROM ranked
 WHERE trip_rank = 1
 ORDER BY city`,
-    lab2: `WITH daily_revenue AS (
-    SELECT *
-    FROM (
-        VALUES
-            (DATE '2025-01-01', 100.0),
-            (DATE '2025-01-02', 150.0),
-            (DATE '2025-01-03', 120.0),
-            (DATE '2025-01-04', 180.0),
-            (DATE '2025-01-05',  90.0)
-    ) AS d(sale_day, daily_revenue)
-)
-SELECT
+    lab2: `SELECT
     sale_day,
     daily_revenue,
     LAG(daily_revenue, 1) OVER (ORDER BY sale_day) AS yesterday_revenue
-FROM daily_revenue
+FROM day05_daily_revenue
 ORDER BY sale_day`,
-    lab3: `WITH
-employees AS (
-    SELECT *
-    FROM (
-        VALUES
-            (1, 'Anita', 'CEO',     CAST(NULL AS INTEGER)),
-            (2, 'Rahul', 'Manager', 1),
-            (3, 'Priya', 'Analyst', 2)
-    ) AS e(emp_id, emp_name, role, manager_id)
-),
-RECURSIVE org_tree AS (
+    lab3: `WITH RECURSIVE org_tree AS (
     SELECT emp_id, emp_name, role, 1 AS lvl
-    FROM employees
+    FROM day05_employees
     WHERE manager_id IS NULL
     UNION ALL
     SELECT e.emp_id, e.emp_name, e.role, t.lvl + 1
-    FROM employees e
+    FROM day05_employees e
     INNER JOIN org_tree t
         ON e.manager_id = t.emp_id
     WHERE t.lvl < 5
@@ -492,30 +466,19 @@ RECURSIVE org_tree AS (
 SELECT emp_id, emp_name, role, lvl
 FROM org_tree
 ORDER BY lvl, emp_id`,
-    challenge: `WITH visits_per_day AS (
-    SELECT *
-    FROM (
-        VALUES
-            (DATE '2025-01-01', 10),
-            (DATE '2025-01-02', 25),
-            (DATE '2025-01-03', 18),
-            (DATE '2025-01-04', 12),
-            (DATE '2025-01-05',  8)
-    ) AS v(visit_day, visit_count)
-),
-ranked_days AS (
+    challenge: `WITH ranked_days AS (
     SELECT
         visit_day,
         visit_count,
         RANK() OVER (ORDER BY visit_count DESC) AS day_rank
-    FROM visits_per_day
+    FROM day05_visits_per_day
 )
 SELECT visit_day, visit_count
 FROM ranked_days
 WHERE day_rank = 2`
   };
 
-  const KEYWORDS = /\b(SELECT|FROM|WHERE|JOIN|LEFT|INNER|ON|GROUP|BY|HAVING|ORDER|LIMIT|CASE|WHEN|THEN|ELSE|END|AND|OR|AS|IN|IS|NULL|NOT|DISTINCT|COUNT|SUM|AVG|ROUND|COALESCE|CAST|DATE|WITH|RECURSIVE|UNION|ALL|DESC|ASC|OVER|PARTITION|ROWS|BETWEEN|PRECEDING|CURRENT|ROW|LAG|LEAD|RANK|DENSE_RANK|ROW_NUMBER|MAX|TRIM|varchar)\b/gi;
+  const KEYWORDS = /\b(SELECT|FROM|WHERE|JOIN|LEFT|INNER|ON|GROUP|BY|HAVING|ORDER|LIMIT|CASE|WHEN|THEN|ELSE|END|AND|OR|AS|IN|IS|NULL|NOT|DISTINCT|COUNT|SUM|AVG|ROUND|COALESCE|CAST|DATE|WITH|RECURSIVE|UNION|ALL|DESC|ASC|OVER|PARTITION|ROWS|BETWEEN|PRECEDING|CURRENT|ROW|LAG|LEAD|RANK|DENSE_RANK|ROW_NUMBER|MAX|TRIM|varchar|DROP|TABLE|CREATE|IF|EXISTS|INTEGER)\b/gi;
 
   function highlightSql(raw) {
     const kw = raw.replace(KEYWORDS, (m) => '<span class="kw">' + m.toUpperCase() + '</span>');
@@ -529,6 +492,7 @@ WHERE day_rank = 2`
     el.innerHTML = highlightSql(raw);
   }
 
+  fill('setup-create-sql', SQL.setupCreate);
   fill('laglead-sql', SQL.laglead);
   fill('lab1-sql', SQL.lab1);
   fill('lab2-sql', SQL.lab2);

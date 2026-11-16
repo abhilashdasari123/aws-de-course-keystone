@@ -1,11 +1,17 @@
 -- =============================================================================
--- Week 1 Day 5: Window Functions — practice labs (inline tiny datasets)
--- Run each block alone in Athena (engine v3). No S3 / Glue tables required.
+-- Week 1 Day 5: Window Functions — practice tables + queries
+-- Athena: pick your workgroup and a database (default or de_keystone_shared).
+-- STEP 0 — Run EACH statement below ONCE to create tables (CTAS → Glue + S3).
+-- Labs — Run one lab query at a time (reads from day05_* tables).
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
--- Lab 0 warm-up — see the 6 practice trips (optional)
+-- STEP 0a — practice_trips (6 rows · Hyderabad & Bengaluru)
 -- -----------------------------------------------------------------------------
+DROP TABLE IF EXISTS day05_practice_trips;
+
+CREATE TABLE day05_practice_trips
+AS
 SELECT *
 FROM (
     VALUES
@@ -15,47 +21,83 @@ FROM (
         ('T4', 'Bengaluru',  200.00),
         ('T5', 'Bengaluru',  150.00),
         ('T6', 'Bengaluru',   40.00)
-) AS practice_trips(trip_id, city, fare_amount);
+) AS t(trip_id, city, fare_amount);
 
 -- -----------------------------------------------------------------------------
--- Demo — LAG / LEAD on 5 daily revenue rows (pre-aggregated toy data)
+-- STEP 0b — daily_revenue (5 days · toy totals)
 -- -----------------------------------------------------------------------------
-WITH daily_revenue AS (
-    SELECT *
-    FROM (
-        VALUES
-            (DATE '2025-01-01', 100.0),
-            (DATE '2025-01-02', 150.0),
-            (DATE '2025-01-03', 120.0),
-            (DATE '2025-01-04', 180.0),
-            (DATE '2025-01-05',  90.0)
-    ) AS d(sale_day, daily_revenue)
-)
+DROP TABLE IF EXISTS day05_daily_revenue;
+
+CREATE TABLE day05_daily_revenue
+AS
+SELECT *
+FROM (
+    VALUES
+        (DATE '2025-01-01', 100.0),
+        (DATE '2025-01-02', 150.0),
+        (DATE '2025-01-03', 120.0),
+        (DATE '2025-01-04', 180.0),
+        (DATE '2025-01-05',  90.0)
+) AS d(sale_day, daily_revenue);
+
+-- -----------------------------------------------------------------------------
+-- STEP 0c — employees (3 rows · mini org)
+-- -----------------------------------------------------------------------------
+DROP TABLE IF EXISTS day05_employees;
+
+CREATE TABLE day05_employees
+AS
+SELECT *
+FROM (
+    VALUES
+        (1, 'Anita', 'CEO',     CAST(NULL AS INTEGER)),
+        (2, 'Rahul', 'Manager', 1),
+        (3, 'Priya', 'Analyst', 2)
+) AS e(emp_id, emp_name, role, manager_id);
+
+-- -----------------------------------------------------------------------------
+-- STEP 0d — visits_per_day (5 days · challenge data)
+-- -----------------------------------------------------------------------------
+DROP TABLE IF EXISTS day05_visits_per_day;
+
+CREATE TABLE day05_visits_per_day
+AS
+SELECT *
+FROM (
+    VALUES
+        (DATE '2025-01-01', 10),
+        (DATE '2025-01-02', 25),
+        (DATE '2025-01-03', 18),
+        (DATE '2025-01-04', 12),
+        (DATE '2025-01-05',  8)
+) AS v(visit_day, visit_count);
+
+-- -----------------------------------------------------------------------------
+-- Verify (optional) — SELECT * FROM each day05_* table
+-- -----------------------------------------------------------------------------
+SELECT 'practice_trips' AS tbl, COUNT(*) AS rows FROM day05_practice_trips
+UNION ALL
+SELECT 'daily_revenue', COUNT(*) FROM day05_daily_revenue
+UNION ALL
+SELECT 'employees', COUNT(*) FROM day05_employees
+UNION ALL
+SELECT 'visits_per_day', COUNT(*) FROM day05_visits_per_day;
+
+-- -----------------------------------------------------------------------------
+-- Demo — LAG / LEAD on day05_daily_revenue
+-- -----------------------------------------------------------------------------
 SELECT
     sale_day,
     daily_revenue,
     LAG(daily_revenue, 1) OVER (ORDER BY sale_day) AS prev_day_revenue,
     LEAD(daily_revenue, 1) OVER (ORDER BY sale_day) AS next_day_revenue
-FROM daily_revenue
+FROM day05_daily_revenue
 ORDER BY sale_day;
 
 -- -----------------------------------------------------------------------------
--- Lab 1 — Highest fare in each city (Hyderabad vs Bengaluru · 6 trips)
--- Expected winners: Hyderabad 120, Bengaluru 200
+-- Lab 1 — Highest fare per city (expect Hyderabad 120, Bengaluru 200)
 -- -----------------------------------------------------------------------------
-WITH practice_trips AS (
-    SELECT *
-    FROM (
-        VALUES
-            ('T1', 'Hyderabad',  120.00),
-            ('T2', 'Hyderabad',   90.00),
-            ('T3', 'Hyderabad',   85.00),
-            ('T4', 'Bengaluru',  200.00),
-            ('T5', 'Bengaluru',  150.00),
-            ('T6', 'Bengaluru',   40.00)
-    ) AS t(trip_id, city, fare_amount)
-),
-ranked AS (
+WITH ranked AS (
     SELECT
         trip_id,
         city,
@@ -64,7 +106,7 @@ ranked AS (
             PARTITION BY city
             ORDER BY fare_amount DESC
         ) AS trip_rank
-    FROM practice_trips
+    FROM day05_practice_trips
 )
 SELECT city, trip_id, fare_amount, trip_rank
 FROM ranked
@@ -72,47 +114,25 @@ WHERE trip_rank = 1
 ORDER BY city;
 
 -- -----------------------------------------------------------------------------
--- Lab 2 — Daily revenue + yesterday (LAG) on toy 5-day series
+-- Lab 2 — Yesterday revenue (LAG) on day05_daily_revenue
 -- -----------------------------------------------------------------------------
-WITH daily_revenue AS (
-    SELECT *
-    FROM (
-        VALUES
-            (DATE '2025-01-01', 100.0),
-            (DATE '2025-01-02', 150.0),
-            (DATE '2025-01-03', 120.0),
-            (DATE '2025-01-04', 180.0),
-            (DATE '2025-01-05',  90.0)
-    ) AS d(sale_day, daily_revenue)
-)
 SELECT
     sale_day,
     daily_revenue,
     LAG(daily_revenue, 1) OVER (ORDER BY sale_day) AS yesterday_revenue
-FROM daily_revenue
+FROM day05_daily_revenue
 ORDER BY sale_day;
 
 -- -----------------------------------------------------------------------------
--- Lab 3 — Tiny org chart (3 people) · RECURSIVE depth levels
--- Anita -> Rahul -> Priya
+-- Lab 3 — Recursive levels on day05_employees
 -- -----------------------------------------------------------------------------
-WITH
-employees AS (
-    SELECT *
-    FROM (
-        VALUES
-            (1, 'Anita', 'CEO',     CAST(NULL AS INTEGER)),
-            (2, 'Rahul', 'Manager', 1),
-            (3, 'Priya', 'Analyst', 2)
-    ) AS e(emp_id, emp_name, role, manager_id)
-),
-RECURSIVE org_tree AS (
+WITH RECURSIVE org_tree AS (
     SELECT emp_id, emp_name, role, 1 AS lvl
-    FROM employees
+    FROM day05_employees
     WHERE manager_id IS NULL
     UNION ALL
     SELECT e.emp_id, e.emp_name, e.role, t.lvl + 1
-    FROM employees e
+    FROM day05_employees e
     INNER JOIN org_tree t
         ON e.manager_id = t.emp_id
     WHERE t.lvl < 5
@@ -122,27 +142,23 @@ FROM org_tree
 ORDER BY lvl, emp_id;
 
 -- -----------------------------------------------------------------------------
--- Challenge — 2nd busiest day by visit_count (Hyderabad · 5 days)
--- Expected: 2025-01-03 with 18 visits (rank 2 after Jan 2 with 25)
+-- Challenge — 2nd busiest day (expect 2025-01-03, 18 visits)
 -- -----------------------------------------------------------------------------
-WITH visits_per_day AS (
-    SELECT *
-    FROM (
-        VALUES
-            (DATE '2025-01-01', 10),
-            (DATE '2025-01-02', 25),
-            (DATE '2025-01-03', 18),
-            (DATE '2025-01-04', 12),
-            (DATE '2025-01-05',  8)
-    ) AS v(visit_day, visit_count)
-),
-ranked_days AS (
+WITH ranked_days AS (
     SELECT
         visit_day,
         visit_count,
         RANK() OVER (ORDER BY visit_count DESC) AS day_rank
-    FROM visits_per_day
+    FROM day05_visits_per_day
 )
 SELECT visit_day, visit_count
 FROM ranked_days
 WHERE day_rank = 2;
+
+-- -----------------------------------------------------------------------------
+-- Cleanup (optional end of session)
+-- -----------------------------------------------------------------------------
+-- DROP TABLE IF EXISTS day05_practice_trips;
+-- DROP TABLE IF EXISTS day05_daily_revenue;
+-- DROP TABLE IF EXISTS day05_employees;
+-- DROP TABLE IF EXISTS day05_visits_per_day;
