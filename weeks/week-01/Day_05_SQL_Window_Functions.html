@@ -80,12 +80,10 @@
         <a href="#setup" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Setup</a>
         <a href="#recap" class="px-2.5 py-1.5 rounded-md text-sky-300/80 hover:text-white hover:bg-sky-500/10">Day 4 recap</a>
         <a href="#m0" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Why windows</a>
-        <a href="#m1" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Lab 1</a>
-        <a href="#m2" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">LAG / LEAD</a>
-        <a href="#m3" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Lab 2</a>
-        <a href="#m4" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">CTEs</a>
-        <a href="#m5" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Lab 3</a>
-        <a href="#m6" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Challenge</a>
+        <a href="#m-lag-lead" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">LAG / LEAD</a>
+        <a href="#live-setup" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Practice data</a>
+        <a href="#live-questions" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Exercises</a>
+        <a href="#live-solutions" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Solutions</a>
         <a href="#interview" class="px-2.5 py-1.5 rounded-md text-emerald-300/90 hover:text-white hover:bg-emerald-500/10">Interview</a>
       </div>
       <div class="flex items-center gap-3">
@@ -181,7 +179,7 @@
       <p class="text-xs text-zinc-400 mt-2 max-w-3xl leading-relaxed">
         Six <code class="font-mono">raw_orders</code> rows (one <code class="font-mono">NULL</code> amount on row 0104).
         <code class="font-mono">COUNT(*)</code> = 6 (includes nulls) vs <code class="font-mono">COUNT(amount)</code> = 5.
-        <code class="font-mono">SUM</code>/<code class="font-mono">AVG</code>/<code class="font-mono">MIN</code>/<code class="font-mono">MAX</code> on <code class="font-mono">amount</code> skip that NULL—Lab 2’s <code class="font-mono">SUM(fare_amount)</code> by day uses the same idea.
+        <code class="font-mono">SUM</code>/<code class="font-mono">AVG</code>/<code class="font-mono">MIN</code>/<code class="font-mono">MAX</code> on <code class="font-mono">amount</code> skip that NULL—running totals and rolling averages use the same rule.
         <code class="font-mono">MIN</code>/<code class="font-mono">MAX</code> work on dates too (<code class="font-mono">MIN(order_date)</code>).
       </p>
       <figure class="mt-6 rounded-2xl border border-emerald-500/25 overflow-hidden bg-zinc-900/50">
@@ -190,21 +188,21 @@
       </figure>
 
       <div class="mt-8 rounded-2xl border border-amber-500/30 bg-amber-950/20 p-5 lg:p-6 max-w-4xl">
-        <p class="text-xs font-semibold text-amber-200 uppercase tracking-wide">Bridge to today’s labs</p>
+        <p class="text-xs font-semibold text-amber-200 uppercase tracking-wide">Bridge to today’s exercises</p>
         <ul class="mt-3 space-y-2 text-xs text-zinc-400 list-disc pl-5 leading-relaxed">
-          <li><strong class="text-zinc-300">WHERE</strong> (recap §1): outer <code class="font-mono">WHERE trip_rank = 1</code> after the window runs.</li>
-          <li><strong class="text-zinc-300">Aggregates</strong> (recap §3): Lab 2 starts from <em>pre-summed</em> daily revenue rows (like after <code class="font-mono">GROUP BY</code>).</li>
-          <li><strong class="text-zinc-300">Joins</strong> (recap §2): not needed in window labs today—data is already one flat practice table.</li>
-          <li><strong class="text-zinc-300">Outer filter:</strong> <code class="font-mono">ROW_NUMBER()</code> in a CTE, <code class="font-mono">WHERE trip_rank = 1</code> outside—like <code class="font-mono">HAVING</code> after <code class="font-mono">GROUP BY</code>.</li>
+          <li><strong class="text-zinc-300">WHERE</strong> (recap §1): filter on a window column in an outer query (e.g. <code class="font-mono">WHERE rn = 1</code>), not in the same <code class="font-mono">SELECT</code> that defines the window.</li>
+          <li><strong class="text-zinc-300">Aggregates</strong> (recap §3): exercise 9 aggregates per employee first, then applies <code class="font-mono">RANK()</code> on those totals.</li>
+          <li><strong class="text-zinc-300">Joins</strong> (recap §2): today’s practice table is flat—no join required until you combine sources in real pipelines.</li>
+          <li><strong class="text-zinc-300">Outer filter:</strong> same pattern as <code class="font-mono">HAVING</code> after <code class="font-mono">GROUP BY</code>—compute, then filter the result.</li>
         </ul>
       </div>
 
       <details class="mt-6 rounded-xl border border-zinc-700 bg-zinc-900/40 p-4 max-w-4xl text-sm">
-        <summary class="font-medium text-zinc-300">Instructor note — what is still “next level” on this page?</summary>
+        <summary class="font-medium text-zinc-300">Optional depth for this day</summary>
         <div class="mt-3 text-xs text-zinc-400 space-y-3 leading-relaxed">
-          <p><strong class="text-emerald-300">Core / teach slowly:</strong> recap visuals; Lab 1 rank on 6 rows; Lab 2 <code class="font-mono">LAG</code> on 5 daily numbers; outer filter after <code class="font-mono">ROW_NUMBER()</code>.</p>
-          <p><strong class="text-amber-300">Medium stretch:</strong> <code class="font-mono">PARTITION BY</code> + <code class="font-mono">ORDER BY</code>; ranking tie behavior (Module 0 poster); <code class="font-mono">LEAD</code>; challenge (rank days after aggregate).</p>
-          <p><strong class="text-rose-300">Save for extension or Day 6:</strong> <code class="font-mono">WITH RECURSIVE</code> (Lab 3)—skip live if the room is tired; interview <strong>gaps &amp; islands</strong>; rolling <code class="font-mono">ROWS BETWEEN</code> frames; multi-city challenge variants.</p>
+          <p><strong class="text-zinc-300">Foundations:</strong> recap visuals; partition totals; ranking with ties; filtering after <code class="font-mono">ROW_NUMBER()</code> in an outer query.</p>
+          <p><strong class="text-zinc-300">Next layer:</strong> <code class="font-mono">PARTITION BY</code> + <code class="font-mono">ORDER BY</code>; <code class="font-mono">LAG</code> / <code class="font-mono">LEAD</code>; ranking daily aggregates.</p>
+          <p><strong class="text-zinc-300">Advanced:</strong> <code class="font-mono">WITH RECURSIVE</code>; gaps &amp; islands patterns; rolling <code class="font-mono">ROWS BETWEEN</code> frames.</p>
         </div>
       </details>
     </div>
@@ -224,150 +222,152 @@
     </div>
   </section>
 
-  <section id="m1" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+  <section id="m-lag-lead" class="scroll-mt-20 border-b border-zinc-800" data-module>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
-      <span class="text-xs font-mono text-cyan-400/90">Hands-on · Lab 1</span>
-      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Highest fare in each city (6-row practice table)</h2>
-      <div class="mt-6 rounded-2xl border border-cyan-500/30 bg-cyan-950/10 p-5 lg:p-6 max-w-4xl">
-        <p class="text-xs font-semibold text-cyan-200 uppercase tracking-wide">Problem statement</p>
-        <p class="text-sm text-zinc-300 mt-3 leading-relaxed">
-          Table <code class="font-mono">day05_practice_trips</code> (create with Step 0a). Find the <strong class="text-zinc-200">single highest <code class="font-mono">fare_amount</code></strong> in <strong class="text-zinc-200">Hyderabad</strong> and in <strong class="text-zinc-200">Bengaluru</strong>. Expected: Hyderabad <strong class="text-zinc-200">120</strong>, Bengaluru <strong class="text-zinc-200">200</strong>.
-        </p>
-        <div class="overflow-x-auto mt-4 rounded-lg border border-zinc-700">
-          <table class="w-full text-xs font-mono text-left">
-            <thead class="bg-zinc-900 text-zinc-500"><tr><th class="p-2">trip_id</th><th class="p-2">city</th><th class="p-2">fare_amount</th></tr></thead>
-            <tbody class="text-zinc-300">
-              <tr class="border-t border-zinc-800"><td class="p-2">T1</td><td class="p-2">Hyderabad</td><td class="p-2">120</td></tr>
-              <tr class="border-t border-zinc-800"><td class="p-2">T2</td><td class="p-2">Hyderabad</td><td class="p-2">90</td></tr>
-              <tr class="border-t border-zinc-800"><td class="p-2">T3</td><td class="p-2">Hyderabad</td><td class="p-2">85</td></tr>
-              <tr class="border-t border-zinc-800"><td class="p-2">T4</td><td class="p-2">Bengaluru</td><td class="p-2">200</td></tr>
-              <tr class="border-t border-zinc-800"><td class="p-2">T5</td><td class="p-2">Bengaluru</td><td class="p-2">150</td></tr>
-              <tr class="border-t border-zinc-800"><td class="p-2">T6</td><td class="p-2">Bengaluru</td><td class="p-2">40</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="mt-6 rounded-2xl border thought-card p-5 lg:p-6 max-w-4xl">
-        <p class="text-xs font-semibold text-amber-200 uppercase tracking-wide">Thought process (plain English → SQL)</p>
-        <ol class="mt-4 space-y-3.5 text-xs text-zinc-400 list-none leading-relaxed">
-          <li><span class="step-num">1</span><strong class="text-zinc-300">Grain:</strong> one row = one trip (already true in <code class="font-mono">VALUES</code>).</li>
-          <li><span class="step-num">2</span><strong class="text-zinc-300">Load data:</strong> you already ran Step 0 — read from <code class="font-mono">day05_practice_trips</code> (like any other table).</li>
-          <li><span class="step-num">3</span><strong class="text-zinc-300">PARTITION BY city</strong> — separate leaderboard per city.</li>
-          <li><span class="step-num">4</span><strong class="text-zinc-300">ORDER BY fare_amount DESC</strong> — biggest fare first.</li>
-          <li><span class="step-num">5</span><strong class="text-zinc-300">ROW_NUMBER()</strong> — pick exactly one winner per city.</li>
-          <li><span class="step-num">6</span><strong class="text-zinc-300">Outer WHERE trip_rank = 1</strong> — window first, filter second (Day 4 order).</li>
-        </ol>
-      </div>
-      <p class="text-xs text-amber-300/90 mt-4 max-w-3xl">Prerequisite: Step 0a created <code class="font-mono">day05_practice_trips</code>. Lab SQL reads that table only (no <code class="font-mono">VALUES</code> CTE).</p>
-      <div class="sql-block mt-4 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
-        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="lab1-sql">Copy SQL</button>
-        <pre id="lab1-sql" class="sql-text"></pre>
-      </div>
-    </div>
-  </section>
-
-  <section id="m2" class="scroll-mt-20 border-b border-zinc-800" data-module>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
-      <span class="text-xs font-mono text-sky-400/90">Module 2</span>
-      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Time-series windows: <code class="font-mono">LAG</code>, <code class="font-mono">LEAD</code>, rolling frames</h2>
-      <figure class="mt-6 rounded-2xl border border-zinc-800 overflow-hidden">
-        <img src="assets/day05_lag_lead_frames.png" alt="Daily revenue table with LAG previous day, LEAD next day, and 3-day rolling average frame" class="w-full h-auto block" loading="lazy">
+      <span class="text-xs font-mono text-sky-400/90">Module 1</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Time-series windows: <code class="font-mono text-base">LAG</code>, <code class="font-mono text-base">LEAD</code>, rolling frames</h2>
+      <figure class="mt-6 rounded-2xl border border-zinc-800 overflow-hidden bg-zinc-900/40">
+        <img src="assets/day05_lag_lead_frames.png" width="1200" height="675" alt="Daily revenue table with LAG previous day, LEAD next day, and rolling average window frame" class="w-full h-auto block" loading="lazy">
+        <figcaption class="px-4 py-3 text-[11px] text-zinc-500 border-t border-zinc-800"><code class="font-mono">ORDER BY</code> defines row order inside the partition; <code class="font-mono">LAG</code> / <code class="font-mono">LEAD</code> shift along that sequence; <code class="font-mono">ROWS BETWEEN</code> sets how many prior (or following) rows enter a rolling aggregate.</figcaption>
       </figure>
       <p class="text-sm text-zinc-400 mt-6 max-w-3xl leading-relaxed">
-        <strong class="text-zinc-300">Two-step CTE pattern:</strong> (1) <code class="font-mono">GROUP BY trip_day</code> to daily revenue grain, (2) apply <code class="font-mono">LAG</code>/<code class="font-mono">LEAD</code> on that CTE—never mix raw trips and day-level windows in one pass.
+        Exercises 5–8 on <code class="font-mono text-zinc-300">day05_live_sales</code> apply the same ideas per employee and sale date: prior/next day amounts, running totals, and a two-day moving average.
       </p>
-      <p class="text-xs text-emerald-300/90 mt-3 max-w-3xl">Runnable demo — 5 daily revenue numbers (already aggregated · LAG + LEAD):</p>
-      <div class="sql-block mt-4 rounded-xl border border-emerald-500/30 bg-black/80 p-4 pr-24 relative">
-        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="laglead-sql">Copy SQL</button>
-        <pre id="laglead-sql" class="sql-text"></pre>
+    </div>
+  </section>
+
+  <section id="live-setup" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-emerald-400/90">Hands-on · Practice table</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Dataset <code class="font-mono text-lg">day05_live_sales</code> — 14 rows, 6 columns</h2>
+      <p class="text-sm text-zinc-400 mt-3 max-w-3xl leading-relaxed">Run <strong class="text-zinc-300">DROP</strong> and <strong class="text-zinc-300">CREATE</strong> as <strong class="text-zinc-300">separate</strong> Athena statements. All ten questions query this one table.</p>
+      <p class="text-xs text-amber-300/90 mt-4">Statement 1 — drop if it exists:</p>
+      <div class="sql-block mt-2 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative max-w-4xl">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-drop-live">Copy SQL</button>
+        <pre id="sql-drop-live" class="sql-text"></pre>
+      </div>
+      <p class="text-xs text-emerald-300/90 mt-6">Statement 2 — CTAS:</p>
+      <div class="sql-block mt-2 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative max-w-4xl">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-setup-live">Copy SQL</button>
+        <pre id="sql-setup-live" class="sql-text"></pre>
       </div>
     </div>
   </section>
 
-  <section id="m3" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+  <section id="live-questions" class="scroll-mt-20 border-b border-zinc-800" data-module>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
-      <span class="text-xs font-mono text-emerald-400/90">Hands-on · Lab 2</span>
-      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Yesterday’s revenue on 5 days (<code class="font-mono">LAG</code>)</h2>
-      <div class="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/10 p-5 max-w-4xl">
-        <p class="text-xs font-semibold text-emerald-200 uppercase">Problem statement</p>
-        <p class="text-sm text-zinc-300 mt-3 leading-relaxed">Query <code class="font-mono">day05_daily_revenue</code> (Step 0b). Show each day’s revenue and <code class="font-mono">LAG</code> = previous day’s value (Jan 1 has <code class="font-mono">NULL</code> yesterday).</p>
-      </div>
-      <div class="mt-6 rounded-2xl border thought-card p-5 max-w-4xl">
-        <p class="text-xs font-semibold text-amber-200 uppercase">Thought process</p>
-        <ol class="mt-4 space-y-3 text-xs text-zinc-400 list-none leading-relaxed">
-          <li><span class="step-num">1</span><strong class="text-zinc-300">Grain is already daily</strong> — table <code class="font-mono">day05_daily_revenue</code> has one row per day (skips <code class="font-mono">GROUP BY</code> in the lab query).</li>
-          <li><span class="step-num">2</span><strong class="text-zinc-300">On real data</strong> you would <code class="font-mono">SUM(amount) GROUP BY sale_day</code> first, then <code class="font-mono">LAG</code> in step 2.</li>
-          <li><span class="step-num">3</span><strong class="text-zinc-300">LAG(... ORDER BY sale_day)</strong> walks backward one row = one calendar day.</li>
-        </ol>
-      </div>
-      <div class="sql-block mt-6 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
-        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="lab2-sql">Copy SQL</button>
-        <pre id="lab2-sql" class="sql-text"></pre>
-      </div>
+      <span class="text-xs font-mono text-cyan-400/90">Hands-on · Exercises</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Window function exercises</h2>
+      <p class="text-sm text-zinc-400 mt-3 max-w-3xl">Work through each item on <code class="font-mono text-zinc-300">day05_live_sales</code>. Reference solutions with copy-ready SQL are in the section below.</p>
+      <ol class="mt-8 space-y-4 text-sm text-zinc-300 max-w-4xl list-decimal pl-6 leading-relaxed">
+        <li><strong class="text-white"><code class="font-mono text-violet-300">OVER()</code> partition total:</strong> Show every sale row along with that department’s total revenue (without collapsing rows).</li>
+        <li><strong class="text-white"><code class="font-mono text-violet-300">ROW_NUMBER()</code> vs. <code class="font-mono text-violet-300">RANK()</code> vs. <code class="font-mono text-violet-300">DENSE_RANK()</code>:</strong> Rank all sales inside each department from highest to lowest <code class="font-mono">amount</code> using all three functions side by side.</li>
+        <li><strong class="text-white">CTE + <code class="font-mono text-violet-300">ROW_NUMBER()</code> (top 1 per group):</strong> Find the single highest sale row in each department (break ties arbitrarily).</li>
+        <li><strong class="text-white">CTE + <code class="font-mono text-violet-300">DENSE_RANK()</code> (2nd highest):</strong> Find the <strong>2nd highest</strong> sale amount in each department without skipping ranks when there is a tie.</li>
+        <li><strong class="text-white"><code class="font-mono text-violet-300">LAG()</code> (looking backward):</strong> For <strong>Rahul</strong> and <strong>Kabir</strong>, show each day’s sale alongside their <strong>previous day’s</strong> sale (<code class="font-mono">yesterday_amount</code>).</li>
+        <li><strong class="text-white"><code class="font-mono text-violet-300">LEAD()</code> (looking forward):</strong> For <strong>Rahul</strong> and <strong>Kabir</strong>, show each day’s sale alongside their <strong>next day’s</strong> sale (<code class="font-mono">tomorrow_amount</code>).</li>
+        <li><strong class="text-white">Running total (<code class="font-mono text-violet-300">UNBOUNDED PRECEDING</code>):</strong> For Rahul and Kabir, calculate cumulative running total day by day.</li>
+        <li><strong class="text-white">Rolling 2-day average (<code class="font-mono text-violet-300">1 PRECEDING</code>):</strong> For Rahul and Kabir, calculate a 2-day moving average (yesterday + today).</li>
+        <li><strong class="text-white">Multi-step CTE (<code class="font-mono text-violet-300">GROUP BY</code> → window):</strong> Calculate each employee’s total sales across all days, then rank all employees from #1 to #6.</li>
+        <li><strong class="text-white"><code class="font-mono text-violet-300">WITH RECURSIVE</code> (hierarchy):</strong> Build the reporting tree starting from <strong>Anita</strong> (<code class="font-mono">manager_id IS NULL</code>) down to juniors—print each employee’s hierarchy level (<code class="font-mono">lvl</code>).</li>
+      </ol>
     </div>
   </section>
 
-  <section id="m4" class="scroll-mt-20 border-b border-zinc-800" data-module>
+  <section id="live-solutions" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
-      <span class="text-xs font-mono text-indigo-400/90">Module 4</span>
-      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Modular CTEs &amp; recursive org walks</h2>
-      <figure class="mt-6 rounded-2xl border border-zinc-800 overflow-hidden">
-        <img src="assets/day05_standard_cte_pipeline.png" alt="Assembly line diagram: step_1 filter, step_2 join, step_3 aggregate as chained WITH clauses" class="w-full h-auto block" loading="lazy">
-      </figure>
-      <figure class="mt-6 rounded-2xl border border-zinc-800 overflow-hidden">
-        <img src="assets/day05_recursive_cte_loop.png" alt="Recursive CTE 3-pass trace: anchor seed, join iterations, empty stop" class="w-full h-auto block" loading="lazy">
-      </figure>
-      <p class="text-sm text-zinc-400 mt-6 max-w-3xl">Labs 1–2 already use modular <code class="font-mono">WITH</code>. Lab 3 adds <code class="font-mono">WITH RECURSIVE</code>: anchor rows (no manager) ∪ join employees whose <code class="font-mono">manager_id</code> matches the working set—stop when a pass returns zero rows (always add <code class="font-mono">lvl &lt; 10</code> in Athena).</p>
-    </div>
-  </section>
+      <span class="text-xs font-mono text-violet-400/90">Hands-on · Solutions</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Reference solutions</h2>
 
-  <section id="m5" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
-      <span class="text-xs font-mono text-violet-400/90">Hands-on · Lab 3</span>
-      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Who reports to whom — depth level only</h2>
-      <div class="mt-6 rounded-2xl border border-violet-500/30 bg-violet-950/10 p-5 max-w-4xl">
-        <p class="text-sm text-zinc-300 leading-relaxed">Table <code class="font-mono">day05_employees</code> (Step 0c): Anita (CEO) → Rahul → Priya. Walk down with <code class="font-mono">WITH RECURSIVE</code> and print <code class="font-mono">lvl</code> (1, 2, 3).</p>
-      </div>
-      <div class="mt-6 rounded-2xl border thought-card p-5 max-w-4xl">
-        <p class="text-xs font-semibold text-amber-200 uppercase">Thought process</p>
-        <ol class="mt-4 space-y-3 text-xs text-zinc-400 list-none leading-relaxed">
-          <li><span class="step-num">A</span><strong class="text-zinc-300">Anchor row:</strong> anyone with no manager → <code class="font-mono">lvl = 1</code>.</li>
-          <li><span class="step-num">R</span><strong class="text-zinc-300">Recursive row:</strong> find people whose <code class="font-mono">manager_id</code> matches someone already in the working set; add <code class="font-mono">lvl + 1</code>.</li>
-          <li><span class="step-num">S</span><strong class="text-zinc-300">Stop when</strong> a pass finds zero new people (keep <code class="font-mono">lvl &lt; 6</code> guard for Athena).</li>
-        </ol>
-      </div>
-      <div class="sql-block mt-6 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
-        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="lab3-sql">Copy SQL</button>
-        <pre id="lab3-sql" class="sql-text"></pre>
-      </div>
-    </div>
-  </section>
-
-  <section id="m6" class="scroll-mt-20 border-b border-zinc-800" data-module>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
-      <span class="text-xs font-mono text-amber-400/90">10-minute challenge</span>
-      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">2nd-busiest day (5-day visit counts)</h2>
-      <p class="text-sm text-zinc-400 mt-3 max-w-3xl leading-relaxed">Toy counts: 10, 25, 18, 12, 8 visits per day. Which day is <strong class="text-zinc-300">rank 2</strong> by volume? (Expected: <strong class="text-zinc-300">2025-01-03</strong> with <strong class="text-zinc-300">18</strong>.)</p>
-      <details class="mt-6 rounded-xl border border-zinc-700 bg-zinc-900/50 p-4 max-w-3xl text-sm">
-        <summary class="font-medium text-zinc-300">Need a hint? (3-step thought guide)</summary>
-        <ol class="mt-3 space-y-2 text-xs text-zinc-400 list-decimal pl-5">
-          <li>Count trips per <code class="font-mono">trip_day</code> (one city, already filtered).</li>
-          <li><code class="font-mono">RANK() OVER (ORDER BY trip_count DESC)</code> on those daily rows—no PARTITION needed (single city).</li>
-          <li>Keep <code class="font-mono">day_rank = 2</code>.</li>
-        </ol>
-      </details>
-      <details class="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-4 max-w-3xl text-sm">
-        <summary class="font-medium text-emerald-300">Reveal solution &amp; walkthrough</summary>
-        <div class="thought-card rounded-lg border p-4 mt-4 text-xs text-zinc-400">
-          <p><span class="step-num">1</span>Daily <code class="font-mono">COUNT(*)</code> CTE at day grain.</p>
-          <p class="mt-2"><span class="step-num">2</span>Rank days by count descending.</p>
-          <p class="mt-2"><span class="step-num">3</span>Filter to rank 2.</p>
+      <article id="live-q1" class="mt-10 max-w-4xl">
+        <h3 class="text-lg font-semibold text-white">Q1. <code class="font-mono text-base">OVER()</code> partition total</h3>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed"> <code class="font-mono">GROUP BY</code> collapses 14 rows into 2 rows; <code class="font-mono">OVER (PARTITION BY dept)</code> keeps all 14 rows and stamps the department total onto each row.</p>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-q1">Copy SQL</button>
+          <pre id="sql-q1" class="sql-text"></pre>
         </div>
-        <div class="sql-block mt-4 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
-          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="challenge-sql">Copy SQL</button>
-          <pre id="challenge-sql" class="sql-text"></pre>
+      </article>
+
+      <article id="live-q2" class="mt-10 max-w-4xl">
+        <h3 class="text-lg font-semibold text-white">Q2. <code class="font-mono text-base">ROW_NUMBER()</code> vs. <code class="font-mono text-base">RANK()</code> vs. <code class="font-mono text-base">DENSE_RANK()</code></h3>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed"> Tie in Enterprise (<code class="font-mono">500, 500, 300</code>): <code class="font-mono">ROW_NUMBER()</code> → 1, 2, 3; <code class="font-mono">RANK()</code> → 1, 1, 3; <code class="font-mono">DENSE_RANK()</code> → 1, 1, 2.</p>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-q2">Copy SQL</button>
+          <pre id="sql-q2" class="sql-text"></pre>
         </div>
-      </details>
+      </article>
+
+      <article id="live-q3" class="mt-10 max-w-4xl">
+        <h3 class="text-lg font-semibold text-white">Q3. CTE + <code class="font-mono text-base">ROW_NUMBER()</code> (top 1 per department)</h3>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed"> You cannot write <code class="font-mono">WHERE ROW_NUMBER() … = 1</code> directly because <code class="font-mono">WHERE</code> executes <em>before</em> window functions. Wrap it in a CTE first.</p>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-q3">Copy SQL</button>
+          <pre id="sql-q3" class="sql-text"></pre>
+        </div>
+      </article>
+
+      <article id="live-q4" class="mt-10 max-w-4xl">
+        <h3 class="text-lg font-semibold text-white">Q4. CTE + <code class="font-mono text-base">DENSE_RANK()</code> (2nd highest per department)</h3>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed"> Returns <code class="font-mono">500</code> (Anita &amp; Rahul) for Enterprise and <code class="font-mono">450</code> (Kabir) for SMB—never misses the true 2nd-highest value even when #1 is tied.</p>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-q4">Copy SQL</button>
+          <pre id="sql-q4" class="sql-text"></pre>
+        </div>
+      </article>
+
+      <article id="live-q5" class="mt-10 max-w-4xl">
+        <h3 class="text-lg font-semibold text-white">Q5. <code class="font-mono text-base">LAG()</code> (previous day’s sale)</h3>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed"> <code class="font-mono">LAG</code> looks <strong>up/backward</strong> 1 row in the partition. Day 1 (<code class="font-mono">2026-01-01</code>) always shows <code class="font-mono">NULL</code> because there is no prior day.</p>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-q5">Copy SQL</button>
+          <pre id="sql-q5" class="sql-text"></pre>
+        </div>
+      </article>
+
+      <article id="live-q6" class="mt-10 max-w-4xl">
+        <h3 class="text-lg font-semibold text-white">Q6. <code class="font-mono text-base">LEAD()</code> (next day’s sale)</h3>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed"> <code class="font-mono">LEAD</code> looks <strong>down/forward</strong> 1 row in the partition. The last day (<code class="font-mono">2026-01-03</code>) shows <code class="font-mono">NULL</code> because there is no next day yet.</p>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-q6">Copy SQL</button>
+          <pre id="sql-q6" class="sql-text"></pre>
+        </div>
+      </article>
+
+      <article id="live-q7" class="mt-10 max-w-4xl">
+        <h3 class="text-lg font-semibold text-white">Q7. Running total (<code class="font-mono text-base">UNBOUNDED PRECEDING</code>)</h3>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed"> Accumulates from the first row of each employee (<code class="font-mono">500</code> → <code class="font-mono">900</code> → <code class="font-mono">1500</code> for Rahul).</p>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-q7">Copy SQL</button>
+          <pre id="sql-q7" class="sql-text"></pre>
+        </div>
+      </article>
+
+      <article id="live-q8" class="mt-10 max-w-4xl">
+        <h3 class="text-lg font-semibold text-white">Q8. Rolling 2-day average (<code class="font-mono text-base">1 PRECEDING</code>)</h3>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed"> Sliding window of size 2 (yesterday + today): for Rahul, Day 1 = <code class="font-mono">500.0</code>, Day 2 = <code class="font-mono">450.0</code>, Day 3 = <code class="font-mono">500.0</code>.</p>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-q8">Copy SQL</button>
+          <pre id="sql-q8" class="sql-text"></pre>
+        </div>
+      </article>
+
+      <article id="live-q9" class="mt-10 max-w-4xl">
+        <h3 class="text-lg font-semibold text-white">Q9. Multi-step CTE (<code class="font-mono text-base">GROUP BY</code> → window)</h3>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed"> When ranking aggregated metrics, always <code class="font-mono">GROUP BY</code> in CTE #1 and apply <code class="font-mono">RANK()</code> in the outer query.</p>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-q9">Copy SQL</button>
+          <pre id="sql-q9" class="sql-text"></pre>
+        </div>
+      </article>
+
+      <article id="live-q10" class="mt-10 max-w-4xl">
+        <h3 class="text-lg font-semibold text-white">Q10. <code class="font-mono text-base">WITH RECURSIVE</code> (org chart hierarchy)</h3>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed"> Anchor finds the root (<code class="font-mono">lvl = 1</code>), recursive join adds direct reports (<code class="font-mono">lvl + 1</code>), and <code class="font-mono">WHERE t.lvl &lt; 5</code> is Athena’s infinite-loop safety guard.</p>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+          <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-q10">Copy SQL</button>
+          <pre id="sql-q10" class="sql-text"></pre>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -379,7 +379,7 @@
         <p class="font-medium text-emerald-400">E · ROW_NUMBER vs RANK vs DENSE_RANK</p>
         <p class="interview-q mt-2 text-xs text-zinc-400">Two trips both have fare $50; third has $40 in the same city. What are the three ranking functions’ values on the tied rows?</p>
         <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
-          <summary>Reveal strong answer</summary>
+          <summary>Answer</summary>
           <p class="text-xs text-zinc-400">Ordered by fare DESC: ROW_NUMBER → 1,2,3 (arbitrary tie-break). RANK → 1,1,3 (skips 2). DENSE_RANK → 1,1,2 (no gap).</p>
         </details>
       </article>
@@ -387,16 +387,77 @@
         <p class="font-medium text-amber-400">M · Why not <code class="font-mono">WHERE ROW_NUMBER() = 1</code>?</p>
         <p class="interview-q mt-2 text-xs text-zinc-400">Explain using Day 4’s logical order.</p>
         <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
-          <summary>Reveal strong answer</summary>
+          <summary>Answer</summary>
           <p class="text-xs text-zinc-400"><code class="font-mono">WHERE</code> is evaluated before <code class="font-mono">SELECT</code> window functions, so the rank column does not exist yet. Use a CTE that computes the window in <code class="font-mono">SELECT</code>, then filter in the next CTE with <code class="font-mono">WHERE rn = 1</code>.</p>
         </details>
       </article>
       <article class="interview-card mt-2 rounded-xl border border-zinc-800 bg-slate-950 p-4 text-sm">
         <p class="font-medium text-rose-400">H · Consecutive login days (gaps &amp; islands starter)</p>
-        <p class="interview-q mt-2 text-xs text-zinc-400"><code class="font-mono">logins(user_id, login_date)</code>—sketch how <code class="font-mono">login_date - ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY login_date)</code> groups consecutive days.</p>
+        <p class="interview-q mt-2 text-xs text-zinc-400 leading-relaxed">
+          Table <code class="font-mono text-zinc-300">logins(user_id, login_date)</code> — one row per login (duplicate days allowed). Sample rows for <strong class="text-zinc-300">user_id = 42</strong>:
+        </p>
+        <div class="overflow-x-auto mt-3 rounded-lg border border-zinc-700/80">
+          <table class="w-full text-[11px] font-mono text-left">
+            <thead class="bg-zinc-900 text-zinc-500">
+              <tr><th class="p-2">user_id</th><th class="p-2">login_date</th></tr>
+            </thead>
+            <tbody class="text-zinc-300">
+              <tr class="border-t border-zinc-800"><td class="p-2">42</td><td class="p-2">2026-01-01</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">42</td><td class="p-2">2026-01-02</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">42</td><td class="p-2">2026-01-03</td></tr>
+              <tr class="border-t border-zinc-800 bg-rose-950/20"><td class="p-2">42</td><td class="p-2 text-zinc-500">— (no rows Jan 4–6)</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">42</td><td class="p-2">2026-01-07</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">42</td><td class="p-2">2026-01-08</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="interview-q mt-3 text-xs text-zinc-400 leading-relaxed">
+          User 42 was inactive Jan 4–6; the rest are separate login days in order.
+        </p>
+        <p class="interview-q mt-2 text-xs text-zinc-400 leading-relaxed">
+          Write SQL to list each user’s consecutive login streaks: <strong class="text-zinc-300">streak start date</strong>, <strong class="text-zinc-300">streak end date</strong>, and <strong class="text-zinc-300">number of days</strong> in the streak.
+        </p>
         <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
-          <summary>Reveal strong answer</summary>
-          <p class="text-xs text-zinc-400">Within a streak, dates increase by 1 while row numbers increase by 1, so the difference is constant per island. Group by that difference (and user) to count streak length—classic gaps-and-islands pattern.</p>
+          <summary>Answer</summary>
+          <div class="text-xs text-zinc-400 space-y-3 leading-relaxed">
+            <p>Give each row a <code class="font-mono">streak_id</code>—one shared value for every day in the same uninterrupted run. A common definition is <code class="font-mono">login_date − ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY login_date)</code> (shift the date back one step per rank). Interview notes often call this the <em>gaps-and-islands</em> trick; the column name <code class="font-mono">streak_id</code> matches what you are measuring. For user 42:</p>
+            <div class="overflow-x-auto rounded-lg border border-zinc-700/80">
+              <table class="w-full text-[11px] font-mono text-left">
+                <thead class="bg-zinc-900 text-zinc-500">
+                  <tr><th class="p-2">login_date</th><th class="p-2">rn</th><th class="p-2">streak_id</th></tr>
+                </thead>
+                <tbody class="text-zinc-300">
+                  <tr class="border-t border-zinc-800"><td class="p-2">2026-01-01</td><td class="p-2">1</td><td class="p-2 text-emerald-300/90">2025-12-31</td></tr>
+                  <tr class="border-t border-zinc-800"><td class="p-2">2026-01-02</td><td class="p-2">2</td><td class="p-2 text-emerald-300/90">2025-12-31</td></tr>
+                  <tr class="border-t border-zinc-800"><td class="p-2">2026-01-03</td><td class="p-2">3</td><td class="p-2 text-emerald-300/90">2025-12-31</td></tr>
+                  <tr class="border-t border-zinc-800"><td class="p-2">2026-01-07</td><td class="p-2">4</td><td class="p-2 text-sky-300/90">2026-01-03</td></tr>
+                  <tr class="border-t border-zinc-800"><td class="p-2">2026-01-08</td><td class="p-2">5</td><td class="p-2 text-sky-300/90">2026-01-03</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>All rows in the Jan 1–3 run share <code class="font-mono">2025-12-31</code>; Jan 7–8 share <code class="font-mono">2026-01-03</code>. On back-to-back days, date and row number both increase by 1, so their difference does not change. After a gap, only the date jumps—so you get a new label and a new streak.</p>
+            <p>Put the label in a CTE, then group:</p>
+            <pre class="mt-2 p-3 rounded-lg bg-black/60 border border-zinc-800 text-[10px] text-zinc-300 leading-relaxed overflow-x-auto">WITH streak_labeled AS (
+    SELECT
+        user_id,
+        login_date,
+        login_date - ROW_NUMBER() OVER (
+            PARTITION BY user_id ORDER BY login_date
+        ) AS streak_id
+    FROM logins
+)
+SELECT
+    user_id,
+    streak_id,
+    MIN(login_date) AS streak_start,
+    MAX(login_date) AS streak_end,
+    COUNT(*)        AS streak_len
+FROM streak_labeled
+GROUP BY user_id, streak_id
+ORDER BY user_id, streak_start;</pre>
+            <p>For user 42: row <code class="font-mono">(42, 2025-12-31, 2026-01-01, 2026-01-03, 3)</code> and <code class="font-mono">(42, 2026-01-03, 2026-01-07, 2026-01-08, 2)</code>. To get <strong class="text-zinc-300">longest streak per user</strong>, rank those groups by <code class="font-mono">streak_len DESC</code> and keep <code class="font-mono">rn = 1</code> (same outer-filter pattern as exercise 3).</p>
+            <p class="text-zinc-500">In Athena, express “minus one day per rank” explicitly if needed, e.g. <code class="font-mono">date_add('day', -rn, login_date)</code> — same grouping logic.</p>
+          </div>
         </details>
       </article>
     </div>
@@ -424,58 +485,131 @@ FROM (
         ('T5', 'Bengaluru',  150.00),
         ('T6', 'Bengaluru',   40.00)
 ) AS t(trip_id, city, fare_amount)`,
-    laglead: `SELECT
-    sale_day,
-    daily_revenue,
-    LAG(daily_revenue, 1) OVER (ORDER BY sale_day) AS prev_day_revenue,
-    LEAD(daily_revenue, 1) OVER (ORDER BY sale_day) AS next_day_revenue
-FROM day05_daily_revenue
-ORDER BY sale_day`,
-    lab1: `WITH ranked AS (
+    dropLive: 'DROP TABLE IF EXISTS day05_live_sales;',
+    setupLive: `CREATE TABLE day05_live_sales AS
+SELECT * FROM (
+    VALUES
+        (1, 'Anita',  'Enterprise', CAST(NULL AS INT), DATE '2026-01-01', 500),
+        (1, 'Anita',  'Enterprise', CAST(NULL AS INT), DATE '2026-01-02', 700),
+        (2, 'Rahul',  'Enterprise', 1,                 DATE '2026-01-01', 500),
+        (2, 'Rahul',  'Enterprise', 1,                 DATE '2026-01-02', 400),
+        (2, 'Rahul',  'Enterprise', 1,                 DATE '2026-01-03', 600),
+        (3, 'Priya',  'Enterprise', 2,                 DATE '2026-01-01', 300),
+        (3, 'Priya',  'Enterprise', 2,                 DATE '2026-01-02', 300),
+        (4, 'Kabir',  'SMB',        1,                 DATE '2026-01-01', 450),
+        (4, 'Kabir',  'SMB',        1,                 DATE '2026-01-02', 450),
+        (4, 'Kabir',  'SMB',        1,                 DATE '2026-01-03', 800),
+        (5, 'Meera',  'SMB',        4,                 DATE '2026-01-01', 200),
+        (5, 'Meera',  'SMB',        4,                 DATE '2026-01-02', 350),
+        (6, 'Vikram', 'SMB',        4,                 DATE '2026-01-02', 200),
+        (6, 'Vikram', 'SMB',        4,                 DATE '2026-01-03', 250)
+) AS t(emp_id, emp_name, dept, manager_id, sale_date, amount)`,
+    q1: `SELECT
+    emp_name,
+    dept,
+    amount,
+    SUM(amount) OVER (PARTITION BY dept) AS dept_total
+FROM day05_live_sales`,
+    q2: `SELECT
+    dept,
+    emp_name,
+    amount,
+    ROW_NUMBER() OVER (PARTITION BY dept ORDER BY amount DESC) AS rn,
+    RANK()       OVER (PARTITION BY dept ORDER BY amount DESC) AS rnk,
+    DENSE_RANK() OVER (PARTITION BY dept ORDER BY amount DESC) AS dense_rnk
+FROM day05_live_sales
+ORDER BY dept, amount DESC`,
+    q3: `WITH ranked AS (
     SELECT
-        trip_id,
-        city,
-        fare_amount,
-        ROW_NUMBER() OVER (
-            PARTITION BY city
-            ORDER BY fare_amount DESC
-        ) AS trip_rank
-    FROM day05_practice_trips
+        dept,
+        emp_name,
+        amount,
+        ROW_NUMBER() OVER (PARTITION BY dept ORDER BY amount DESC) AS rn
+    FROM day05_live_sales
 )
-SELECT city, trip_id, fare_amount, trip_rank
+SELECT dept, emp_name, amount
 FROM ranked
-WHERE trip_rank = 1
-ORDER BY city`,
-    lab2: `SELECT
-    sale_day,
-    daily_revenue,
-    LAG(daily_revenue, 1) OVER (ORDER BY sale_day) AS yesterday_revenue
-FROM day05_daily_revenue
-ORDER BY sale_day`,
-    lab3: `WITH RECURSIVE org_tree AS (
-    SELECT emp_id, emp_name, role, 1 AS lvl
-    FROM day05_employees
+WHERE rn = 1`,
+    q4: `WITH ranked AS (
+    SELECT
+        dept,
+        emp_name,
+        amount,
+        DENSE_RANK() OVER (PARTITION BY dept ORDER BY amount DESC) AS rnk
+    FROM day05_live_sales
+)
+SELECT dept, emp_name, amount
+FROM ranked
+WHERE rnk = 2`,
+    q5: `SELECT
+    emp_name,
+    sale_date,
+    amount,
+    LAG(amount, 1) OVER (PARTITION BY emp_name ORDER BY sale_date) AS yesterday_amount
+FROM day05_live_sales
+WHERE emp_name IN ('Rahul', 'Kabir')
+ORDER BY emp_name, sale_date`,
+    q6: `SELECT
+    emp_name,
+    sale_date,
+    amount,
+    LEAD(amount, 1) OVER (PARTITION BY emp_name ORDER BY sale_date) AS tomorrow_amount
+FROM day05_live_sales
+WHERE emp_name IN ('Rahul', 'Kabir')
+ORDER BY emp_name, sale_date`,
+    q7: `SELECT
+    emp_name,
+    sale_date,
+    amount,
+    SUM(amount) OVER (
+        PARTITION BY emp_name
+        ORDER BY sale_date
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS running_total
+FROM day05_live_sales
+WHERE emp_name IN ('Rahul', 'Kabir')
+ORDER BY emp_name, sale_date`,
+    q8: `SELECT
+    emp_name,
+    sale_date,
+    amount,
+    AVG(amount) OVER (
+        PARTITION BY emp_name
+        ORDER BY sale_date
+        ROWS BETWEEN 1 PRECEDING AND CURRENT ROW
+    ) AS rolling_2day_avg
+FROM day05_live_sales
+WHERE emp_name IN ('Rahul', 'Kabir')
+ORDER BY emp_name, sale_date`,
+    q9: `WITH emp_totals AS (
+    SELECT emp_name, dept, SUM(amount) AS total_sales
+    FROM day05_live_sales
+    GROUP BY emp_name, dept
+)
+SELECT
+    emp_name,
+    dept,
+    total_sales,
+    RANK() OVER (ORDER BY total_sales DESC) AS overall_rank
+FROM emp_totals`,
+    q10: `WITH RECURSIVE
+employees AS (
+    SELECT DISTINCT emp_id, emp_name, dept, manager_id
+    FROM day05_live_sales
+),
+org_tree AS (
+    SELECT emp_id, emp_name, dept, 1 AS lvl
+    FROM employees
     WHERE manager_id IS NULL
     UNION ALL
-    SELECT e.emp_id, e.emp_name, e.role, t.lvl + 1
-    FROM day05_employees e
-    INNER JOIN org_tree t
-        ON e.manager_id = t.emp_id
+    SELECT e.emp_id, e.emp_name, e.dept, t.lvl + 1
+    FROM employees e
+    JOIN org_tree t ON e.manager_id = t.emp_id
     WHERE t.lvl < 5
 )
-SELECT emp_id, emp_name, role, lvl
+SELECT lvl, emp_name, dept
 FROM org_tree
-ORDER BY lvl, emp_id`,
-    challenge: `WITH ranked_days AS (
-    SELECT
-        visit_day,
-        visit_count,
-        RANK() OVER (ORDER BY visit_count DESC) AS day_rank
-    FROM day05_visits_per_day
-)
-SELECT visit_day, visit_count
-FROM ranked_days
-WHERE day_rank = 2`
+ORDER BY lvl, emp_id`
   };
 
   const KEYWORDS = /\b(SELECT|FROM|WHERE|JOIN|LEFT|INNER|ON|GROUP|BY|HAVING|ORDER|LIMIT|CASE|WHEN|THEN|ELSE|END|AND|OR|AS|IN|IS|NULL|NOT|DISTINCT|COUNT|SUM|AVG|ROUND|COALESCE|CAST|DATE|WITH|RECURSIVE|UNION|ALL|DESC|ASC|OVER|PARTITION|ROWS|BETWEEN|PRECEDING|CURRENT|ROW|LAG|LEAD|RANK|DENSE_RANK|ROW_NUMBER|MAX|TRIM|varchar|DROP|TABLE|CREATE|IF|EXISTS|INTEGER)\b/gi;
@@ -493,11 +627,9 @@ WHERE day_rank = 2`
   }
 
   fill('setup-create-sql', SQL.setupCreate);
-  fill('laglead-sql', SQL.laglead);
-  fill('lab1-sql', SQL.lab1);
-  fill('lab2-sql', SQL.lab2);
-  fill('lab3-sql', SQL.lab3);
-  fill('challenge-sql', SQL.challenge);
+  fill('sql-drop-live', SQL.dropLive);
+  fill('sql-setup-live', SQL.setupLive);
+  ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'].forEach((k) => fill('sql-' + k, SQL[k]));
 
   document.querySelectorAll('.sql-copy').forEach((btn) => {
     btn.addEventListener('click', () => {

@@ -1,164 +1,175 @@
 -- =============================================================================
--- Week 1 Day 5: Window Functions — practice tables + queries
--- Athena: pick your workgroup and a database (default or de_keystone_shared).
--- STEP 0 — Run EACH statement below ONCE to create tables (CTAS → Glue + S3).
--- Labs — Run one lab query at a time (reads from day05_* tables).
+-- Week 1 Day 5: Window Functions — Live coding on day05_live_sales
+-- Run DROP + CREATE once, then one lab query at a time in Athena.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
--- STEP 0a — practice_trips (6 rows · Hyderabad & Bengaluru)
+-- Setup — day05_live_sales (14 rows, 6 columns)
+-- Run DROP and CREATE as separate statements
 -- -----------------------------------------------------------------------------
-DROP TABLE IF EXISTS day05_practice_trips;
+DROP TABLE IF EXISTS day05_live_sales;
 
-CREATE TABLE day05_practice_trips
-AS
-SELECT *
-FROM (
+CREATE TABLE day05_live_sales AS
+SELECT * FROM (
     VALUES
-        ('T1', 'Hyderabad',  120.00),
-        ('T2', 'Hyderabad',   90.00),
-        ('T3', 'Hyderabad',   85.00),
-        ('T4', 'Bengaluru',  200.00),
-        ('T5', 'Bengaluru',  150.00),
-        ('T6', 'Bengaluru',   40.00)
-) AS t(trip_id, city, fare_amount);
+        (1, 'Anita',  'Enterprise', CAST(NULL AS INT), DATE '2026-01-01', 500),
+        (1, 'Anita',  'Enterprise', CAST(NULL AS INT), DATE '2026-01-02', 700),
+        (2, 'Rahul',  'Enterprise', 1,                 DATE '2026-01-01', 500),
+        (2, 'Rahul',  'Enterprise', 1,                 DATE '2026-01-02', 400),
+        (2, 'Rahul',  'Enterprise', 1,                 DATE '2026-01-03', 600),
+        (3, 'Priya',  'Enterprise', 2,                 DATE '2026-01-01', 300),
+        (3, 'Priya',  'Enterprise', 2,                 DATE '2026-01-02', 300),
+        (4, 'Kabir',  'SMB',        1,                 DATE '2026-01-01', 450),
+        (4, 'Kabir',  'SMB',        1,                 DATE '2026-01-02', 450),
+        (4, 'Kabir',  'SMB',        1,                 DATE '2026-01-03', 800),
+        (5, 'Meera',  'SMB',        4,                 DATE '2026-01-01', 200),
+        (5, 'Meera',  'SMB',        4,                 DATE '2026-01-02', 350),
+        (6, 'Vikram', 'SMB',        4,                 DATE '2026-01-02', 200),
+        (6, 'Vikram', 'SMB',        4,                 DATE '2026-01-03', 250)
+) AS t(emp_id, emp_name, dept, manager_id, sale_date, amount);
 
 -- -----------------------------------------------------------------------------
--- STEP 0b — daily_revenue (5 days · toy totals)
--- -----------------------------------------------------------------------------
-DROP TABLE IF EXISTS day05_daily_revenue;
-
-CREATE TABLE day05_daily_revenue
-AS
-SELECT *
-FROM (
-    VALUES
-        (DATE '2025-01-01', 100.0),
-        (DATE '2025-01-02', 150.0),
-        (DATE '2025-01-03', 120.0),
-        (DATE '2025-01-04', 180.0),
-        (DATE '2025-01-05',  90.0)
-) AS d(sale_day, daily_revenue);
-
--- -----------------------------------------------------------------------------
--- STEP 0c — employees (3 rows · mini org)
--- -----------------------------------------------------------------------------
-DROP TABLE IF EXISTS day05_employees;
-
-CREATE TABLE day05_employees
-AS
-SELECT *
-FROM (
-    VALUES
-        (1, 'Anita', 'CEO',     CAST(NULL AS INTEGER)),
-        (2, 'Rahul', 'Manager', 1),
-        (3, 'Priya', 'Analyst', 2)
-) AS e(emp_id, emp_name, role, manager_id);
-
--- -----------------------------------------------------------------------------
--- STEP 0d — visits_per_day (5 days · challenge data)
--- -----------------------------------------------------------------------------
-DROP TABLE IF EXISTS day05_visits_per_day;
-
-CREATE TABLE day05_visits_per_day
-AS
-SELECT *
-FROM (
-    VALUES
-        (DATE '2025-01-01', 10),
-        (DATE '2025-01-02', 25),
-        (DATE '2025-01-03', 18),
-        (DATE '2025-01-04', 12),
-        (DATE '2025-01-05',  8)
-) AS v(visit_day, visit_count);
-
--- -----------------------------------------------------------------------------
--- Verify (optional) — SELECT * FROM each day05_* table
--- -----------------------------------------------------------------------------
-SELECT 'practice_trips' AS tbl, COUNT(*) AS rows FROM day05_practice_trips
-UNION ALL
-SELECT 'daily_revenue', COUNT(*) FROM day05_daily_revenue
-UNION ALL
-SELECT 'employees', COUNT(*) FROM day05_employees
-UNION ALL
-SELECT 'visits_per_day', COUNT(*) FROM day05_visits_per_day;
-
--- -----------------------------------------------------------------------------
--- Demo — LAG / LEAD on day05_daily_revenue
+-- Q1 — OVER() partition total
 -- -----------------------------------------------------------------------------
 SELECT
-    sale_day,
-    daily_revenue,
-    LAG(daily_revenue, 1) OVER (ORDER BY sale_day) AS prev_day_revenue,
-    LEAD(daily_revenue, 1) OVER (ORDER BY sale_day) AS next_day_revenue
-FROM day05_daily_revenue
-ORDER BY sale_day;
+    emp_name,
+    dept,
+    amount,
+    SUM(amount) OVER (PARTITION BY dept) AS dept_total
+FROM day05_live_sales;
 
 -- -----------------------------------------------------------------------------
--- Lab 1 — Highest fare per city (expect Hyderabad 120, Bengaluru 200)
+-- Q2 — ROW_NUMBER vs RANK vs DENSE_RANK
+-- -----------------------------------------------------------------------------
+SELECT
+    dept,
+    emp_name,
+    amount,
+    ROW_NUMBER() OVER (PARTITION BY dept ORDER BY amount DESC) AS rn,
+    RANK()       OVER (PARTITION BY dept ORDER BY amount DESC) AS rnk,
+    DENSE_RANK() OVER (PARTITION BY dept ORDER BY amount DESC) AS dense_rnk
+FROM day05_live_sales
+ORDER BY dept, amount DESC;
+
+-- -----------------------------------------------------------------------------
+-- Q3 — CTE + ROW_NUMBER (top 1 per department)
 -- -----------------------------------------------------------------------------
 WITH ranked AS (
     SELECT
-        trip_id,
-        city,
-        fare_amount,
-        ROW_NUMBER() OVER (
-            PARTITION BY city
-            ORDER BY fare_amount DESC
-        ) AS trip_rank
-    FROM day05_practice_trips
+        dept,
+        emp_name,
+        amount,
+        ROW_NUMBER() OVER (PARTITION BY dept ORDER BY amount DESC) AS rn
+    FROM day05_live_sales
 )
-SELECT city, trip_id, fare_amount, trip_rank
+SELECT dept, emp_name, amount
 FROM ranked
-WHERE trip_rank = 1
-ORDER BY city;
+WHERE rn = 1;
 
 -- -----------------------------------------------------------------------------
--- Lab 2 — Yesterday revenue (LAG) on day05_daily_revenue
+-- Q4 — CTE + DENSE_RANK (2nd highest per department)
+-- -----------------------------------------------------------------------------
+WITH ranked AS (
+    SELECT
+        dept,
+        emp_name,
+        amount,
+        DENSE_RANK() OVER (PARTITION BY dept ORDER BY amount DESC) AS rnk
+    FROM day05_live_sales
+)
+SELECT dept, emp_name, amount
+FROM ranked
+WHERE rnk = 2;
+
+-- -----------------------------------------------------------------------------
+-- Q5 — LAG (previous day) for Rahul and Kabir
 -- -----------------------------------------------------------------------------
 SELECT
-    sale_day,
-    daily_revenue,
-    LAG(daily_revenue, 1) OVER (ORDER BY sale_day) AS yesterday_revenue
-FROM day05_daily_revenue
-ORDER BY sale_day;
+    emp_name,
+    sale_date,
+    amount,
+    LAG(amount, 1) OVER (PARTITION BY emp_name ORDER BY sale_date) AS yesterday_amount
+FROM day05_live_sales
+WHERE emp_name IN ('Rahul', 'Kabir')
+ORDER BY emp_name, sale_date;
 
 -- -----------------------------------------------------------------------------
--- Lab 3 — Recursive levels on day05_employees
+-- Q6 — LEAD (next day) for Rahul and Kabir
 -- -----------------------------------------------------------------------------
-WITH RECURSIVE org_tree AS (
-    SELECT emp_id, emp_name, role, 1 AS lvl
-    FROM day05_employees
+SELECT
+    emp_name,
+    sale_date,
+    amount,
+    LEAD(amount, 1) OVER (PARTITION BY emp_name ORDER BY sale_date) AS tomorrow_amount
+FROM day05_live_sales
+WHERE emp_name IN ('Rahul', 'Kabir')
+ORDER BY emp_name, sale_date;
+
+-- -----------------------------------------------------------------------------
+-- Q7 — Running total (UNBOUNDED PRECEDING)
+-- -----------------------------------------------------------------------------
+SELECT
+    emp_name,
+    sale_date,
+    amount,
+    SUM(amount) OVER (
+        PARTITION BY emp_name
+        ORDER BY sale_date
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS running_total
+FROM day05_live_sales
+WHERE emp_name IN ('Rahul', 'Kabir')
+ORDER BY emp_name, sale_date;
+
+-- -----------------------------------------------------------------------------
+-- Q8 — Rolling 2-day average
+-- -----------------------------------------------------------------------------
+SELECT
+    emp_name,
+    sale_date,
+    amount,
+    AVG(amount) OVER (
+        PARTITION BY emp_name
+        ORDER BY sale_date
+        ROWS BETWEEN 1 PRECEDING AND CURRENT ROW
+    ) AS rolling_2day_avg
+FROM day05_live_sales
+WHERE emp_name IN ('Rahul', 'Kabir')
+ORDER BY emp_name, sale_date;
+
+-- -----------------------------------------------------------------------------
+-- Q9 — GROUP BY then rank employees
+-- -----------------------------------------------------------------------------
+WITH emp_totals AS (
+    SELECT emp_name, dept, SUM(amount) AS total_sales
+    FROM day05_live_sales
+    GROUP BY emp_name, dept
+)
+SELECT
+    emp_name,
+    dept,
+    total_sales,
+    RANK() OVER (ORDER BY total_sales DESC) AS overall_rank
+FROM emp_totals;
+
+-- -----------------------------------------------------------------------------
+-- Q10 — WITH RECURSIVE org chart from Anita
+-- -----------------------------------------------------------------------------
+WITH RECURSIVE
+employees AS (
+    SELECT DISTINCT emp_id, emp_name, dept, manager_id
+    FROM day05_live_sales
+),
+org_tree AS (
+    SELECT emp_id, emp_name, dept, 1 AS lvl
+    FROM employees
     WHERE manager_id IS NULL
     UNION ALL
-    SELECT e.emp_id, e.emp_name, e.role, t.lvl + 1
-    FROM day05_employees e
-    INNER JOIN org_tree t
-        ON e.manager_id = t.emp_id
+    SELECT e.emp_id, e.emp_name, e.dept, t.lvl + 1
+    FROM employees e
+    JOIN org_tree t ON e.manager_id = t.emp_id
     WHERE t.lvl < 5
 )
-SELECT emp_id, emp_name, role, lvl
+SELECT lvl, emp_name, dept
 FROM org_tree
 ORDER BY lvl, emp_id;
-
--- -----------------------------------------------------------------------------
--- Challenge — 2nd busiest day (expect 2025-01-03, 18 visits)
--- -----------------------------------------------------------------------------
-WITH ranked_days AS (
-    SELECT
-        visit_day,
-        visit_count,
-        RANK() OVER (ORDER BY visit_count DESC) AS day_rank
-    FROM day05_visits_per_day
-)
-SELECT visit_day, visit_count
-FROM ranked_days
-WHERE day_rank = 2;
-
--- -----------------------------------------------------------------------------
--- Cleanup (optional end of session)
--- -----------------------------------------------------------------------------
--- DROP TABLE IF EXISTS day05_practice_trips;
--- DROP TABLE IF EXISTS day05_daily_revenue;
--- DROP TABLE IF EXISTS day05_employees;
--- DROP TABLE IF EXISTS day05_visits_per_day;
