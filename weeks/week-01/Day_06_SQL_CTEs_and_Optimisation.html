@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day 6 — SQL Recursion &amp; Query Optimization | KeystoneEduTech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-feature-settings: 'ss01' on; }
+    .glass { background: rgba(24, 27, 34, 0.78); backdrop-filter: blur(12px); }
+    .progress-ring { transition: stroke-dashoffset 0.4s ease; }
+    .sql-block { position: relative; }
+    .sql-copy {
+      position: absolute; top: 0.5rem; right: 0.5rem; z-index: 2;
+    }
+    pre.sql-text {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 0.72rem;
+      line-height: 1.55;
+    }
+    .sql-text .kw { color: #c4b5fd; font-weight: 600; }
+    .sql-text .kw2 { color: #67e8f9; font-weight: 500; }
+    .sql-text .fn { color: #7dd3fc; }
+    .sql-text .str { color: #86efac; }
+    .sql-text .cmt { color: #71717a; font-style: italic; }
+    .sql-text .num { color: #fcd34d; }
+    details summary { cursor: pointer; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    .step-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 1.75rem; height: 1.75rem; border-radius: 0.5rem;
+      background: rgba(56, 189, 248, 0.15); border: 1px solid rgb(56 189 248 / 0.45);
+      color: rgb(186 230 253); font-size: 0.75rem; font-weight: 600; margin-right: 0.5rem;
+    }
+    .tab-btn[aria-selected="true"] { background: rgba(56, 189, 248, 0.2); border-color: rgb(56 189 248 / 0.5); color: rgb(186 230 253); }
+    .pillar-panel[hidden] { display: none; }
+    .interview-card .interview-q { white-space: normal; }
+    details.interview-answer > summary {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.75rem; font-weight: 600; color: rgb(161 161 170);
+    }
+    details.interview-answer > summary:hover { color: rgb(228 228 231); }
+    details.interview-answer[open] > summary { color: rgb(52 211 153); margin-bottom: 0.75rem; }
+    .stepper-row[data-active="true"] { border-color: rgb(34 211 238 / 0.5); background: rgb(22 78 99 / 0.25); }
+  </style>
+</head>
+<body class="bg-slate-950 text-zinc-100 antialiased min-h-screen">
+
+<header class="sticky top-0 z-50 border-b border-zinc-800 glass">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Primary">
+    <div class="flex flex-wrap items-center justify-between gap-3 py-3">
+      <div class="flex items-center gap-3 flex-wrap">
+        <a href="index.html" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-emerald-500/50 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25 text-sm font-semibold shrink-0 transition-colors" title="Return to Week 1 day list">
+          Week 1 index
+        </a>
+        <a href="#top" class="flex items-center gap-2 font-semibold text-white tracking-tight">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/20 text-cyan-400 font-mono text-xs">6</span>
+          KeystoneEduTech
+        </a>
+      </div>
+      <div class="hidden lg:flex flex-wrap items-center gap-1 text-sm">
+        <a href="#setup" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Setup</a>
+        <a href="#recursion-model" class="px-2.5 py-1.5 rounded-md text-cyan-300/80 hover:text-white hover:bg-cyan-500/10">Recursion</a>
+        <a href="#live-setup" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Tables</a>
+        <a href="#example-1" class="px-2.5 py-1.5 rounded-md text-purple-300/80 hover:text-white hover:bg-purple-500/10">Org chart</a>
+        <a href="#example-2" class="px-2.5 py-1.5 rounded-md text-purple-300/80 hover:text-white hover:bg-purple-500/10">Date spine</a>
+        <a href="#challenges" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Challenges</a>
+        <a href="#optimization" class="px-2.5 py-1.5 rounded-md text-sky-300/80 hover:text-white hover:bg-sky-500/10">Optimization</a>
+        <a href="#interview" class="px-2.5 py-1.5 rounded-md text-emerald-300/90 hover:text-white hover:bg-emerald-500/10">Practice Qs</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-xs text-zinc-500">
+          <svg class="w-9 h-9 -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="#27272a" stroke-width="3"/>
+            <circle id="progress-ring" class="progress-ring" cx="18" cy="18" r="15" fill="none" stroke="#22d3ee" stroke-width="3" stroke-linecap="round" stroke-dasharray="94.2" stroke-dashoffset="94.2"/>
+          </svg>
+          <span><span id="progress-pct" class="text-cyan-400 font-mono font-medium">0</span>% explored</span>
+        </div>
+        <a href="Day_05_SQL_Window_Functions.html" class="text-xs text-zinc-500 hover:text-zinc-300">Prev: Day 5</a>
+        <a href="Day_07_SQL_Production_Patterns.html" class="text-xs text-zinc-500 hover:text-teal-300">Next: Day 7</a>
+        <a href="../../index.html" class="text-xs text-zinc-500 hover:text-emerald-300 underline-offset-2 hover:underline">Course home</a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="relative border-b border-zinc-800 overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.12),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(167,139,250,0.14),transparent_50%)]"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-20 relative">
+      <p class="text-cyan-400 text-sm font-medium tracking-wide uppercase mb-3">Week 1 · Day 6 · Hands-On + Architecture</p>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white max-w-4xl">
+        SQL Recursion (Hands-On) &amp; Query Optimization Architecture (Theory)
+      </h1>
+      <p class="text-xs text-zinc-500 mt-2">Section 2: SQL for Data Engineers (3 of 5)</p>
+      <p class="mt-4 text-lg text-zinc-400 max-w-3xl leading-relaxed">
+        <strong class="font-medium text-zinc-300">Part 1</strong> wires the <code class="font-mono text-cyan-300/90">WITH RECURSIVE</code> loop—anchor, recursive step, stop condition—on <code class="font-mono text-zinc-300">day06_employees</code> and <code class="font-mono text-zinc-300">day06_daily_sales</code> in Athena.
+        <strong class="font-medium text-zinc-300">Part 2</strong> maps how to think about performance across <span class="text-sky-300">universal</span>, <span class="text-amber-300">OLTP</span>, and <span class="text-emerald-300">OLAP</span> workloads—without diving into engine-specific tuning SQL.
+      </p>
+      <div class="flex flex-wrap gap-3 mt-10">
+        <a href="#recursion-model" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-sm transition-colors">
+          Part 1 — Recursion
+        </a>
+        <a href="#optimization" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-zinc-600 text-zinc-200 hover:bg-zinc-800 font-semibold text-sm transition-colors">
+          Part 2 — Optimization lens
+        </a>
+      </div>
+    </div>
+</section>
+
+  <section id="setup" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-sky-400/90">Before the lab</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Athena setup — load <code class="font-mono text-lg">day06_*</code> tables</h2>
+      <p class="text-zinc-400 mt-3 max-w-3xl text-sm leading-relaxed">
+        Run each statement separately in your workgroup. Full script: <a href="Day_06_sql_queries.sql" class="text-sky-300 hover:underline">Day_06_sql_queries.sql</a>.
+        Day 5’s recursive preview used <code class="font-mono">day05_live_sales</code>; today’s tables are smaller and purpose-built for hierarchy + sparse dates.
+      </p>
+      <ul class="mt-6 space-y-3 text-sm text-zinc-300 max-w-3xl list-none">
+        <li class="flex gap-3 items-start"><span class="step-num">1</span><span><strong class="text-zinc-200">DROP</strong> both tables if they exist.</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">2</span><span><strong class="text-zinc-200">CTAS</strong> <code class="font-mono">day06_employees</code> (4-row org chart) and <code class="font-mono">day06_daily_sales</code> (3 sparse days).</span></li>
+        <li class="flex gap-3 items-start"><span class="step-num">3</span><span>Run examples and challenges <strong class="text-zinc-200">one query at a time</strong>.</span></li>
+      </ul>
+      <p class="text-xs text-emerald-300/90 mt-6">Combined setup (split at home if your console rejects batches):</p>
+      <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative max-w-4xl">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-setup-all">Copy SQL</button>
+        <pre id="sql-setup-all" class="sql-text"></pre>
+      </div>
+    </div>
+</section>
+
+  <section id="recursion-model" class="scroll-mt-20 border-b border-zinc-800 bg-gradient-to-b from-cyan-950/20 to-transparent" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-cyan-400/90">Part 1 · Mental model</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1"><code class="font-mono text-cyan-300">WITH RECURSIVE</code> — Anchor · Step · Stop</h2>
+      <p class="text-sm text-zinc-400 mt-3 max-w-3xl leading-relaxed">
+        A recursive CTE is two queries glued with <code class="font-mono text-purple-300">UNION ALL</code>:
+        the <strong class="text-cyan-300">anchor</strong> seeds row set pass 0;
+        the <strong class="text-purple-300">recursive step</strong> joins new rows to the growing result;
+        <strong class="text-zinc-300">stop</strong> when the step returns nothing—or when your <code class="font-mono">WHERE depth &lt; N</code> guard blocks cycles and runaway depth.
+      </p>
+
+      <div class="grid lg:grid-cols-2 gap-6 mt-8">
+        <figure class="rounded-2xl border border-cyan-500/25 overflow-hidden bg-zinc-900/50">
+          <img src="assets/day06_recursive_cte_loop.png" width="1200" height="675" alt="Diagram of recursive CTE loop: anchor query, union all, recursive member feeding back" class="w-full h-auto block" loading="lazy" decoding="async">
+          <figcaption class="px-4 py-3 text-[11px] text-zinc-500 border-t border-zinc-800">The engine repeats the recursive member until it adds zero new rows.</figcaption>
+        </figure>
+        <figure class="rounded-2xl border border-purple-500/25 overflow-hidden bg-zinc-900/50">
+          <img src="assets/day06_recursive_flow.png" width="1200" height="675" alt="Flow: anchor rows, recursive expansion, final union result" class="w-full h-auto block" loading="lazy" decoding="async">
+          <figcaption class="px-4 py-3 text-[11px] text-zinc-500 border-t border-zinc-800">Anchor → expand → stop: same pattern for org trees and date spines.</figcaption>
+        </figure>
+      </div>
+
+      <div class="mt-10 rounded-2xl border border-cyan-500/30 bg-cyan-950/15 p-5 lg:p-6 max-w-4xl">
+        <h3 class="text-sm font-semibold text-cyan-200">Interactive pass stepper — <code class="font-mono text-xs">day06_employees</code></h3>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed">Walk how the org tree grows from CEO Aarav. Each pass runs the recursive step once.</p>
+        <div class="flex flex-wrap gap-2 mt-4" id="stepper-controls" role="toolbar" aria-label="Recursive pass">
+          <button type="button" id="step-reset" class="px-3 py-1.5 rounded-lg border border-zinc-600 text-xs text-zinc-300 hover:bg-zinc-800">Reset</button>
+          <button type="button" class="step-pass px-3 py-1.5 rounded-lg border border-cyan-600/50 text-xs text-cyan-200 hover:bg-cyan-500/15" data-pass="0">Pass 0</button>
+          <button type="button" class="step-pass px-3 py-1.5 rounded-lg border border-cyan-600/50 text-xs text-cyan-200 hover:bg-cyan-500/15" data-pass="1">Pass 1</button>
+          <button type="button" class="step-pass px-3 py-1.5 rounded-lg border border-cyan-600/50 text-xs text-cyan-200 hover:bg-cyan-500/15" data-pass="2">Pass 2</button>
+          <button type="button" class="step-pass px-3 py-1.5 rounded-lg border border-cyan-600/50 text-xs text-cyan-200 hover:bg-cyan-500/15" data-pass="3">Pass 3</button>
+          <button type="button" class="step-pass px-3 py-1.5 rounded-lg border border-purple-600/50 text-xs text-purple-200 hover:bg-purple-500/15" data-pass="4">Pass 4 (done)</button>
+        </div>
+        <p id="stepper-caption" class="text-xs text-zinc-300 mt-4 font-medium">Pass 0 — Anchor only.</p>
+        <ul id="stepper-rows" class="mt-3 space-y-2 text-xs font-mono"></ul>
+      </div>
+
+      <div class="mt-8 grid sm:grid-cols-3 gap-3 max-w-4xl text-xs">
+        <div class="rounded-xl border border-cyan-500/40 bg-cyan-950/25 p-4"><p class="font-semibold text-cyan-300">Anchor</p><p class="text-zinc-400 mt-1">Fixed starting set—roots, start date, or seed row.</p></div>
+        <div class="rounded-xl border border-purple-500/40 bg-purple-950/25 p-4"><p class="font-semibold text-purple-300">Step</p><p class="text-zinc-400 mt-1">Join the working set to source rows; append new rows.</p></div>
+        <div class="rounded-xl border border-zinc-600 bg-zinc-900/50 p-4"><p class="font-semibold text-zinc-200">Stop</p><p class="text-zinc-400 mt-1">No new rows, or <code class="font-mono">depth &lt; N</code> fails.</p></div>
+      </div>
+    </div>
+</section>
+
+  <section id="live-setup" class="scroll-mt-20 border-b border-zinc-800 bg-zinc-900/20" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-purple-400/90">Hands-on · Practice tables</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Schema snapshot</h2>
+      <div class="overflow-x-auto mt-6 rounded-xl border border-zinc-800 max-w-3xl">
+        <table class="w-full text-[11px] font-mono text-left">
+          <thead class="bg-zinc-900 text-zinc-500"><tr><th class="p-2">Table</th><th class="p-2">Rows</th><th class="p-2">Purpose</th></tr></thead>
+          <tbody class="text-zinc-300">
+            <tr class="border-t border-zinc-800"><td class="p-2 text-cyan-300">day06_employees</td><td class="p-2">4</td><td class="p-2 text-zinc-400">CEO → VP → Lead → Eng (mgr_id chain)</td></tr>
+            <tr class="border-t border-zinc-800"><td class="p-2 text-cyan-300">day06_daily_sales</td><td class="p-2">3</td><td class="p-2 text-zinc-400">2026-11-01, 03, 06 only—gaps on purpose</td></tr>
+          </tbody>
+  </table>
+      </div>
+      <p class="text-xs text-amber-300/90 mt-6">Employees CTAS:</p>
+      <div class="sql-block mt-2 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative max-w-4xl">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-setup-employees">Copy SQL</button>
+        <pre id="sql-setup-employees" class="sql-text"></pre>
+      </div>
+      <p class="text-xs text-emerald-300/90 mt-6">Daily sales CTAS:</p>
+      <div class="sql-block mt-2 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative max-w-4xl">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-setup-sales">Copy SQL</button>
+        <pre id="sql-setup-sales" class="sql-text"></pre>
+  </div>
+  </div>
+</section>
+
+  <section id="example-1" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-purple-400/90">Example 1</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Org chart — <code class="font-mono text-base text-cyan-300">reporting_chain</code> + <code class="font-mono text-base">depth &lt; 10</code></h2>
+      <p class="text-sm text-zinc-400 mt-3 max-w-3xl leading-relaxed">
+        Anchor at <code class="font-mono">mgr_id IS NULL</code> (Aarav). Each recursion appends <code class="font-mono">' -&gt; '</code> to the path and increments <code class="font-mono">depth</code>. The depth guard mirrors real-world cycle protection.
+      </p>
+      <div class="sql-block mt-6 rounded-xl border border-purple-500/25 bg-black/80 p-4 pr-24 relative max-w-4xl">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-ex1">Copy SQL</button>
+        <pre id="sql-ex1" class="sql-text"></pre>
+      </div>
+      <div class="overflow-x-auto mt-4 rounded-lg border border-zinc-800 max-w-3xl">
+        <table class="w-full text-[11px] font-mono text-left">
+          <thead class="bg-zinc-900 text-zinc-500"><tr><th class="p-2">emp_id</th><th class="p-2">name</th><th class="p-2">depth</th><th class="p-2">reporting_chain</th></tr></thead>
+          <tbody class="text-zinc-300">
+            <tr class="border-t border-zinc-800"><td class="p-2">1</td><td class="p-2">Aarav</td><td class="p-2">1</td><td class="p-2">Aarav</td></tr>
+            <tr class="border-t border-zinc-800"><td class="p-2">2</td><td class="p-2">Diya</td><td class="p-2">2</td><td class="p-2">Aarav -&gt; Diya</td></tr>
+            <tr class="border-t border-zinc-800"><td class="p-2">3</td><td class="p-2">Kabir</td><td class="p-2">3</td><td class="p-2">Aarav -&gt; Diya -&gt; Kabir</td></tr>
+            <tr class="border-t border-zinc-800"><td class="p-2">4</td><td class="p-2">Meera</td><td class="p-2">4</td><td class="p-2">Aarav -&gt; Diya -&gt; Kabir -&gt; Meera</td></tr>
+          </tbody>
+  </table>
+      </div>
+  </div>
+</section>
+
+  <section id="example-2" class="scroll-mt-20 border-b border-zinc-800 bg-purple-950/10" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-cyan-400/90">Example 2</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Date spine — <code class="font-mono text-base">LEFT JOIN</code> + <code class="font-mono text-base text-cyan-300">COALESCE</code></h2>
+      <p class="text-sm text-zinc-400 mt-3 max-w-3xl leading-relaxed">
+        The spine generates Nov 1–7. Sparse sales only hit three dates; <code class="font-mono">LEFT JOIN</code> keeps every spine day, and <code class="font-mono">COALESCE(d.revenue, 0)</code> turns missing matches into explicit zeros—critical for rates and moving averages.
+      </p>
+      <div class="sql-block mt-6 rounded-xl border border-cyan-500/25 bg-black/80 p-4 pr-24 relative max-w-4xl">
+        <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-ex2">Copy SQL</button>
+        <pre id="sql-ex2" class="sql-text"></pre>
+      </div>
+      <div class="overflow-x-auto mt-4 rounded-lg border border-zinc-800 max-w-md">
+        <table class="w-full text-[11px] font-mono text-left">
+          <thead class="bg-zinc-900 text-zinc-500"><tr><th class="p-2">sale_date</th><th class="p-2">revenue</th></tr></thead>
+          <tbody class="text-zinc-300">
+            <tr class="border-t border-zinc-800"><td class="p-2">2026-11-01</td><td class="p-2">1200</td></tr>
+            <tr class="border-t border-zinc-800"><td class="p-2">2026-11-02</td><td class="p-2">0</td></tr>
+            <tr class="border-t border-zinc-800"><td class="p-2">2026-11-03</td><td class="p-2">800</td></tr>
+            <tr class="border-t border-zinc-800"><td class="p-2">2026-11-04</td><td class="p-2">0</td></tr>
+            <tr class="border-t border-zinc-800"><td class="p-2">2026-11-05</td><td class="p-2">0</td></tr>
+            <tr class="border-t border-zinc-800"><td class="p-2">2026-11-06</td><td class="p-2">1500</td></tr>
+            <tr class="border-t border-zinc-800"><td class="p-2">2026-11-07</td><td class="p-2">0</td></tr>
+          </tbody>
+  </table>
+      </div>
+      <p class="text-xs text-zinc-500 mt-4">Athena note: recursive step may use <code class="font-mono">date_add('day', 1, sale_date)</code> instead of <code class="font-mono">+ INTERVAL '1' DAY</code>.</p>
+    </div>
+</section>
+
+  <section id="challenges" class="scroll-mt-20 border-b border-zinc-800" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-cyan-400/90">Practice</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Two recursion challenges</h2>
+
+      <article id="challenge-1" class="mt-10 max-w-4xl rounded-2xl border border-purple-500/30 bg-zinc-900/30 p-6">
+        <h3 class="text-lg font-semibold text-white">Challenge A — Depth filter on the full org walk</h3>
+        <p class="text-sm text-zinc-400 mt-2 leading-relaxed">
+          Reuse Example 1’s recursive query. Return only rows with <code class="font-mono">depth &gt;= 3</code> (Kabir and Meera)—or anchor at Diya (<code class="font-mono">emp_id = 2</code>) and walk down her branch only.
+        </p>
+        <details class="mt-4 rounded-xl border border-amber-500/30 bg-amber-950/20 p-4">
+          <summary class="text-xs font-semibold text-amber-200">Hint</summary>
+          <p class="text-xs text-zinc-400 mt-2">Either wrap Example 1 in an outer <code class="font-mono">WHERE depth &gt;= 3</code>, or change the anchor to <code class="font-mono">emp_id = 2</code> and keep <code class="font-mono">e.mgr_id = t.emp_id</code>.</p>
+        </details>
+        <details class="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-950/15 p-4">
+          <summary class="text-xs font-semibold text-emerald-300">Solution</summary>
+          <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+            <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-ch1">Copy SQL</button>
+            <pre id="sql-ch1" class="sql-text"></pre>
+          </div>
+        </details>
+      </article>
+
+      <article id="challenge-2" class="mt-10 max-w-4xl rounded-2xl border border-cyan-500/30 bg-zinc-900/30 p-6">
+        <h3 class="text-lg font-semibold text-white">Challenge B — 14-day spine with weekday labels</h3>
+        <p class="text-sm text-zinc-400 mt-2 leading-relaxed">
+          Generate <code class="font-mono">2026-11-01</code> through <code class="font-mono">2026-11-14</code>, <code class="font-mono">LEFT JOIN</code> sales, and add <code class="font-mono">day_kind</code>: <code class="font-mono">'weekend'</code> or <code class="font-mono">'weekday'</code> from the calendar date (still <code class="font-mono">COALESCE(revenue, 0)</code>).
+        </p>
+        <details class="mt-4 rounded-xl border border-amber-500/30 bg-amber-950/20 p-4">
+          <summary class="text-xs font-semibold text-amber-200">Hint</summary>
+          <p class="text-xs text-zinc-400 mt-2">End the spine at <code class="font-mono">2026-11-14</code>. In Athena: <code class="font-mono">day_of_week(sale_date) IN (6, 7)</code> for weekend; DuckDB: <code class="font-mono">dayofweek(sale_date)</code>—check whether Sunday is 0 or 7 for your engine.</p>
+        </details>
+        <details class="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-950/15 p-4">
+          <summary class="text-xs font-semibold text-emerald-300">Solution</summary>
+          <div class="sql-block mt-3 rounded-xl border border-zinc-800 bg-black/80 p-4 pr-24 relative">
+            <button type="button" class="sql-copy px-2 py-1 rounded-md border border-zinc-600 text-[10px] text-zinc-400 hover:text-white" data-copy-from="sql-ch2">Copy SQL</button>
+            <pre id="sql-ch2" class="sql-text"></pre>
+          </div>
+        </details>
+      </article>
+    </div>
+  </section>
+
+  <section id="optimization" class="scroll-mt-20 border-b border-zinc-800 bg-sky-950/10" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-sky-400/90">Part 2 · Theory</span>
+      <h2 class="text-2xl lg:text-3xl font-bold text-white mt-1">Query optimization architecture</h2>
+      <p class="text-sm text-zinc-400 mt-3 max-w-3xl leading-relaxed">
+        There are two common worlds: <strong class="text-amber-300">OLTP</strong> (apps saving one order or login at a time) and <strong class="text-emerald-300">OLAP</strong> (reports scanning huge history in S3). Some habits help <em>both</em>; others only fit one world. The poster below is the map—cards explain it in plain language.
+      </p>
+      <p class="text-xs text-zinc-500 mt-2 max-w-3xl"><strong class="text-zinc-400">Golden rule:</strong> OLTP speeds up <em>finding one row</em>; OLAP speeds up <em>skipping files and columns you do not need</em>.</p>
+      <figure class="mt-8 rounded-2xl border border-sky-500/25 overflow-hidden bg-zinc-900/50 max-w-4xl">
+        <img src="assets/day06_oltp_vs_olap_opt.png" width="1200" height="675" alt="OLTP vs OLAP optimization contrast: indexes and normalization versus partitions and columnar scans" class="w-full h-auto block" loading="lazy" decoding="async">
+        <figcaption class="px-4 py-3 text-[11px] text-zinc-500 border-t border-zinc-800">Three-pillar lens: habits that apply everywhere, then OLTP-specific, then OLAP-specific choices.</figcaption>
+      </figure>
+
+      <div class="flex flex-wrap gap-2 mt-10" id="pillar-tabs" role="tablist" aria-label="Optimization pillars">
+        <button type="button" class="tab-btn px-4 py-2 rounded-lg border border-zinc-600 text-xs font-semibold text-zinc-300" role="tab" aria-selected="true" data-tab="all">All 3 Pillars</button>
+        <button type="button" class="tab-btn px-4 py-2 rounded-lg border border-sky-600/50 text-xs font-semibold text-sky-200" role="tab" aria-selected="false" data-tab="universal">Universal</button>
+        <button type="button" class="tab-btn px-4 py-2 rounded-lg border border-amber-600/50 text-xs font-semibold text-amber-200" role="tab" aria-selected="false" data-tab="oltp">OLTP</button>
+        <button type="button" class="tab-btn px-4 py-2 rounded-lg border border-emerald-600/50 text-xs font-semibold text-emerald-200" role="tab" aria-selected="false" data-tab="olap">OLAP</button>
+      </div>
+
+      <div id="pillar-panels" class="mt-6">
+        <div class="pillar-panel" data-panel="all" role="tabpanel">
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="rounded-xl border border-sky-500/35 bg-sky-950/20 p-4"><h3 class="text-sm font-semibold text-sky-200">Workload first</h3><p class="text-xs text-zinc-400 mt-2">Classify read/write pattern, latency target, and data volume before touching indexes or file layout.</p></div>
+            <div class="rounded-xl border border-sky-500/35 bg-sky-950/20 p-4"><h3 class="text-sm font-semibold text-sky-200">Measure, then change</h3><p class="text-xs text-zinc-400 mt-2">Capture baseline duration and row counts; change one variable; re-measure.</p></div>
+            <div class="rounded-xl border border-amber-500/35 bg-amber-950/20 p-4"><h3 class="text-sm font-semibold text-amber-200">OLTP</h3><p class="text-xs text-zinc-400 mt-2">Checkout, CRM, banking—fast lookup by id, many small writes.</p></div>
+            <div class="rounded-xl border border-emerald-500/35 bg-emerald-950/20 p-4"><h3 class="text-sm font-semibold text-emerald-200">OLAP</h3><p class="text-xs text-zinc-400 mt-2">Dashboards and lake SQL—read big history, touch few columns and folders.</p></div>
+          </div>
+        </div>
+        <div class="pillar-panel" data-panel="universal" hidden role="tabpanel">
+          <p class="text-xs text-sky-300/90 mb-4 max-w-3xl">Good habits on PostgreSQL <em>and</em> Athena.</p>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="rounded-xl border border-sky-500/35 bg-sky-950/20 p-4"><h3 class="text-sm font-semibold text-sky-200">Filter-friendly WHERE</h3><p class="text-xs text-zinc-400 mt-2">Compare the column itself to a value—<code class="font-mono">order_date &gt;= '2026-01-01'</code>. Avoid <code class="font-mono">YEAR(order_date) = 2026</code>; wrapping the column often blocks shortcuts.</p></div>
+            <div class="rounded-xl border border-sky-500/35 bg-sky-950/20 p-4"><h3 class="text-sm font-semibold text-sky-200">Filter before join</h3><p class="text-xs text-zinc-400 mt-2">Use <code class="font-mono">WHERE</code> to shrink rows <em>before</em> big <code class="font-mono">JOIN</code>s and <code class="font-mono">GROUP BY</code>—less work for the engine.</p></div>
+            <div class="rounded-xl border border-sky-500/35 bg-sky-950/20 p-4"><h3 class="text-sm font-semibold text-sky-200">Avoid duplicate explosion</h3><p class="text-xs text-zinc-400 mt-2">Join on the right keys at the right grain. If rows multiply, fix the join—don't paper over it with <code class="font-mono">DISTINCT</code> on a huge result.</p></div>
+            <div class="rounded-xl border border-sky-500/35 bg-sky-950/20 p-4"><h3 class="text-sm font-semibold text-sky-200">Only columns you need</h3><p class="text-xs text-zinc-400 mt-2">List columns in <code class="font-mono">SELECT</code>. Skip <code class="font-mono">SELECT *</code> on wide tables—especially on lakes with dozens of fields.</p></div>
+          </div>
+        </div>
+        <div class="pillar-panel" data-panel="oltp" hidden role="tabpanel">
+          <p class="text-xs text-amber-300/90 mb-4 max-w-3xl">Typical engines: PostgreSQL, MySQL, SQL Server. Data stored <strong>row by row</strong>—great for “fetch order #12345.”</p>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="rounded-xl border border-amber-500/35 bg-amber-950/20 p-4"><h3 class="text-sm font-semibold text-amber-200">Indexes (lookup shortcuts)</h3><p class="text-xs text-zinc-400 mt-2">Like a sorted phone book on <code class="font-mono">order_id</code>—jump to one row instead of reading every row in the table.</p></div>
+            <div class="rounded-xl border border-amber-500/35 bg-amber-950/20 p-4"><h3 class="text-sm font-semibold text-amber-200">Index holds extra columns</h3><p class="text-xs text-zinc-400 mt-2">If the index already stores every column your query needs, the engine may never open the main table at all.</p></div>
+            <div class="rounded-xl border border-amber-500/35 bg-amber-950/20 p-4"><h3 class="text-sm font-semibold text-amber-200">Reusable query templates</h3><p class="text-xs text-zinc-400 mt-2">Apps send the same SQL shape with different ids (<code class="font-mono">WHERE order_id = ?</code>) so the database doesn't re-plan from scratch every click.</p></div>
+            <div class="rounded-xl border border-amber-500/35 bg-amber-950/20 p-4"><h3 class="text-sm font-semibold text-amber-200">Tidy tables, small locks</h3><p class="text-xs text-zinc-400 mt-2">Store each fact once (normalized). Updates touch one row; other users' rows stay unlocked.</p></div>
+          </div>
+        </div>
+        <div class="pillar-panel" data-panel="olap" hidden role="tabpanel">
+          <p class="text-xs text-emerald-300/90 mb-4 max-w-3xl">Typical engines: Athena, Redshift, Databricks. Files on S3, often <strong>column by column</strong>—great for “sum revenue last year.”</p>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="rounded-xl border border-emerald-500/35 bg-emerald-950/20 p-4"><h3 class="text-sm font-semibold text-emerald-200">Read columns you asked for</h3><p class="text-xs text-zinc-400 mt-2">Parquet stores each column separately. Need <code class="font-mono">amount</code> and <code class="font-mono">date</code>? The engine can ignore the other 48 columns in the file.</p></div>
+            <div class="rounded-xl border border-emerald-500/35 bg-emerald-950/20 p-4"><h3 class="text-sm font-semibold text-emerald-200">Skip whole folders</h3><p class="text-xs text-zinc-400 mt-2">Data lives in paths like <code class="font-mono">month=11/</code>. Filter to November and Athena never opens October's files.</p></div>
+            <div class="rounded-xl border border-emerald-500/35 bg-emerald-950/20 p-4"><h3 class="text-sm font-semibold text-emerald-200">Related data stored together</h3><p class="text-xs text-zinc-400 mt-2">When files are sorted by date (or similar), the engine can skip big chunks whose min/max doesn't match your filter.</p></div>
+            <div class="rounded-xl border border-emerald-500/35 bg-emerald-950/20 p-4"><h3 class="text-sm font-semibold text-emerald-200">Avoid moving too much data</h3><p class="text-xs text-zinc-400 mt-2">Huge joins shuffle rows across machines—that's slow. Sometimes an approximate distinct count (<code class="font-mono">APPROX_DISTINCT</code>) is enough for a dashboard.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+</section>
+
+  <section id="interview" class="scroll-mt-20 border-t border-zinc-800 bg-zinc-900/30" data-module>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <span class="text-xs font-mono text-emerald-400/90">Recursion practice</span>
+      <h2 class="text-2xl font-bold text-white mt-1"><code class="font-mono text-base">WITH RECURSIVE</code> — easy / medium / hard</h2>
+
+      <article class="interview-card mt-8 max-w-4xl rounded-xl border border-zinc-800 bg-slate-950 p-5 text-sm">
+        <p class="font-medium text-emerald-400">E · Reversed join (walks the wrong way)</p>
+        <p class="interview-q mt-2 text-xs text-zinc-400 leading-relaxed">
+          <strong class="text-zinc-300">Input</strong> — linear chain: Aarav (1) → Diya (2) → Kabir (3) → Meera (4), same as <code class="font-mono">day06_employees</code>.
+        </p>
+        <p class="interview-q mt-2 text-xs text-zinc-400 leading-relaxed">
+          <strong class="text-zinc-300">Problem:</strong> Anchor: <code class="font-mono">WHERE mgr_id IS NULL</code> (CEO only). Recursive join is mistakenly written as <code class="font-mono">ON e.emp_id = t.mgr_id</code> instead of <code class="font-mono">ON e.mgr_id = t.emp_id</code>. After the recursive CTE finishes, how many rows are in the result, and who appears?
+        </p>
+        <p class="text-xs text-zinc-500 mt-2"><strong class="text-zinc-400">Expected output</strong> — final row set:</p>
+        <div class="overflow-x-auto mt-2 rounded-lg border border-emerald-900/40 max-w-md">
+          <table class="w-full text-[11px] font-mono text-left">
+            <thead class="bg-zinc-900 text-zinc-500"><tr><th class="p-2">emp_id</th><th class="p-2">name</th></tr></thead>
+            <tbody class="text-zinc-300">
+              <tr class="border-t border-zinc-800"><td class="p-2">1</td><td class="p-2">Aarav</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
+          <summary>Answer</summary>
+          <p class="text-xs text-zinc-400 leading-relaxed">Pass 0 still adds Aarav. On pass 1 the bad join looks for employees whose <code class="font-mono">emp_id</code> equals Aarav's <code class="font-mono">mgr_id</code>—but <code class="font-mono">mgr_id</code> is <code class="font-mono">NULL</code>, so no row matches. The recursive step returns <strong>zero new rows</strong> and the CTE stops with <strong>one row only</strong>. To walk <em>down</em> to reports, the child's <code class="font-mono">mgr_id</code> must equal the parent's <code class="font-mono">emp_id</code>.</p>
+        </details>
+      </article>
+
+      <article class="interview-card mt-4 max-w-4xl rounded-xl border border-zinc-800 bg-slate-950 p-5 text-sm">
+        <p class="font-medium text-amber-400">M · Walk <em>up</em> the chain from Meera</p>
+        <p class="interview-q mt-2 text-xs text-zinc-400 leading-relaxed">
+          <strong class="text-zinc-300">Input</strong> — same four-employee table.
+        </p>
+        <p class="interview-q mt-2 text-xs text-zinc-400 leading-relaxed">
+          <strong class="text-zinc-300">Problem:</strong> Build <code class="font-mono">WITH RECURSIVE mgr_chain</code> that starts at <code class="font-mono">emp_id = 4</code> (Meera) and climbs to the CEO. Recursive join: <code class="font-mono">e.emp_id = t.mgr_id</code> (parent row = employee who manages current row). Return <code class="font-mono">name</code>, <code class="font-mono">steps_up</code> (1 = Meera, 2 = her manager, …), ordered by <code class="font-mono">steps_up</code>.
+        </p>
+        <p class="text-xs text-zinc-500 mt-2"><strong class="text-zinc-400">Expected output:</strong></p>
+        <div class="overflow-x-auto mt-2 rounded-lg border border-amber-900/30 max-w-md">
+          <table class="w-full text-[11px] font-mono text-left">
+            <thead class="bg-zinc-900 text-zinc-500"><tr><th class="p-2">steps_up</th><th class="p-2">name</th></tr></thead>
+            <tbody class="text-zinc-300">
+              <tr class="border-t border-zinc-800"><td class="p-2">1</td><td class="p-2">Meera</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">2</td><td class="p-2">Kabir</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">3</td><td class="p-2">Diya</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">4</td><td class="p-2">Aarav</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
+          <summary>Answer</summary>
+          <div class="text-xs text-zinc-400 space-y-2 leading-relaxed">
+            <p><strong class="text-zinc-300">Anchor:</strong> Meera with <code class="font-mono">steps_up = 1</code>.</p>
+            <p><strong class="text-zinc-300">Step:</strong> from Meera (<code class="font-mono">mgr_id = 3</code>) pull Kabir; from Kabir pull Diya; from Diya pull Aarav; Aarav's <code class="font-mono">mgr_id</code> is null so the next pass adds nobody.</p>
+            <p>Same machinery as walking down—only the join direction and anchor row change. Useful for “who is this person's skip-level manager?” without a fixed-depth self-join.</p>
+          </div>
+        </details>
+      </article>
+
+      <article class="interview-card mt-4 max-w-4xl rounded-xl border border-zinc-800 bg-slate-950 p-5 text-sm">
+        <p class="font-medium text-rose-400">H · Branching org + wrong spine join</p>
+        <p class="interview-q mt-2 text-xs text-zinc-400 leading-relaxed">
+          <strong class="text-zinc-300">Input A</strong> — org with two branches under the CEO:
+        </p>
+        <div class="overflow-x-auto mt-2 rounded-lg border border-zinc-700/80 max-w-lg">
+          <table class="w-full text-[11px] font-mono text-left">
+            <thead class="bg-zinc-900 text-zinc-500"><tr><th class="p-2">emp_id</th><th class="p-2">name</th><th class="p-2">mgr_id</th></tr></thead>
+            <tbody class="text-zinc-300">
+              <tr class="border-t border-zinc-800"><td class="p-2">1</td><td class="p-2">Aarav</td><td class="p-2">NULL</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">2</td><td class="p-2">Diya</td><td class="p-2">1</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">3</td><td class="p-2">Kabir</td><td class="p-2">1</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">4</td><td class="p-2">Meera</td><td class="p-2">2</td></tr>
+              <tr class="border-t border-zinc-800"><td class="p-2">5</td><td class="p-2">Isha</td><td class="p-2">3</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="interview-q mt-3 text-xs text-zinc-400 leading-relaxed">
+          <strong class="text-zinc-300">Part 1:</strong> Recursive walk <em>down</em> from CEO with correct join <code class="font-mono">e.mgr_id = t.emp_id</code>. How many rows, and what is the maximum <code class="font-mono">depth</code>?
+        </p>
+        <p class="interview-q mt-2 text-xs text-zinc-400 leading-relaxed">
+          <strong class="text-zinc-300">Input B</strong> — date spine Nov 1–5 exists; sales only on Nov 1 and Nov 3 (same pattern as class data).
+        </p>
+        <p class="interview-q mt-2 text-xs text-zinc-400 leading-relaxed">
+          <strong class="text-zinc-300">Part 2:</strong> Someone uses <code class="font-mono">INNER JOIN daily_sales</code> on the spine instead of <code class="font-mono">LEFT JOIN</code>. How many rows come back, and which dates disappear from the report?
+        </p>
+        <p class="text-xs text-zinc-500 mt-2"><strong class="text-zinc-400">Expected answers (summary):</strong></p>
+        <ul class="mt-2 text-xs text-zinc-300 list-disc pl-5 space-y-1">
+          <li>Part 1: <strong>5 rows</strong>; max depth <strong>2</strong> (Meera and Isha under different VPs).</li>
+          <li>Part 2: <strong>2 rows</strong> (Nov 1 and Nov 3 only); Nov 2, 4, 5 vanish—dashboards look “healthy” but daily totals are wrong.</li>
+        </ul>
+        <details class="interview-answer mt-3 border-t border-zinc-800/80 pt-3">
+          <summary>Answer</summary>
+          <div class="text-xs text-zinc-400 space-y-2 leading-relaxed">
+            <p><strong class="text-zinc-300">Part 1:</strong> Pass 1 adds Diya and Kabir (both report to Aarav). Pass 2 adds Meera (under Diya) and Isha (under Kabir). No depth-3 rows exist, so recursion ends. A single chain assumption (like our four-row lab table) would miss Isha entirely.</p>
+            <p><strong class="text-zinc-300">Part 2:</strong> The spine still <em>generates</em> five dates, but inner join keeps only dates with a matching sale. Zero-sale days never appear—so 7-day moving averages and “days since last sale” metrics break. The fix is <code class="font-mono">LEFT JOIN</code> + <code class="font-mono">COALESCE(revenue, 0)</code> on the spine side.</p>
+          </div>
+        </details>
+      </article>
+  </div>
+</section>
+</main>
+
+<footer class="border-t border-zinc-800 py-8 text-center text-xs text-zinc-600">
+  Week 1 Day 6 ·
+  <a href="Day_06_sql_queries.sql" class="text-emerald-400 hover:text-emerald-300 font-medium">Day_06_sql_queries.sql</a> ·
+  <a href="Day_05_SQL_Window_Functions.html" class="text-cyan-400 hover:text-cyan-300 font-medium">← Day 5</a> ·
+  <a href="index.html" class="text-emerald-400 hover:text-emerald-300 font-medium">Week 1 index</a>
+</footer>
+
+<script>
+(function () {
+  const SQL = {
+    setupAll: `-- Run each statement separately in Athena
+DROP TABLE IF EXISTS day06_employees;
+DROP TABLE IF EXISTS day06_daily_sales;`,
+    setupEmployees: `CREATE TABLE day06_employees AS
+SELECT * FROM (
+    VALUES
+        (1, 'Aarav', 'CEO',  CAST(NULL AS INT)),
+        (2, 'Diya',  'VP',   1),
+        (3, 'Kabir', 'Lead', 2),
+        (4, 'Meera', 'Eng',  3)
+) AS t(emp_id, name, role, mgr_id);`,
+    setupSales: `CREATE TABLE day06_daily_sales AS
+SELECT * FROM (
+    VALUES
+        (DATE '2026-11-01', 1200.00),
+        (DATE '2026-11-03', 800.00),
+        (DATE '2026-11-06', 1500.00)
+) AS t(sale_date, revenue);`,
+    ex1: `WITH RECURSIVE org_tree AS (
+    SELECT
+        emp_id,
+        name,
+        role,
+        mgr_id,
+        1 AS depth,
+        CAST(name AS VARCHAR) AS reporting_chain
+    FROM day06_employees
+    WHERE mgr_id IS NULL
+
+    UNION ALL
+
+    SELECT
+        e.emp_id,
+        e.name,
+        e.role,
+        e.mgr_id,
+        t.depth + 1,
+        t.reporting_chain || ' -> ' || e.name
+    FROM day06_employees e
+    INNER JOIN org_tree t ON e.mgr_id = t.emp_id
+    WHERE t.depth < 10
+)
+SELECT emp_id, name, role, depth, reporting_chain
+FROM org_tree
+ORDER BY depth, emp_id;`,
+    ex2: `WITH RECURSIVE date_spine AS (
+    SELECT DATE '2026-11-01' AS sale_date
+    UNION ALL
+    SELECT sale_date + INTERVAL '1' DAY
+    FROM date_spine
+    WHERE sale_date < DATE '2026-11-07'
+)
+SELECT
+    s.sale_date,
+    COALESCE(d.revenue, 0) AS revenue
+FROM date_spine s
+LEFT JOIN day06_daily_sales d ON d.sale_date = s.sale_date
+ORDER BY s.sale_date;`,
+    ch1: `WITH RECURSIVE org_tree AS (
+    SELECT emp_id, name, role, 1 AS depth,
+        CAST(name AS VARCHAR) AS reporting_chain
+    FROM day06_employees
+    WHERE mgr_id IS NULL
+    UNION ALL
+    SELECT e.emp_id, e.name, e.role, t.depth + 1,
+        t.reporting_chain || ' -> ' || e.name
+    FROM day06_employees e
+    INNER JOIN org_tree t ON e.mgr_id = t.emp_id
+    WHERE t.depth < 10
+)
+SELECT emp_id, name, depth, reporting_chain
+FROM org_tree
+WHERE depth >= 3
+ORDER BY depth, emp_id;`,
+    ch2: `WITH RECURSIVE date_spine AS (
+    SELECT DATE '2026-11-01' AS sale_date
+    UNION ALL
+    SELECT sale_date + INTERVAL '1' DAY
+    FROM date_spine
+    WHERE sale_date < DATE '2026-11-14'
+)
+SELECT
+    s.sale_date,
+    COALESCE(d.revenue, 0) AS revenue,
+    CASE
+        WHEN day_of_week(s.sale_date) IN (6, 7) THEN 'weekend'
+        ELSE 'weekday'
+    END AS day_kind
+FROM date_spine s
+LEFT JOIN day06_daily_sales d ON d.sale_date = s.sale_date
+ORDER BY s.sale_date;`
+  };
+
+  const STEPPER = {
+    captions: [
+      'Pass 0 — Anchor only (mgr_id IS NULL).',
+      'Pass 1 — Direct reports of anchor added.',
+      'Pass 2 — Next level down.',
+      'Pass 3 — Full chain to Meera.',
+      'Pass 4 — Recursive step returns no rows; done.'
+    ],
+    byPass: [
+      [{ d: 1, row: '1 Aarav CEO depth=1 chain=Aarav' }],
+      [
+        { d: 1, row: '1 Aarav CEO depth=1 chain=Aarav' },
+        { d: 2, row: '2 Diya VP depth=2 chain=Aarav -> Diya' }
+      ],
+      [
+        { d: 1, row: '1 Aarav CEO depth=1 chain=Aarav' },
+        { d: 2, row: '2 Diya VP depth=2 chain=Aarav -> Diya' },
+        { d: 3, row: '3 Kabir Lead depth=3 chain=Aarav -> Diya -> Kabir' }
+      ],
+      [
+        { d: 1, row: '1 Aarav CEO depth=1 chain=Aarav' },
+        { d: 2, row: '2 Diya VP depth=2 chain=Aarav -> Diya' },
+        { d: 3, row: '3 Kabir Lead depth=3 chain=Aarav -> Diya -> Kabir' },
+        { d: 4, row: '4 Meera Eng depth=4 chain=Aarav -> Diya -> Kabir -> Meera' }
+      ],
+      [
+        { d: 1, row: '1 Aarav CEO depth=1 chain=Aarav' },
+        { d: 2, row: '2 Diya VP depth=2 chain=Aarav -> Diya' },
+        { d: 3, row: '3 Kabir Lead depth=3 chain=Aarav -> Diya -> Kabir' },
+        { d: 4, row: '4 Meera Eng depth=4 chain=Aarav -> Diya -> Kabir -> Meera' }
+      ]
+    ]
+  };
+
+  const KEYWORDS = /\b(SELECT|FROM|WHERE|JOIN|LEFT|INNER|ON|GROUP|BY|HAVING|ORDER|LIMIT|CASE|WHEN|THEN|ELSE|END|AND|OR|AS|IN|IS|NULL|NOT|DISTINCT|COUNT|SUM|AVG|ROUND|COALESCE|CAST|DATE|WITH|RECURSIVE|UNION|ALL|DESC|ASC|OVER|PARTITION|DROP|TABLE|CREATE|IF|EXISTS|INTERVAL|DAY|VARCHAR|INT)\b/gi;
+
+  function highlightSql(raw) {
+    const kw = raw.replace(KEYWORDS, (m) => '<span class="kw">' + m.toUpperCase() + '</span>');
+    return kw.replace(/(--[^\n]*)/g, '<span class="cmt">$1</span>');
+  }
+
+  function fill(id, raw) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.dataset.sqlRaw = raw;
+    el.innerHTML = highlightSql(raw);
+  }
+
+  Object.entries({
+    'sql-setup-all': SQL.setupAll,
+    'sql-setup-employees': SQL.setupEmployees,
+    'sql-setup-sales': SQL.setupSales,
+    'sql-ex1': SQL.ex1,
+    'sql-ex2': SQL.ex2,
+    'sql-ch1': SQL.ch1,
+    'sql-ch2': SQL.ch2
+  }).forEach(([id, raw]) => fill(id, raw));
+
+  document.querySelectorAll('.sql-copy').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const from = btn.getAttribute('data-copy-from');
+      const el = document.getElementById(from);
+      const text = el ? (el.dataset.sqlRaw || el.textContent) : '';
+      navigator.clipboard.writeText(text).then(() => {
+        const prev = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = prev; }, 1400);
+      });
+    });
+  });
+
+  const captionEl = document.getElementById('stepper-caption');
+  const rowsEl = document.getElementById('stepper-rows');
+
+  function renderPass(pass) {
+    const n = Number(pass);
+    if (captionEl) captionEl.textContent = STEPPER.captions[n] || '';
+    if (!rowsEl) return;
+    rowsEl.innerHTML = '';
+    const rows = STEPPER.byPass[n] || [];
+    if (rows.length === 0) return;
+    rows.forEach((r) => {
+      const li = document.createElement('li');
+      li.className = 'stepper-row rounded-lg border border-zinc-700 px-3 py-2 text-zinc-300';
+      li.textContent = r.row;
+      rowsEl.appendChild(li);
+    });
+    document.querySelectorAll('.step-pass').forEach((b) => {
+      const active = Number(b.getAttribute('data-pass')) === n;
+      b.classList.toggle('ring-1', active);
+      b.classList.toggle('ring-cyan-400', active);
+    });
+  }
+
+  document.getElementById('step-reset')?.addEventListener('click', () => renderPass(0));
+  document.querySelectorAll('.step-pass').forEach((b) => {
+    b.addEventListener('click', () => renderPass(b.getAttribute('data-pass')));
+  });
+  renderPass(0);
+
+  document.querySelectorAll('#pillar-tabs .tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-tab');
+      document.querySelectorAll('#pillar-tabs .tab-btn').forEach((t) => {
+        t.setAttribute('aria-selected', t === btn ? 'true' : 'false');
+      });
+      document.querySelectorAll('.pillar-panel').forEach((p) => {
+        const show = p.getAttribute('data-panel') === tab;
+        p.hidden = !show;
+      });
+    });
+  });
+
+
+  const explored = new Set();
+  const CIRC = 94.2;
+  const n = document.querySelectorAll('[data-module]').length;
+  function bump(id) {
+    if (id) explored.add(id);
+    const pct = n ? Math.round((explored.size / n) * 100) : 0;
+    const pctEl = document.getElementById('progress-pct');
+    const ring = document.getElementById('progress-ring');
+    if (pctEl) pctEl.textContent = String(pct);
+    if (ring) ring.style.strokeDashoffset = String(CIRC - (CIRC * explored.size / n));
+  }
+  document.querySelectorAll('[data-module]').forEach((s) => {
+    new IntersectionObserver((e) => e.forEach((x) => { if (x.isIntersecting) bump(s.id); }), { threshold: 0.25 }).observe(s);
+  });
+})();
+</script>
+</body>
+</html>

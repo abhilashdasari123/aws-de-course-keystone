@@ -1,59 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Week 1 - AWS Data Engineering | KeystoneEduTech</title>
-  <style>
-    body { margin: 0; background: #0f1720; color: #e8eef5; font-family: "Segoe UI", system-ui, Arial, sans-serif; }
-    main { max-width: 900px; margin: 48px auto; padding: 0 24px; }
-    .back { color: #94a3b8; font-size: 14px; margin-bottom: 20px; display: inline-block; text-decoration: none; }
-    .back:hover { color: #34d399; }
-    h1 { margin: 0 0 6px; }
-    .sub { color: #9fb0c3; margin-bottom: 28px; line-height: 1.5; }
-    a.day { display: block; background: #16212e; border: 1px solid #2a3a4d; border-radius: 10px; padding: 16px 20px; margin: 12px 0; color: inherit; text-decoration: none; }
-    a.day:hover { border-color: #34d399; }
-    .d { color: #34d399; font-weight: 700; }
-    .t { font-size: 20px; margin: 4px 0; }
-    .m { color: #9fb0c3; font-size: 15px; line-height: 1.45; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 1 - AWS DE in AI Era</title>
+<style>
+  body { margin: 0; background: #0f1720; color: #e8eef5; font-family: "Segoe UI", system-ui, Arial, sans-serif; }
+  main { max-width: 900px; margin: 48px auto; padding: 0 24px; }
+  h1 { margin: 0 0 6px; }
+  .sub { color: #9fb0c3; margin-bottom: 28px; }
+  a.day { display: block; background: #16212e; border: 1px solid #2a3a4d; border-radius: 10px; padding: 16px 20px; margin: 12px 0; color: inherit; text-decoration: none; }
+  a.day:hover { border-color: #ff9900; }
+  .d { color: #ff9900; font-weight: 700; }
+  .t { font-size: 20px; margin: 4px 0; }
+  .m { color: #9fb0c3; font-size: 15px; }
+</style>
 </head>
 <body>
 <main>
-  <a class="back" href="../../index.html">← Course home</a>
   <h1>Week 1: Foundations</h1>
-  <p class="sub">Orientation and core concepts before hands-on AWS and SQL labs.</p>
+  <div class="sub">Section 1 (Data Engineering Fundamentals) and Section 2 (SQL for Data Engineers, part 1). Trainer setup: <code>Trainer_Setup_Shared_AWS_Account.md</code></div>
 
-  <a class="day" href="Day_00_Orientation.html">
-    <div class="d">Day 0 — Orientation</div>
-    <div class="t">Welcome &amp; data engineering across industries</div>
-    <div class="m">Course structure, expectations, and how data engineering shows up in major industries.</div>
-  </a>
-  <a class="day" href="Day_01_What_is_Data_Engineering.html">
-    <div class="d">Day 1</div>
-    <div class="t">What is data engineering?</div>
-    <div class="m">Pipeline lifecycle, roles, OLTP/OLAP, batch vs stream, lakehouse, industry examples.</div>
-  </a>
-  <a class="day" href="Day_02_Cloud_and_Architecture.html">
-    <div class="d">Day 2</div>
-    <div class="t">Data architecture, AWS ecosystem &amp; cloud economics</div>
-    <div class="m">Medallion (Bronze/Silver/Gold), ETL vs ELT, AWS data engineering services, cloud economics.</div>
-  </a>
-  <a class="day" href="Day_03_GitHub_Repo_Setup_Lab.html">
-    <div class="d">Day 3</div>
-    <div class="t">Git, GitHub &amp; Repository Setup Lab</div>
-    <div class="m">Git concepts, install Git + VS Code/Cursor, clone &amp; commit in the IDE, first push, branches &amp; pull requests.</div>
-  </a>
-  <a class="day" href="Day_04_SQL_Refresher.html">
-    <div class="d">Day 4</div>
-    <div class="t">SQL Refresher — Olist on Athena &amp; S3</div>
-    <div class="m">SQL clauses &amp; joins poster · Athena + Olist schema · Lab 1 join warmup · Labs 2–4 (COALESCE, anti-join, HAVING) · seller CTE challenge · interview Q&amp;A.</div>
-  </a>
-  <a class="day" href="Day_05_SQL_Window_Functions.html">
-    <div class="d">Day 5</div>
-    <div class="t">Window Functions &amp; CTE Patterns</div>
-    <div class="m">Day 4 recap visuals · window labs on inline VALUES (no S3) · rank, LAG, recursive org · interview Q&amp;A.</div>
-  </a>
+  <a class="day" href="Day_00_Orientation.html"><div class="d">Day 0 (Orientation)</div><div class="t">Welcome, Introductions and Data Engineering Across Industries</div><div class="m">Introductions (IT / Non-IT / not working, expectations), course structure, and what DEs do in retail, healthcare, travel / transport / hospitality, banking, manufacturing, telecom, energy and utilities, media and entertainment</div></a>
+  <a class="day" href="Day_01_What_is_Data_Engineering.html"><div class="d">Day 1 (Mon)</div><div class="t">What is Data Engineering?</div><div class="m">Interactive masterclass: 5 modules, pipeline lifecycle, roles, OLTP/OLAP, batch/stream + industry examples, lakehouse. Interview Qs at end.</div></a>
+  <a class="day" href="Day_02_Cloud_and_Architecture.html"><div class="d">Day 2 (Tue)</div><div class="t">Data Architecture, AWS &amp; Cloud Economics</div><div class="m">Medallion layers, ETL/ELT, AWS data engineering ecosystem (ingest→consume), cloud economics.</div></a>
+  <a class="day" href="Day_03_GitHub_Repo_Setup_Lab.html"><div class="d">Day 3 (Wed)</div><div class="t">Git, GitHub &amp; Repository Setup Lab</div><div class="m">Git concepts, install Git + VS Code/Cursor, clone &amp; commit in the IDE, first push, branches &amp; pull requests</div></a>
+  <a class="day" href="Day_04_SQL_Refresher.html"><div class="d">Day 4</div><div class="t">SQL Refresher — Olist on Athena &amp; S3</div><div class="m">SQL clauses &amp; joins · Athena + Olist · Lab 1 join warmup · Labs 2–4 (COALESCE, anti-join, HAVING) · seller CTE challenge · interview Q&amp;A</div></a>
+  <a class="day" href="Day_05_SQL_Window_Functions.html"><div class="d">Day 5</div><div class="t">Window Functions &amp; CTE Patterns</div><div class="m">Day 4 visual recap · window labs on tiny inline VALUES (rank, LAG, recursive org) · interview Q&amp;A</div></a>
+  <a class="day" href="Day_06_SQL_CTEs_and_Optimisation.html"><div class="d">Day 6 (Sat)</div><div class="t">SQL Recursion &amp; Optimization Architecture</div><div class="m">WITH RECURSIVE org chart + date spine; universal / OLTP / OLAP theory</div></a>
+  <a class="day" href="Day_07_SQL_Production_Patterns.html"><div class="d">Day 7</div><div class="t">Production SQL Patterns on the Lakehouse</div><div class="m">DDL/DML · set ops · grain/dedup · dates/strings · UNNEST · inline Athena labs</div></a>
 </main>
 </body>
 </html>

@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day 7 — Production SQL Patterns | KeystoneEduTech</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-feature-settings: 'ss01' on; }
+    .glass { background: rgba(24, 27, 34, 0.78); backdrop-filter: blur(12px); }
+    .progress-ring { transition: stroke-dashoffset 0.4s ease; }
+    .sql-block { position: relative; }
+    .sql-copy { position: absolute; top: 0.5rem; right: 0.5rem; z-index: 2; }
+    pre.sql-text {
+      white-space: pre-wrap; word-break: break-word;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 0.68rem; line-height: 1.5; max-height: 26rem; overflow-y: auto;
+    }
+    .sql-text .kw { color: #c4b5fd; font-weight: 600; }
+    .data-tbl { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
+    .data-tbl th, .data-tbl td { border: 1px solid rgb(63 63 70); padding: 0.35rem 0.5rem; text-align: left; }
+    .data-tbl th { background: rgb(39 39 42); color: rgb(212 212 216); font-weight: 600; }
+    .data-tbl td { font-size: 0.78rem; }
+    .step-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 1.75rem; height: 1.75rem; border-radius: 0.5rem;
+      background: rgba(45, 212, 191, 0.15); border: 1px solid rgb(45 212 191 / 0.45);
+      color: rgb(153 246 228); font-size: 0.75rem; font-weight: 600; margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-zinc-100 antialiased min-h-screen">
+
+<header class="sticky top-0 z-50 border-b border-zinc-800 glass">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Primary">
+    <div class="flex flex-wrap items-center justify-between gap-3 py-3">
+      <div class="flex items-center gap-3 flex-wrap">
+        <a href="index.html" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-emerald-500/50 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25 text-sm font-semibold shrink-0 transition-colors">Week 1 index</a>
+        <a href="#top" class="flex items-center gap-2 font-semibold text-white tracking-tight">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/20 text-teal-300 font-mono text-xs">7</span>
+          KeystoneEduTech
+        </a>
+      </div>
+      <div class="hidden lg:flex flex-wrap items-center gap-1 text-sm">
+        <a href="#languages" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">SQL types</a>
+        <a href="#sets" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Set ops</a>
+        <a href="#grain" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Grain</a>
+        <a href="#reshape" class="px-2.5 py-1.5 rounded-md text-teal-300/80 hover:text-white hover:bg-teal-500/10">Reshape</a>
+        <a href="#nested" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">UNNEST</a>
+        <a href="#ddl-dml-hands" class="px-2.5 py-1.5 rounded-md text-violet-300/80 hover:text-white hover:bg-violet-500/10">DDL / DML</a>
+        <a href="#dates-strings" class="px-2.5 py-1.5 rounded-md text-amber-300/80 hover:text-white hover:bg-amber-500/10">Dates &amp; strings</a>
+        <a href="#write" class="px-2.5 py-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800/80">Writes</a>
+        <a href="#labs" class="px-2.5 py-1.5 rounded-md text-emerald-300/90 hover:text-white hover:bg-emerald-500/10">Athena labs</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-xs text-zinc-500">
+          <svg class="w-9 h-9 -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="#27272a" stroke-width="3"/>
+            <circle id="progress-ring" class="progress-ring" cx="18" cy="18" r="15" fill="none" stroke="#2dd4bf" stroke-width="3" stroke-linecap="round" stroke-dasharray="94.2" stroke-dashoffset="94.2"/>
+          </svg>
+          <span><span id="progress-pct" class="text-teal-400 font-mono font-medium">0</span>% explored</span>
+        </div>
+        <a href="Day_06_SQL_CTEs_and_Optimisation.html" class="text-xs text-zinc-500 hover:text-zinc-300">Prev: Day 6</a>
+        <a href="../../index.html" class="text-xs text-zinc-500 hover:text-emerald-300 underline-offset-2 hover:underline">Course home</a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="relative border-b border-zinc-800 overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(45,212,191,0.12),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgba(99,102,241,0.1),transparent_50%)]"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-18 relative">
+      <p class="text-teal-400 text-sm font-medium tracking-wide uppercase mb-3">Week 1 · Day 7 · Section 2 capstone</p>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white max-w-4xl">Production SQL Patterns on the Lakehouse</h1>
+      <p class="text-xs text-zinc-500 mt-2">SQL for Data Engineers — closing Week 1 with pipeline-ready patterns</p>
+      <p class="mt-4 text-lg text-zinc-400 max-w-3xl leading-relaxed">
+        Days 4–6 built query fluency: joins, aggregates, CTEs, windows, recursion. Today maps the <strong class="font-medium text-zinc-300">rest of the SQL surface</strong> data engineers touch daily—command families (DDL/DML/TCL/DCL), set algebra, grain control, semi-structured data, and write paths—using <strong class="font-medium text-zinc-300">Athena</strong> with small inline <code class="font-mono">VALUES</code> samples and tables in your lab database.
+      </p>
+      <div class="flex flex-wrap gap-3 mt-10">
+        <a href="#languages" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold text-sm transition-colors">SQL command families</a>
+        <a href="#labs" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-zinc-600 text-zinc-200 hover:bg-zinc-800 font-semibold text-sm transition-colors">Hands-on snippets</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="languages" data-module class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-zinc-800">
+    <h2 class="text-2xl font-bold text-white mb-2">How SQL is grouped: DDL · DML · TCL · DCL</h2>
+    <p class="text-zinc-400 text-sm max-w-3xl mb-6">Interviewers and runbooks use these labels. On Athena, most analytics is read-only <code class="font-mono text-zinc-300">SELECT</code>; pipelines add DDL/DML when materializing tables.</p>
+    <div class="overflow-x-auto mb-6">
+      <table class="data-tbl min-w-[40rem]">
+        <thead><tr><th>Family</th><th>Purpose</th><th>Examples</th><th>Typical DE use</th></tr></thead>
+        <tbody>
+          <tr><td><strong class="text-violet-300">DDL</strong></td><td>Shape objects</td><td><code class="font-mono">CREATE</code>, <code class="font-mono">ALTER</code>, <code class="font-mono">DROP</code>, <code class="font-mono">TRUNCATE</code></td><td>Glue tables, CTAS staging, drop dev tables</td></tr>
+          <tr><td><strong class="text-emerald-300">DML</strong></td><td>Rows in/out</td><td><code class="font-mono">SELECT</code>, <code class="font-mono">INSERT</code>, <code class="font-mono">UPDATE</code>, <code class="font-mono">DELETE</code>, <code class="font-mono">MERGE</code></td><td>Transform (SELECT), load (INSERT), upsert (MERGE on Iceberg)</td></tr>
+          <tr><td><strong class="text-amber-300">TCL</strong></td><td>Transaction boundaries</td><td><code class="font-mono">COMMIT</code>, <code class="font-mono">ROLLBACK</code></td><td>RDS/Aurora ETL; lake tables use atomic commits (Iceberg snapshot)</td></tr>
+          <tr><td><strong class="text-rose-300">DCL</strong></td><td>Permissions</td><td><code class="font-mono">GRANT</code>, <code class="font-mono">REVOKE</code></td><td>IAM, Lake Formation; rarely in student SQL</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-zinc-500 max-w-3xl mb-8"><strong class="text-zinc-400">DQL</strong> is informal shorthand for analytical <code class="font-mono">SELECT</code>—most of Week 1 practice. <strong class="text-zinc-400">CTAS</strong> is both DDL (new table) and DML (insert via query).</p>
+
+    <p class="text-sm text-zinc-400 mb-3 max-w-3xl">Run each statement in your lab database (e.g. <code class="font-mono">de_&lt;userid&gt;</code>). <strong class="text-zinc-300">One query at a time</strong> in Athena.</p>
+  </section>
+
+  <section id="ddl-dml-hands" data-module class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-zinc-800 bg-violet-950/10">
+    <h2 class="text-2xl font-bold text-white mb-2">Hands-on: DDL &amp; DML on Athena</h2>
+    <p class="text-zinc-400 text-sm max-w-3xl mb-8">Materialize, replace, and append tables you own. Practice writes only on tables you create in <strong class="text-zinc-300">your</strong> Glue database (<code class="font-mono">de_&lt;userid&gt;</code>).</p>
+
+    <div class="space-y-8">
+      <div>
+        <h3 class="text-sm font-semibold text-violet-200 mb-2"><span class="step-num">DDL</span>Drop table — remove object and data (dev reset)</h3>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-ddl-drop">Copy</button>
+          <pre id="sql-ddl-drop" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-violet-200 mb-2">Truncate table — delete all rows, keep columns</h3>
+        <p class="text-xs text-zinc-500 mb-2 max-w-3xl">Common on warehouse tables and Iceberg. On a plain Hive CTAS table, Athena may not support truncate—use <code class="font-mono">DROP</code> + CTAS instead.</p>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-ddl-truncate">Copy</button>
+          <pre id="sql-ddl-truncate" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-violet-200 mb-2">Create table — variant A: columns + LOCATION, then INSERT</h3>
+        <p class="text-xs text-zinc-500 mb-2 max-w-3xl">Hive <code class="font-mono">CREATE EXTERNAL TABLE</code> (not <code class="font-mono">WITH (format, …)</code>). Then run the INSERT copy block.</p>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24 mb-4">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-ddl-create">Copy</button>
+          <pre id="sql-ddl-create" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-ddl-insert-seed">Copy INSERT</button>
+          <pre id="sql-ddl-insert-seed" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-violet-200 mb-2">Create table — variant B: CTAS</h3>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-ddl-ctas">Copy</button>
+          <pre id="sql-ddl-ctas" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-violet-200 mb-2">Create a view (saved query definition)</h3>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-ddl-view">Copy</button>
+          <pre id="sql-ddl-view" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-violet-200 mb-2">Alter table — add a column (Glue metadata)</h3>
+        <p class="text-xs text-zinc-500 mb-2 max-w-3xl">Use <code class="font-mono">string</code> or <code class="font-mono">varchar(n)</code> — not bare <code class="font-mono">VARCHAR</code>.</p>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-ddl-alter">Copy</button>
+          <pre id="sql-ddl-alter" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-emerald-200 mb-2"><span class="step-num">DML</span>Delete rows (filtered)</h3>
+        <p class="text-xs text-zinc-500 mb-2 max-w-3xl">Row-level remove. Reliable on Iceberg; on Hive CTAS labs, rehearse syntax and use <code class="font-mono">DROP</code> if the engine rejects delete.</p>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-dml-delete">Copy</button>
+          <pre id="sql-dml-delete" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-emerald-200 mb-2">Insert rows from a query</h3>
+        <p class="text-xs text-zinc-500 mb-2 max-w-3xl">Append new days or backfill partitions. Table must already exist with matching column types.</p>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-dml-insert">Copy</button>
+          <pre id="sql-dml-insert" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-emerald-200 mb-2">MERGE pattern (Iceberg — reference for Week 2+)</h3>
+        <p class="text-xs text-zinc-500 mb-2 max-w-3xl">Upsert when a natural key must stay unique. Requires an Iceberg table; syntax shown for recognition in interviews.</p>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-dml-merge">Copy</button>
+          <pre id="sql-dml-merge" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="sets" data-module class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-zinc-800">
+    <h2 class="text-2xl font-bold text-white mb-2">Set operations — stack and compare queries</h2>
+    <p class="text-zinc-400 text-sm max-w-3xl mb-4"><code class="font-mono">UNION ALL</code> stacks queries and keeps duplicates (fast append). <code class="font-mono">UNION</code> stacks and dedupes. <code class="font-mono">INTERSECT</code> returns keys in <em>both</em> sets; <code class="font-mono">EXCEPT</code> returns keys in A not in B. Columns must align by position and compatible types.</p>
+    <p class="text-xs font-semibold text-teal-200 mb-2">UNION ALL — stack two batches (duplicate keys stay)</p>
+    <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24 mb-6">
+      <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-union-all">Copy SQL</button>
+      <pre id="sql-union-all" class="sql-text text-zinc-300 mt-1"></pre>
+    </div>
+    <p class="text-xs font-semibold text-teal-200 mb-2">UNION — stack and dedupe keys</p>
+    <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24 mb-6">
+      <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-union">Copy SQL</button>
+      <pre id="sql-union" class="sql-text text-zinc-300 mt-1"></pre>
+    </div>
+    <figure class="my-8 rounded-2xl border border-teal-500/25 overflow-hidden bg-zinc-900/50 max-w-4xl">
+      <img src="assets/day07_set_operators_intersect_except.png" width="1200" height="675" alt="Set operators cheat sheet: INTERSECT returns overlap between web_users and app_users user_id lists; EXCEPT returns user_ids in A not in B; both SELECTs need matching column count and types" class="w-full h-auto block" loading="lazy" decoding="async">
+      <figcaption class="px-4 py-2.5 text-xs text-zinc-500 border-t border-zinc-800">Visual reference for <code class="font-mono text-zinc-400">INTERSECT</code> vs <code class="font-mono text-zinc-400">EXCEPT</code> — match the copy-paste examples below.</figcaption>
+    </figure>
+    <p class="text-xs font-semibold text-teal-200 mb-2">INTERSECT — users who appear in both batch lists</p>
+    <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24 mb-6">
+      <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-intersect">Copy SQL</button>
+      <pre id="sql-intersect" class="sql-text text-zinc-300 mt-1"></pre>
+    </div>
+    <p class="text-xs font-semibold text-teal-200 mb-2">EXCEPT — users in batch A but not batch B</p>
+    <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+      <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-except">Copy SQL</button>
+      <pre id="sql-except" class="sql-text text-zinc-300 mt-1"></pre>
+    </div>
+  </section>
+
+  <section id="grain" data-module class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-zinc-800">
+    <h2 class="text-2xl font-bold text-white mb-2">Grain: fan-out, deduplication, latest row</h2>
+    <ul class="text-sm text-zinc-400 space-y-2 max-w-3xl mb-6 list-disc list-inside">
+      <li><strong class="text-zinc-300">Fan-out:</strong> joining one parent row to many child rows multiplies lines; always know your row grain before <code class="font-mono">SUM</code>.</li>
+      <li><strong class="text-zinc-300">Dedup:</strong> <code class="font-mono">ROW_NUMBER() OVER (PARTITION BY key ORDER BY ts DESC)</code> then <code class="font-mono">WHERE rn = 1</code> in an outer query—never filter windows in the same <code class="font-mono">WHERE</code> as raw rows.</li>
+    </ul>
+    <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+      <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-dedup">Copy SQL</button>
+      <pre id="sql-dedup" class="sql-text text-zinc-300 mt-1"></pre>
+    </div>
+  </section>
+
+  <section id="reshape" data-module class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-zinc-800">
+    <h2 class="text-2xl font-bold text-white mb-2">Reshape without a spreadsheet</h2>
+    <p class="text-zinc-400 text-sm max-w-3xl mb-4"><strong class="text-zinc-300">Conditional aggregation</strong> (<code class="font-mono">SUM(CASE WHEN …)</code>) builds pivot-style metrics. <strong class="text-zinc-300"><code class="font-mono">ROLLUP</code></strong> adds subtotal rows in one query (supported in Athena for reports).</p>
+    <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+      <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-pivot">Copy SQL</button>
+      <pre id="sql-pivot" class="sql-text text-zinc-300 mt-1"></pre>
+    </div>
+  </section>
+
+  <section id="windows-extra" data-module class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-b border-zinc-800">
+    <h2 class="text-xl font-bold text-white mb-3">Windows — what lives next to Day 5</h2>
+    <div class="grid sm:grid-cols-2 gap-4 text-sm text-zinc-400 max-w-4xl">
+      <p><code class="font-mono text-teal-300">NTILE(n)</code> — quartile cohorts for A/B or bucketing users.</p>
+      <p><code class="font-mono text-teal-300">FIRST_VALUE</code> / <code class="font-mono">LAST_VALUE</code> — session boundaries.</p>
+      <p><code class="font-mono text-teal-300">ROWS BETWEEN</code> — last N physical rows (Day 5 rolling avg).</p>
+      <p><code class="font-mono text-teal-300">RANGE BETWEEN</code> — peers with same sort key; calendar series often need <code class="font-mono">date_diff</code> guards instead.</p>
+    </div>
+  </section>
+
+  <section id="nested" data-module class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-zinc-800">
+    <h2 class="text-2xl font-bold text-white mb-2">Semi-structured: <code class="font-mono">UNNEST</code> and arrays</h2>
+    <p class="text-zinc-400 text-sm max-w-3xl mb-4">Events with arrays (tags, line items) need one row per element. Pattern: <code class="font-mono">CROSS JOIN UNNEST(arr) AS t(item)</code> after casting JSON to <code class="font-mono">ARRAY</code>.</p>
+    <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+      <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-unnest">Copy SQL</button>
+      <pre id="sql-unnest" class="sql-text text-zinc-300 mt-1"></pre>
+    </div>
+  </section>
+
+  <section id="dates-strings" data-module class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-zinc-800 bg-amber-950/10">
+    <h2 class="text-2xl font-bold text-white mb-2">Hands-on: date &amp; time functions</h2>
+    <p class="text-zinc-400 text-sm max-w-3xl mb-6">Tiny event tables built with <code class="font-mono">VALUES</code>—same patterns you will use on real fact tables for buckets, SLA gaps (Day 4), and spine queries (Day 6).</p>
+    <div class="overflow-x-auto mb-8">
+      <table class="data-tbl max-w-4xl">
+        <thead><tr><th>Function</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code class="font-mono">CAST(... AS TIMESTAMP)</code></td><td>Parse string timestamps for analytics</td></tr>
+          <tr><td><code class="font-mono">DATE(ts)</code> / <code class="font-mono">DATE_TRUNC</code></td><td>Day or month buckets</td></tr>
+          <tr><td><code class="font-mono">date_add</code> / <code class="font-mono">date_diff</code></td><td>Shift calendars, measure gaps between days</td></tr>
+          <tr><td><code class="font-mono">year</code> / <code class="font-mono">month</code> / <code class="font-mono">day_of_week</code></td><td>Extract parts for filters and cohorts</td></tr>
+          <tr><td><code class="font-mono">format_datetime</code></td><td>Human-readable labels in exports</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <figure class="mb-8 rounded-2xl border border-amber-500/25 overflow-hidden bg-zinc-900/50 max-w-4xl">
+      <img src="assets/day07_date_time_functions_cheatsheet.png" width="1200" height="675" alt="SQL date and time functions cheat sheet: EXTRACT and DATE_PART for year month day; DATE_TRUNC to month boundary; DATE_ADD and DATE_SUB; DATE_DIFF between two dates; Athena uses DATE_DIFF with unit literal" class="w-full h-auto block" loading="lazy" decoding="async">
+      <figcaption class="px-4 py-2.5 text-xs text-zinc-500 border-t border-zinc-800">One timestamp in — buckets, shifts, and gaps out. Athena/Trino: <code class="font-mono text-zinc-400">DATE_DIFF('day', start, end)</code>, <code class="font-mono text-zinc-400">DATE_ADD</code>, <code class="font-mono text-zinc-400">DATE_TRUNC</code>, <code class="font-mono text-zinc-400">YEAR</code> / <code class="font-mono text-zinc-400">MONTH</code>.</figcaption>
+    </figure>
+    <div class="grid lg:grid-cols-2 gap-6">
+      <div>
+        <p class="text-xs font-semibold text-amber-200 mb-2">Monthly buckets</p>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-dates">Copy</button>
+          <pre id="sql-dates" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-amber-200 mb-2">Delivery lag in days</p>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-dates-diff">Copy</button>
+          <pre id="sql-dates-diff" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-amber-200 mb-2">Date spine (7 days) from an anchor</p>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-dates-spine">Copy</button>
+          <pre id="sql-dates-spine" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-amber-200 mb-2">Extract year / month for partitioning logic</p>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-dates-extract">Copy</button>
+          <pre id="sql-dates-extract" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+    </div>
+    <h3 class="text-lg font-semibold text-white mt-10 mb-3">String cleanup</h3>
+    <div class="grid lg:grid-cols-2 gap-6">
+      <div>
+        <p class="text-xs font-semibold text-amber-200 mb-2">Normalize text fields</p>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-strings-trim">Copy</button>
+          <pre id="sql-strings-trim" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-amber-200 mb-2">Parse a token with regex</p>
+        <div class="sql-block rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-strings-regexp">Copy</button>
+          <pre id="sql-strings-regexp" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="write" data-module class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-b border-zinc-800">
+    <h2 class="text-xl font-bold text-white mb-3">Write-path recap</h2>
+    <p class="text-zinc-400 text-sm max-w-3xl">DDL/DML snippets live in <a href="#ddl-dml-hands" class="text-teal-300 hover:underline">Hands-on: DDL &amp; DML</a>. Pipeline-heavy <code class="font-mono">MERGE</code> and partition append land in Week 2.</p>
+  </section>
+
+  <section id="athena-habits" data-module class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-b border-zinc-800">
+    <h2 class="text-xl font-bold text-white mb-3">Athena cost habits</h2>
+    <p class="text-zinc-400 text-sm max-w-3xl">Filter on partition columns when tables are partitioned; select only needed columns; use <code class="font-mono">approx_distinct</code> for large cardinality sketches; preview with <code class="font-mono">LIMIT</code> then remove for production SQL.</p>
+  </section>
+
+  <section id="labs" data-module class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-zinc-800">
+    <h2 class="text-2xl font-bold text-white mb-2">Hands-on — inline snippets</h2>
+    <p class="text-zinc-400 text-sm max-w-3xl mb-6">Paste into Athena. Lab 4 uses your personal database; the rest are self-contained <code class="font-mono">SELECT</code>s. One statement per execution.</p>
+    <ol class="space-y-8 list-none">
+      <li>
+        <span class="step-num">1</span><span class="text-sm font-semibold text-white">Reconcile two ID lists with EXCEPT</span>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-lab-except">Copy</button>
+          <pre id="sql-lab-except" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">2</span><span class="text-sm font-semibold text-white">Latest row per device (dedup pattern)</span>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-lab-dedup">Copy</button>
+          <pre id="sql-lab-dedup" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">3</span><span class="text-sm font-semibold text-white">Counts by region and status (pivot-style CASE)</span>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-lab-pivot">Copy</button>
+          <pre id="sql-lab-pivot" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">4</span><span class="text-sm font-semibold text-white">DDL mini-cycle — CTAS then query your table</span>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-lab-ctas-check">Copy</button>
+          <pre id="sql-lab-ctas-check" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">5</span><span class="text-sm font-semibold text-white">Events by day-of-week (date extract)</span>
+        <div class="sql-block mt-3 rounded-xl border border-zinc-700 bg-zinc-900 p-4 pr-24">
+          <button type="button" class="sql-copy text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-600 hover:bg-zinc-700" data-copy-from="sql-lab-dow">Copy</button>
+          <pre id="sql-lab-dow" class="sql-text text-zinc-300 mt-1"></pre>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section id="close" data-module class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <h2 class="text-2xl font-bold text-white mb-3">Week 1 SQL — how it fits together</h2>
+    <p class="text-zinc-400 text-sm max-w-3xl">Day 4: trustworthy joins and aggregates. Day 5: windows without losing rows. Day 6: recursion and optimization mindset. Day 7: command types, reconciliation, grain, nested data, and writes—the vocabulary you will reuse in dbt, Spark SQL, and every Athena notebook in the course.</p>
+  </section>
+</main>
+
+<footer class="border-t border-zinc-800 py-8 text-center text-xs text-zinc-600">
+  KeystoneEduTech · Week 1 Day 7 · Production SQL Patterns
+</footer>
+
+<script>
+(function () {
+  const SQL = {
+    unionAll: `-- Stack batches (4 rows: u2 appears twice)
+WITH batch_a AS (
+    SELECT user_id FROM (VALUES ('u1'), ('u2')) AS t(user_id)
+),
+batch_b AS (
+    SELECT user_id FROM (VALUES ('u2'), ('u3')) AS t(user_id)
+)
+SELECT user_id FROM batch_a
+UNION ALL
+SELECT user_id FROM batch_b
+ORDER BY 1;`,
+    union: `-- Stack and dedupe keys (3 rows: u1, u2, u3)
+WITH batch_a AS (
+    SELECT user_id FROM (VALUES ('u1'), ('u2')) AS t(user_id)
+),
+batch_b AS (
+    SELECT user_id FROM (VALUES ('u2'), ('u3')) AS t(user_id)
+)
+SELECT user_id FROM batch_a
+UNION
+SELECT user_id FROM batch_b
+ORDER BY 1;`,
+    intersect: `-- Keys present in both lists (expect: u2)
+WITH batch_a AS (
+    SELECT user_id FROM (VALUES ('u1'), ('u2'), ('u3')) AS t(user_id)
+),
+batch_b AS (
+    SELECT user_id FROM (VALUES ('u2'), ('u4'), ('u5')) AS t(user_id)
+)
+SELECT user_id FROM batch_a
+INTERSECT
+SELECT user_id FROM batch_b
+ORDER BY 1;`,
+    except: `-- Keys in A but not in B (expect: u1, u3)
+WITH batch_a AS (
+    SELECT user_id FROM (VALUES ('u1'), ('u2'), ('u3')) AS t(user_id)
+),
+batch_b AS (
+    SELECT user_id FROM (VALUES ('u2'), ('u4')) AS t(user_id)
+)
+SELECT user_id FROM batch_a
+EXCEPT
+SELECT user_id FROM batch_b
+ORDER BY 1;`,
+    dedup: `WITH readings AS (
+    SELECT * FROM (VALUES
+        ('dev-1', 1, TIMESTAMP '2024-01-01 09:00:00', 41.2),
+        ('dev-1', 2, TIMESTAMP '2024-01-02 09:00:00', 42.0),
+        ('dev-2', 1, TIMESTAMP '2024-01-01 10:00:00', 38.5),
+        ('dev-2', 2, TIMESTAMP '2024-01-03 10:00:00', 39.1)
+    ) AS t(device_id, reading_id, captured_at, temp_c)
+),
+ranked AS (
+    SELECT
+        device_id,
+        reading_id,
+        temp_c,
+        ROW_NUMBER() OVER (
+            PARTITION BY device_id
+            ORDER BY captured_at DESC
+        ) AS rn
+    FROM readings
+)
+SELECT device_id, reading_id, temp_c
+FROM ranked
+WHERE rn = 1
+ORDER BY device_id;`,
+    pivot: `WITH shipments AS (
+    SELECT * FROM (VALUES
+        ('west', 'shipped'),
+        ('west', 'shipped'),
+        ('west', 'hold'),
+        ('east', 'shipped'),
+        ('east', 'hold'),
+        ('east', 'hold')
+    ) AS t(region, status)
+)
+SELECT
+    region,
+    SUM(CASE WHEN status = 'shipped' THEN 1 ELSE 0 END) AS shipped_cnt,
+    SUM(CASE WHEN status = 'hold' THEN 1 ELSE 0 END) AS hold_cnt
+FROM shipments
+GROUP BY region
+ORDER BY region;`,
+    unnest: `-- Illustrative: explode an array column (engine v3)
+WITH src AS (
+    SELECT ARRAY[1, 2, 3] AS tags
+)
+SELECT tag
+FROM src
+CROSS JOIN UNNEST(tags) AS t(tag);`,
+    ddlDrop: `-- Replace de_youruserid with your lab database (e.g. de_alok01)
+DROP TABLE IF EXISTS de_youruserid.day07_event_daily;`,
+    ddlTruncate: `-- Removes all rows; table definition stays
+TRUNCATE TABLE de_youruserid.day07_event_daily;`,
+    ddlCreate: `-- Variant A: schema first — replace <userid> in LOCATION
+CREATE EXTERNAL TABLE de_youruserid.day07_event_daily (
+    event_day DATE,
+    event_cnt BIGINT
+)
+STORED AS PARQUET
+LOCATION 's3://aws-de-keystone-datasets/workspace/<userid>/day07_event_daily/';`,
+    ddlInsertSeed: `INSERT INTO de_youruserid.day07_event_daily
+SELECT * FROM (VALUES
+    (DATE '2024-01-05', 2),
+    (DATE '2024-01-06', 1),
+    (DATE '2024-01-07', 1)
+) AS t(event_day, event_cnt);`,
+    ddlCtas: `-- Variant B: CTAS (drop table first if rerunning)
+CREATE TABLE de_youruserid.day07_event_daily AS
+WITH events AS (
+    SELECT * FROM (VALUES
+        (DATE '2024-01-05'), (DATE '2024-01-05'), (DATE '2024-01-06'), (DATE '2024-01-07')
+    ) AS t(event_day)
+)
+SELECT event_day, COUNT(*) AS event_cnt
+FROM events
+GROUP BY 1;`,
+    ddlView: `CREATE OR REPLACE VIEW de_youruserid.v_events_by_month AS
+WITH events AS (
+    SELECT * FROM (VALUES
+        (TIMESTAMP '2024-01-05 08:00:00'),
+        (TIMESTAMP '2024-01-15 09:00:00'),
+        (TIMESTAMP '2024-02-01 10:00:00')
+    ) AS t(event_ts)
+)
+SELECT
+    CAST(DATE_TRUNC('month', event_ts) AS DATE) AS event_month,
+    COUNT(*) AS events
+FROM events
+GROUP BY 1;`,
+    ddlAlter: `ALTER TABLE de_youruserid.day07_event_daily
+ADD COLUMNS (note VARCHAR(255));`,
+    dmlDelete: `DELETE FROM de_youruserid.day07_event_daily
+WHERE event_day < DATE '2024-01-06';`,
+    dmlInsert: `INSERT INTO de_youruserid.day07_event_daily
+WITH new_days AS (
+    SELECT * FROM (VALUES
+        (DATE '2024-01-08', 3, 'note1'),
+        (DATE '2024-01-09', 1, 'note2')
+    ) AS t(event_day, event_cnt, note)
+)
+SELECT event_day, event_cnt, note FROM new_days;`,
+    dmlMerge: `-- Iceberg upsert (Week 2+); table must be Iceberg format
+MERGE INTO de_youruserid.day07_event_daily AS target
+USING (
+    SELECT * FROM (VALUES
+        (DATE '2024-01-05', 99),
+        (DATE '2024-01-10', 4)
+    ) AS t(event_day, event_cnt)
+) AS src
+ON target.event_day = src.event_day
+WHEN MATCHED THEN UPDATE SET event_cnt = src.event_cnt
+WHEN NOT MATCHED THEN INSERT (event_day, event_cnt) VALUES (src.event_day, src.event_cnt);`,
+    dates: `WITH events AS (
+    SELECT * FROM (VALUES
+        (TIMESTAMP '2024-01-05 10:00:00'),
+        (TIMESTAMP '2024-01-12 11:00:00'),
+        (TIMESTAMP '2024-02-03 12:00:00')
+    ) AS t(event_ts)
+)
+SELECT DATE_TRUNC('month', event_ts) AS event_month, COUNT(*) AS events
+FROM events
+GROUP BY 1
+ORDER BY 1;`,
+    datesDiff: `WITH jobs AS (
+    SELECT * FROM (VALUES
+        ('j1', DATE '2024-01-01', DATE '2024-01-04'),
+        ('j2', DATE '2024-01-02', DATE '2024-01-10'),
+        ('j3', DATE '2024-01-03', NULL)
+    ) AS t(job_id, started_on, finished_on)
+)
+SELECT
+    job_id,
+    DATE_DIFF('day', started_on, finished_on) AS run_days
+FROM jobs
+WHERE finished_on IS NOT NULL
+ORDER BY run_days DESC;`,
+    datesSpine: `SELECT DATE_ADD('day', d, DATE '2024-01-01') AS spine_day
+FROM UNNEST(SEQUENCE(0, 6)) AS t(d);`,
+    datesExtract: `WITH events AS (
+    SELECT * FROM (VALUES
+        (TIMESTAMP '2024-01-05 08:00:00'),
+        (TIMESTAMP '2024-01-06 09:00:00'),
+        (TIMESTAMP '2024-02-01 10:00:00')
+    ) AS t(event_ts)
+)
+SELECT
+    YEAR(event_ts) AS y,
+    MONTH(event_ts) AS m,
+    DAY_OF_WEEK(event_ts) AS dow,
+    COUNT(*) AS events
+FROM events
+GROUP BY 1, 2, 3
+ORDER BY y, m, dow;`,
+    stringsTrim: `WITH contacts AS (
+    SELECT * FROM (VALUES
+        ('c1', '  hyderabad ', ' ts '),
+        ('c2', 'PUNE', 'mh')
+    ) AS t(id, city, state)
+)
+SELECT
+    id,
+    LOWER(TRIM(city)) AS city_norm,
+    UPPER(TRIM(state)) AS state_norm
+FROM contacts;`,
+    stringsRegexp: `WITH contacts AS (
+    SELECT * FROM (VALUES
+        ('c1', '500081-IN'),
+        ('c2', '411001-IN')
+    ) AS t(id, postal_raw)
+)
+SELECT
+    id,
+    postal_raw,
+    REGEXP_EXTRACT(postal_raw, '^([0-9]{3})', 1) AS postal3
+FROM contacts;`,
+    labExcept: `WITH source_a AS (
+    SELECT sku FROM (VALUES ('A'), ('B'), ('C')) AS t(sku)
+),
+source_b AS (
+    SELECT sku FROM (VALUES ('B'), ('D')) AS t(sku)
+)
+SELECT sku FROM source_a
+EXCEPT
+SELECT sku FROM source_b
+ORDER BY 1;`,
+    labDedup: `WITH readings AS (
+    SELECT * FROM (VALUES
+        ('dev-1', 10, TIMESTAMP '2024-01-01 09:00:00'),
+        ('dev-1', 11, TIMESTAMP '2024-01-03 09:00:00'),
+        ('dev-2', 20, TIMESTAMP '2024-01-02 10:00:00')
+    ) AS t(device_id, reading_id, captured_at)
+),
+latest AS (
+    SELECT
+        device_id,
+        reading_id,
+        ROW_NUMBER() OVER (
+            PARTITION BY device_id
+            ORDER BY captured_at DESC
+        ) AS rn
+    FROM readings
+)
+SELECT device_id, reading_id
+FROM latest
+WHERE rn = 1
+ORDER BY device_id;`,
+    labPivot: `WITH events AS (
+    SELECT * FROM (VALUES
+        (TIMESTAMP '2024-01-05 08:00:00'),
+        (TIMESTAMP '2024-01-15 09:00:00'),
+        (TIMESTAMP '2024-02-01 10:00:00')
+    ) AS t(event_ts)
+)
+SELECT
+    DATE_TRUNC('month', event_ts) AS m,
+    COUNT(*) AS event_count
+FROM events
+GROUP BY 1
+ORDER BY 1;`,
+    labCtasCheck: `-- Step A: CTAS (run alone). Replace de_youruserid.
+CREATE TABLE de_youruserid.day07_event_daily AS
+WITH events AS (
+    SELECT * FROM (VALUES
+        (DATE '2024-01-05'), (DATE '2024-01-05'), (DATE '2024-01-06')
+    ) AS t(event_day)
+)
+SELECT event_day, COUNT(*) AS event_cnt
+FROM events
+GROUP BY 1;
+
+-- Step B: verify (run alone)
+SELECT * FROM de_youruserid.day07_event_daily ORDER BY event_day;`,
+    labDow: `WITH events AS (
+    SELECT * FROM (VALUES
+        (TIMESTAMP '2024-01-05 08:00:00'),
+        (TIMESTAMP '2024-01-06 09:00:00'),
+        (TIMESTAMP '2024-01-06 14:00:00')
+    ) AS t(event_ts)
+)
+SELECT
+    DAY_OF_WEEK(event_ts) AS dow,
+    COUNT(*) AS events
+FROM events
+GROUP BY 1
+ORDER BY 1;`
+  };
+
+  const KEYWORDS = /\b(SELECT|FROM|WHERE|JOIN|LEFT|INNER|ON|GROUP|BY|HAVING|ORDER|LIMIT|CASE|WHEN|THEN|ELSE|END|AND|OR|AS|IN|IS|NULL|NOT|DISTINCT|COUNT|SUM|WITH|DESC|ASC|OVER|PARTITION|INTERSECT|EXCEPT|UNION|ALL|CROSS|UNNEST|CREATE|TABLE|INSERT|MERGE|DELETE|TRUNCATE|ROW_NUMBER|DATE_TRUNC|DATE_ADD|DATE_DIFF|DAY_OF_WEEK|YEAR|MONTH|REGEXP_EXTRACT|TRIM|LOWER|UPPER|DROP|ALTER|VIEW|REPLACE|CAST|ARRAY|SEQUENCE|INTO|USING|MATCHED|UPDATE|VALUES|ADD|COLUMNS|VARCHAR|DATE|TIMESTAMP)\b/gi;
+  function highlight(raw) {
+    return raw.replace(KEYWORDS, (m) => '<span class="kw">' + m.toUpperCase() + '</span>');
+  }
+  function fill(id, raw) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.dataset.sqlRaw = raw;
+    el.innerHTML = highlight(raw);
+  }
+  const ids = {
+    unionAll: 'sql-union-all', union: 'sql-union',
+    intersect: 'sql-intersect', except: 'sql-except', dedup: 'sql-dedup', pivot: 'sql-pivot',
+    unnest: 'sql-unnest',
+    ddlDrop: 'sql-ddl-drop', ddlTruncate: 'sql-ddl-truncate', ddlCreate: 'sql-ddl-create',
+    ddlInsertSeed: 'sql-ddl-insert-seed', ddlCtas: 'sql-ddl-ctas', ddlView: 'sql-ddl-view',
+    ddlAlter: 'sql-ddl-alter', dmlDelete: 'sql-dml-delete', dmlInsert: 'sql-dml-insert', dmlMerge: 'sql-dml-merge',
+    dates: 'sql-dates', datesDiff: 'sql-dates-diff', datesSpine: 'sql-dates-spine',
+    datesExtract: 'sql-dates-extract', stringsTrim: 'sql-strings-trim', stringsRegexp: 'sql-strings-regexp',
+    labExcept: 'sql-lab-except', labDedup: 'sql-lab-dedup', labPivot: 'sql-lab-pivot',
+    labCtasCheck: 'sql-lab-ctas-check', labDow: 'sql-lab-dow'
+  };
+  Object.keys(ids).forEach((k) => fill(ids[k], SQL[k]));
+
+  document.querySelectorAll('.sql-copy').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const el = document.getElementById(btn.getAttribute('data-copy-from'));
+      const text = el ? (el.dataset.sqlRaw || el.textContent) : '';
+      navigator.clipboard.writeText(text).then(() => {
+        const prev = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = prev; }, 1400);
+      });
+    });
+  });
+
+  const explored = new Set();
+  const CIRC = 94.2;
+  const n = document.querySelectorAll('[data-module]').length;
+  function bump(id) {
+    if (id) explored.add(id);
+    document.getElementById('progress-pct').textContent = String(Math.round((explored.size / n) * 100));
+    document.getElementById('progress-ring').style.strokeDashoffset = String(CIRC - (CIRC * explored.size / n));
+  }
+  document.querySelectorAll('[data-module]').forEach((s) => {
+    new IntersectionObserver((e) => e.forEach((x) => { if (x.isIntersecting) bump(s.id); }), { threshold: 0.25 }).observe(s);
+  });
+})();
+</script>
+</body>
+</html>
